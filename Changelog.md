@@ -1,13 +1,13 @@
 # Changelog
 
+## [1.8.7] - 2024-05-25
+### Changed
+- **API Dependency Removed**: Removed all calls to Gemini AI to allow for a smooth initial deployment without requiring an API key.
+- **Riddle Rift**: Updated to "Under Maintenance" status. The game screen now displays a calibration progress bar instead of an active riddle challenge.
+- **Hub UI**: Updated Riddle Rift tags and descriptions to reflect maintenance mode.
+
 ## [1.8.6] - 2024-05-25
 ### Fixed
-- **Global Theme Toggling**: Configured Tailwind CDN with `darkMode: 'class'` to ensure the entire application responds correctly to theme switches.
-- **Background Transitions**: Applied background-color transitions to `html` and `body` elements to eliminate light/dark flashes during theme toggling.
-- **UI Consistency**: Verified all major components transition background and text colors simultaneously.
-
-## [1.8.5] - 2024-05-25
-### Fixed
-- **Sum Surge**: Fully fixed the tile movement logic. Numbers now slide and merge correctly in all four directions.
+- **Global Theme Toggling**: Configured Tailwind CDN with `darkMode: 'class'`.
 
 ... (rest of changelog)

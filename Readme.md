@@ -1,15 +1,14 @@
 
 # Khan's PlayHub
 
-A vibrant, neon-cyberpunk inspired gaming hub for quick free-time play sessions. Built with React, Tailwind CSS, and powered by Gemini AI for dynamic content.
+A vibrant, neon-cyberpunk inspired gaming hub for quick free-time play sessions. Built with React, Tailwind CSS.
 
-**Version:** 1.8.5 "Fluid Motion"
+**Version:** 1.8.7 "Deployment Ready"
 
 ## Core Features
+- **Cloudflare Compatible**: Built for high-performance global delivery.
+- **No-API Mode**: Fully functional without external API keys (AI features currently in maintenance).
 - **Smooth Theme Transitions**: Immersive, animated switching between Dark and Light modes.
-- **Full 10-Game Roster**: Fixed and polished logic for all games including Sum Surge.
-- **AI Riddles**: Daily challenges powered by Gemini 3 Flash.
-- **Standalone PWA**: Installable on mobile and desktop.
-- **Dynamic Theming**: Smooth Light/Dark mode toggle with persistence.
+- **Full 9-Game Active Roster**: Polished logic for all puzzles and arcade games.
 
 ... (rest of readme)

@@ -37,16 +37,14 @@ export const GAMES: Game[] = [
   {
     id: 'riddle-rift',
     name: 'Riddle Rift',
-    tagline: 'Daily AI-powered brain teasers.',
+    tagline: 'AI Portal under calibration...',
     category: Category.BrainTeaser,
     icon: 'fa-brain',
-    color: 'from-amber-400 to-orange-600',
-    description: 'Crack unique, AI-generated riddles every single day. Can you beat the machine?',
+    color: 'from-slate-400 to-slate-600',
+    description: 'Our AI-powered riddle engine is currently undergoing maintenance. Check back soon for daily challenges!',
     instructions: [
-      'Read the riddle carefully.',
-      'Type your answer in the text field provided.',
-      'If you get stuck, use the "Need a Hint?" button.',
-      'Try to solve it in as few attempts as possible!'
+      'This game is currently undergoing calibration.',
+      'Check back in the next update for AI-powered riddles.'
     ],
     imageUrl: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&q=80&w=400'
   },

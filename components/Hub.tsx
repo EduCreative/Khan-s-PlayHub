@@ -122,7 +122,7 @@ const Hub: React.FC<HubProps> = ({
         <div className="h-px w-24 bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent" />
         <span className="px-6 py-2 glass-card border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-[0.3em] shadow-inner flex items-center gap-3 transition-colors duration-500">
           <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping" />
-          App Version 1.8.6 Alpha
+          App Version 1.8.7 Alpha
         </span>
       </div>
     </div>
