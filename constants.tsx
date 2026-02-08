@@ -57,12 +57,12 @@ export const GAMES: Game[] = [
     color: 'from-green-400 to-emerald-600',
     description: 'High-speed endless runner. Navigate through neon obstacles and set the record distance.',
     instructions: [
-      'Move your mouse or finger up and down to control the runner.',
-      'Dodge the red incoming blocks to stay in the race.',
+      'Move your mouse or finger left and right to control the runner.',
+      'Dodge the red incoming walls to stay in the race.',
       'The longer you survive, the higher your score multiplier grows.',
       'One hit and the run is over—stay focused!'
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=400'
+    imageUrl: 'https://images.unsplash.com/photo-1519750157634-b6d493a0f77c?auto=format&fit=crop&q=80&w=400'
   },
   {
     id: 'bubble-fury',

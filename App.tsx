@@ -11,6 +11,8 @@ const App: React.FC = () => {
   const [filter, setFilter] = useState<Category | 'All'>('All');
   const [scores, setScores] = useState<Record<string, number>>({});
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBtn, setShowInstallBtn] = useState(false);
 
   useEffect(() => {
     // Initial load from storage
@@ -24,6 +26,19 @@ const App: React.FC = () => {
       const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
       setIsDarkMode(!prefersLight);
     }
+
+    // PWA Install logic
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBtn(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
 
   useEffect(() => {
@@ -49,6 +64,38 @@ const App: React.FC = () => {
   };
 
   const toggleTheme = () => setIsDarkMode(prev => !prev);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      console.log('User accepted the install prompt');
+    } else {
+      console.log('User dismissed the install prompt');
+    }
+    setDeferredPrompt(null);
+    setShowInstallBtn(false);
+  };
+
+  const handleShareClick = async () => {
+    const shareData = {
+      title: "Khan's PlayHub",
+      text: "Check out these addictive mini-games on Khan's PlayHub!",
+      url: window.location.origin,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.origin);
+        alert('Link copied to clipboard!');
+      }
+    } catch (err) {
+      console.error('Error sharing:', err);
+    }
+  };
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-white selection:bg-indigo-500 selection:text-white transition-colors duration-500">
@@ -77,14 +124,28 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Persistent App Installation Prompt */}
-      <div className="fixed bottom-6 right-6 z-[60] flex flex-col gap-3">
+      {/* Persistent App Actions Bar */}
+      <div className="fixed bottom-6 right-6 z-[60] flex flex-col gap-4">
+        {showInstallBtn && (
+          <button 
+            className="bg-emerald-600 hover:bg-emerald-500 text-white w-14 h-14 rounded-2xl shadow-2xl shadow-emerald-500/50 transition-all hover:scale-110 active:scale-95 flex items-center justify-center border-2 border-white/20 group relative"
+            onClick={handleInstallClick}
+          >
+            <i className="fas fa-download text-lg"></i>
+            <span className="absolute right-full mr-4 px-3 py-1 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap border border-white/10">
+              Install App
+            </span>
+          </button>
+        )}
+        
         <button 
-          className="bg-indigo-600 hover:bg-indigo-500 text-white w-14 h-14 rounded-2xl shadow-2xl shadow-indigo-500/50 transition-all hover:scale-110 active:scale-95 flex items-center justify-center border-2 border-white/20"
-          onClick={() => alert("Install Khan's PlayHub for a full-screen standalone experience!")}
-          title="Install App"
+          className="bg-indigo-600 hover:bg-indigo-500 text-white w-14 h-14 rounded-2xl shadow-2xl shadow-indigo-500/50 transition-all hover:scale-110 active:scale-95 flex items-center justify-center border-2 border-white/20 group relative"
+          onClick={handleShareClick}
         >
-          <i className="fas fa-download text-lg"></i>
+          <i className="fas fa-share-nodes text-lg"></i>
+          <span className="absolute right-full mr-4 px-3 py-1 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap border border-white/10">
+            Share Hub
+          </span>
         </button>
       </div>
     </div>
