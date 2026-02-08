@@ -1,0 +1,130 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Khan's PlayHub – Quick Fun Anytime!</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          animation: {
+            'spin-slow': 'spin 8s linear infinite',
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="manifest" href="/manifest.json">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Bungee&display=swap');
+    
+    :root {
+      --transition-speed: 0.6s;
+      --transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      font-family: 'Outfit', sans-serif;
+      transition: background-color var(--transition-speed) var(--transition-easing), 
+                  color var(--transition-speed) var(--transition-easing);
+    }
+
+    /* Light mode default background */
+    body {
+      background-color: #f8fafc; /* slate-50 */
+      color: #0f172a; /* slate-900 */
+    }
+
+    /* Dark mode override */
+    .dark body {
+      background-color: #0f172a; /* Custom dark navy */
+      color: #ffffff;
+    }
+
+    .neon-text {
+      text-shadow: 0 0 10px rgba(99, 102, 241, 0.5), 0 0 20px rgba(168, 85, 247, 0.5);
+      transition: text-shadow var(--transition-speed) var(--transition-easing);
+    }
+
+    .dark .neon-text {
+      text-shadow: 0 0 10px rgba(255, 0, 255, 0.8), 0 0 20px rgba(0, 255, 255, 0.8);
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+      transition: background-color var(--transition-speed) var(--transition-easing), 
+                  border-color var(--transition-speed) var(--transition-easing),
+                  box-shadow var(--transition-speed) var(--transition-easing);
+    }
+
+    .dark .glass-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+    }
+
+    .game-font {
+      font-family: 'Bungee', cursive;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0px); }
+    }
+
+    .floating {
+      animation: float 3s ease-in-out infinite;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #6366f1;
+      border-radius: 4px;
+    }
+
+    .bg-grid-pattern {
+      background-image: radial-gradient(circle, rgba(99, 102, 241, 0.1) 1px, transparent 1px);
+      background-size: 30px 30px;
+      transition: opacity var(--transition-speed) var(--transition-easing);
+    }
+
+    .dark .bg-grid-pattern {
+      background-image: radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    }
+    
+    .theme-icon-transition {
+      transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+  </style>
+<script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "@google/genai": "https://esm.sh/@google/genai@^1.38.0"
+  }
+}
+</script>
+</head>
+<body class="overflow-x-hidden">
+  <div id="root"></div>
+</body>
+</html>

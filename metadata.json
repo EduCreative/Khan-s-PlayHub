@@ -1,0 +1,8 @@
+{
+  "name": "Khan's PlayHub",
+  "description": "A vibrant, neon-cyberpunk inspired PWA gaming hub with 10 addictive mini-games for quick fun anytime.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
