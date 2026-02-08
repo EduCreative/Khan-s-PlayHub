@@ -49,7 +49,7 @@ class BlitzAudio {
         snare.stop(t + 0.35);
       }
 
-      this.beatTimer = window.setTimeout(playBeat, 500);
+      this.beatTimer = window.setTimeout(playBeat, 600); // Slightly slower beat for easier pacing
     };
 
     playBeat();
@@ -93,9 +93,9 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
 
   const spawnObstacle = useCallback(() => {
     const id = Math.random();
-    const w = 20 + Math.random() * 30; // Width of the wall obstacle
+    const w = 25 + Math.random() * 30; // Slightly larger gap on average
     const x = Math.random() * (100 - w);
-    return { x, y: -20, w, id }; // Start off-screen at the top
+    return { x, y: -20, w, id };
   }, []);
 
   const endGame = useCallback(() => {
@@ -127,34 +127,33 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
       lastUpdate.current = now;
 
       // Update Score
-      scoreRef.current += dt * 200;
+      scoreRef.current += dt * 100; // Slower score accumulation
       setScore(Math.floor(scoreRef.current));
       
-      // Move Obstacles Downwards
-      const speed = 400 + (scoreRef.current / 10); // Speed increases with score
+      // Move Obstacles Downwards (Much slower initial speed and scaling)
+      const speed = 250 + (scoreRef.current / 40); 
       const nextObstacles = obstaclesRef.current
-        .map(o => ({ ...o, y: o.y + speed * dt * 0.25 })) // Slower vertical movement for better reactivity
+        .map(o => ({ ...o, y: o.y + speed * dt * 0.18 })) 
         .filter(o => o.y < 120);
 
-      // Spawn logic
-      if (nextObstacles.length < 5 && (nextObstacles.length === 0 || nextObstacles[nextObstacles.length - 1].y > 25)) {
+      // Spawn logic: less dense obstacles
+      if (nextObstacles.length < 4 && (nextObstacles.length === 0 || nextObstacles[nextObstacles.length - 1].y > 35)) {
         nextObstacles.push(spawnObstacle());
       }
 
       // Collision Detection
-      // Player is at y: 85%. x is playerX (0-100).
-      // Player rect: x approx playerXRef +/- 6%. y approx 82% to 88%.
+      // Player is at bottom: 12% (top: 88%). Visual center approx 88%.
       const px = playerXRef.current;
-      const playerXMin = px - 6;
-      const playerXMax = px + 6;
-      const playerYMin = 82;
-      const playerYMax = 88;
+      const playerXMin = px - 5;
+      const playerXMax = px + 5;
+      const playerYMin = 85; // Better alignment with visual 'bottom: 12%'
+      const playerYMax = 91;
 
       for (const o of nextObstacles) {
         const oxMin = o.x;
         const oxMax = o.x + o.w;
         const oyMin = o.y;
-        const oyMax = o.y + 10; // Fixed wall height
+        const oyMax = o.y + 6; // Thinner walls for fairer collision
 
         const hitX = playerXMax > oxMin && playerXMin < oxMax;
         const hitY = playerYMax > oyMin && playerYMin < oyMax;
@@ -178,20 +177,20 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
     };
   }, [isPlaying, spawnObstacle, endGame]);
 
-  // Arrow Keys Support (Left/Right for horizontal steering)
+  // Arrow Keys Support (Left/Right)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isPlaying) return;
       if (e.key === 'ArrowLeft') {
         setPlayerX(prev => {
-          const next = Math.max(5, prev - 8);
+          const next = Math.max(5, prev - 10);
           playerXRef.current = next;
           return next;
         });
       }
       if (e.key === 'ArrowRight') {
         setPlayerX(prev => {
-          const next = Math.min(95, prev + 8);
+          const next = Math.min(95, prev + 10);
           playerXRef.current = next;
           return next;
         });
@@ -216,11 +215,9 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
       onMouseMove={handleMouseMove}
       onTouchMove={handleMouseMove}
     >
-      {/* Background Scrolling Grid */}
       <div className="absolute inset-0 bg-[#020617]" />
-      <div className="absolute inset-0 bg-grid-white/[0.03] animate-[pulse_4s_infinite] pointer-events-none" />
+      <div className="absolute inset-0 bg-grid-white/[0.03] animate-[pulse_6s_infinite] pointer-events-none" />
       
-      {/* Scrolling Stars Visual */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-30">
         {[...Array(20)].map((_, i) => (
            <div 
@@ -235,7 +232,6 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
         ))}
       </div>
 
-      {/* Dynamic Score UI */}
       <div className="absolute top-8 left-8 z-20">
         <div className="flex flex-col">
           <span className="text-[10px] text-slate-500 uppercase font-black tracking-[0.3em] mb-1">Blitz Distance</span>
@@ -248,27 +244,23 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
         </div>
       </div>
 
-      {/* Speed Multiplier HUD */}
       <div className="absolute top-8 right-8 z-20 flex flex-col items-end">
         <span className="text-[10px] text-slate-500 uppercase font-black tracking-[0.3em] mb-1">Engines</span>
         <div className="flex gap-1">
           {[1,2,3,4,5].map(i => (
-            <div key={i} className={`w-2 h-4 rounded-sm border border-white/10 ${score > i*1000 ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'bg-white/5'}`} />
+            <div key={i} className={`w-2 h-4 rounded-sm border border-white/10 ${score > i*500 ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'bg-white/5'}`} />
           ))}
         </div>
       </div>
 
-      {/* Player Runner (Positioned at the bottom, moving left/right) */}
       <div 
         className="absolute bottom-[12%] w-14 h-14 bg-gradient-to-br from-green-400 to-emerald-600 rounded-2xl shadow-[0_0_40px_rgba(74,222,128,0.6)] flex items-center justify-center transition-all duration-75 z-30 border-2 border-white/20"
         style={{ left: `${playerX}%`, transform: 'translateX(-50%)' }}
       >
         <i className="fas fa-bolt text-black text-2xl animate-pulse"></i>
-        {/* Engine Flare (Pointing down as we fly up) */}
         <div className="absolute -bottom-4 w-6 h-4 bg-cyan-400/60 blur-md rounded-full animate-pulse" />
       </div>
 
-      {/* Obstacles (Energy Walls moving from top to bottom) */}
       {obstacles.map((o) => (
         <div 
           key={o.id}
@@ -284,10 +276,8 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
         </div>
       ))}
 
-      {/* Scanline Effect */}
       <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.03),rgba(0,255,0,0.01),rgba(0,0,255,0.03))] bg-[length:100%_4px,3px_100%] z-40" />
 
-      {/* Control Tips */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] animate-bounce flex items-center gap-4 bg-black/40 px-6 py-2 rounded-full border border-white/5 backdrop-blur-sm z-20">
         <div className="flex items-center gap-1"><i className="fas fa-mouse text-green-500"></i> STEER</div>
         <div className="w-1 h-1 bg-slate-700 rounded-full" />

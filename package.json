@@ -2,7 +2,7 @@
 {
   "name": "khans-playhub",
   "private": true,
-  "version": "1.8.6",
+  "version": "1.9.8",
   "type": "module",
   "scripts": {
     "dev": "vite",

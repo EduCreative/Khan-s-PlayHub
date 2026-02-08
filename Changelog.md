@@ -1,13 +1,14 @@
 # Changelog
 
-## [1.9.3] - 2024-05-25
-### Changed
-- **Blitz Runner Overhaul**: Rotated gameplay orientation from horizontal (Left-to-Right) to vertical (Bottom-to-Top). This change significantly improves the experience for mobile players.
-- **Blitz Runner Assets**: Updated the preview image to a more relevant neon speed visual, removing the irrelevant computer imagery.
-- **Controls**: Switched to horizontal steering (Left/Right) to match the new vertical perspective.
+## [1.9.8] - 2024-05-25
+### Added
+- **New Visual Identity**: Launched the official Khan's PlayHub logo—a modern geometric "K" combined with a Play icon.
+- **Logo Component**: Introduced `Logo.tsx` for high-fidelity SVG rendering with neon glow effects.
+- **Dynamic Favicon**: The browser tab now features the brand logo as an SVG favicon.
 
-## [1.9.2] - 2024-05-25
 ### Changed
-- **Native Word Builder**: Migrated the Word Builder game from an external iframe to a native React component. 
+- **Header Redesign**: Replaced generic icons with the new brand logo and updated typography with premium gradient effects.
+- **UI Polish**: Refined dark mode contrast and neon text shadows for better accessibility and aesthetics.
 
+## [1.9.7] - 2024-05-25
 ... (rest of changelog)

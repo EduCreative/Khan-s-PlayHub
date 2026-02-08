@@ -2,6 +2,7 @@
 import React from 'react';
 import { Game, Category } from '../types';
 import GameCard from './GameCard';
+import Logo from './Logo';
 
 interface HubProps {
   games: Game[];
@@ -31,19 +32,17 @@ const Hub: React.FC<HubProps> = ({
     <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-12 md:py-20 animate-in fade-in slide-in-from-bottom-4 duration-1000">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-16">
         <div className="space-y-4">
-          <div className="flex items-center gap-4 group">
-            <div className="w-14 h-14 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-indigo-500/40 group-hover:rotate-12 transition-transform duration-500 border-2 border-white/20">
-              <i className="fas fa-gamepad text-2xl"></i>
-            </div>
+          <div className="flex items-center gap-6 group">
+            <Logo size={64} className="group-hover:rotate-[360deg] transition-transform duration-1000 ease-in-out" />
             <div>
               <h1 className="text-4xl md:text-6xl font-black italic tracking-tighter uppercase dark:text-white text-slate-900 leading-none transition-colors duration-500">
-                Khan's <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">PlayHub</span>
+                Khan's <span className="text-gradient">PlayHub</span>
               </h1>
-              <div className="h-1 w-24 bg-gradient-to-r from-indigo-600 to-transparent mt-2 rounded-full" />
+              <div className="h-1.5 w-32 bg-gradient-to-r from-indigo-600 to-transparent mt-2 rounded-full" />
             </div>
           </div>
           <p className="text-slate-600 dark:text-slate-400 font-medium max-w-xl text-lg leading-relaxed transition-colors duration-500">
-            Unleash your skills in our elite collection of <span className="text-indigo-500 font-bold">AI-enhanced</span> arcade and logic challenges.
+            Enter the nexus of elite <span className="text-indigo-500 font-bold">AI-enhanced</span> arcade challenges. Fast, fluid, and forever free.
           </p>
         </div>
 
@@ -106,7 +105,7 @@ const Hub: React.FC<HubProps> = ({
         <div className="h-px w-24 bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent" />
         <span className="px-6 py-2 glass-card border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-[0.3em] shadow-inner flex items-center gap-3 transition-colors duration-500">
           <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping" />
-          App Version 1.9.3 Alpha
+          App Version 1.9.8 Alpha
         </span>
       </div>
     </div>

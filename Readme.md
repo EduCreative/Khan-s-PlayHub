@@ -3,12 +3,10 @@
 
 A vibrant, neon-cyberpunk inspired gaming hub for quick free-time play sessions. Built with React, Tailwind CSS.
 
-**Version:** 1.9.3 "Vertical Shift Update"
+**Version:** 1.9.6 "Juicy Match Update"
 
 ## Core Features
-- **Mobile First**: Blitz Runner now features vertical gameplay orientation for a natural mobile feel.
-- **Clean UI**: Irrelevant assets replaced with thematic cyberpunk visuals.
-- **Native Experience**: All games built directly in React for high performance.
-- **PWA Ready**: Install the hub directly to your home screen.
-
+- **Enhanced Physics**: Fruit Vortex now features "juicier" animations and comprehensive match detection.
+- **Mobile First**: Optimized touch response and vertical orientation across all games.
+- **Vast Vocabulary**: Word Builder Quest supports an expanded dictionary for creative play.
 ... (rest of readme)
