@@ -50,7 +50,7 @@ const Hub: React.FC<HubProps> = ({
         <div className="flex items-center gap-6">
           <div className="hidden lg:flex flex-col items-end border-r border-indigo-500/20 pr-6">
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Active Portals</span>
-            <span className="text-3xl font-black text-indigo-600 dark:text-indigo-400 italic leading-none transition-colors duration-500">{games.length}</span>
+            <span className="text-3xl font-black text-indigo-600 dark:text-indigo-400 italic leading-none transition-colors duration-500 animate-pulse">{games.length}</span>
           </div>
 
           <button 
@@ -102,27 +102,11 @@ const Hub: React.FC<HubProps> = ({
         ))}
       </div>
 
-      {filteredGames.length === 0 && (
-        <div className="text-center py-32 glass-card rounded-[3rem] border-dashed border-2 border-indigo-500/20">
-          <div className="w-20 h-20 bg-indigo-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            <i className="fas fa-ghost text-4xl text-indigo-500/50 animate-bounce"></i>
-          </div>
-          <h3 className="text-3xl font-black dark:text-white text-slate-900 uppercase italic tracking-tighter mb-2 transition-colors duration-500">The Rift is Empty</h3>
-          <p className="text-slate-500 font-medium">No games match the selected category filter.</p>
-          <button 
-            onClick={() => setFilter('All')}
-            className="mt-8 px-8 py-3 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-600 dark:text-indigo-400 rounded-xl font-bold transition-all"
-          >
-            Clear Filter
-          </button>
-        </div>
-      )}
-
       <div className="mt-32 flex flex-col items-center gap-4">
         <div className="h-px w-24 bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent" />
         <span className="px-6 py-2 glass-card border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-[0.3em] shadow-inner flex items-center gap-3 transition-colors duration-500">
           <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping" />
-          App Version 1.8.8 Alpha
+          App Version 1.9.0 Alpha
         </span>
       </div>
     </div>

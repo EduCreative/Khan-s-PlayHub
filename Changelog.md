@@ -1,12 +1,16 @@
 # Changelog
 
-## [1.8.8] - 2024-05-25
+## [1.9.0] - 2024-05-25
 ### Fixed
-- **Build Failure**: Resolved TypeScript error `TS2345` in `services/gemini.ts` by adding fallback checks for `response.text`.
-- **API Safety**: Updated `fetchDailyRiddle` to return mock data if `API_KEY` is missing, ensuring the app builds and runs without environment variables.
+- **Blitz Runner Collision**: Fixed the critical bug where red blocks weren't ending the game on contact.
+- **Blitz Runner Controls**: Added Arrow Key support for PC/Keyboard players.
+### Added
+- **Blitz Runner Sound**: Implemented a rhythmic procedural background track and crash sound effects.
+- **Blitz Runner UI**: Added engine engine status and speed multiplier indicators.
 
-## [1.8.7] - 2024-05-25
-### Changed
-- **API Dependency Removed**: Removed all calls to Gemini AI to allow for a smooth initial deployment without requiring an API key.
+## [1.8.9] - 2024-05-25
+### Added
+- **Number Ninja Feedback**: Correct answers now glow green; incorrect answers glow red.
+- **Number Ninja Game Over**: Added a dedicated "Time Over" summary screen.
 
 ... (rest of changelog)

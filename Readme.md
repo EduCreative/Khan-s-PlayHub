@@ -3,12 +3,12 @@
 
 A vibrant, neon-cyberpunk inspired gaming hub for quick free-time play sessions. Built with React, Tailwind CSS.
 
-**Version:** 1.8.7 "Deployment Ready"
+**Version:** 1.9.0 "The Arcade Update"
 
 ## Core Features
-- **Cloudflare Compatible**: Built for high-performance global delivery.
-- **No-API Mode**: Fully functional without external API keys (AI features currently in maintenance).
-- **Smooth Theme Transitions**: Immersive, animated switching between Dark and Light modes.
-- **Full 9-Game Active Roster**: Polished logic for all puzzles and arcade games.
+- **Arcade Polish**: Fixed Blitz Runner collision and added keyboard support.
+- **Sound Design**: Procedural rhythmic music tracks for immersive gameplay.
+- **Immersive Feedback**: Real-time visual responses (e.g., Number Ninja green/red glow).
+- **Session Summaries**: Detailed Game Over screens with metrics.
 
 ... (rest of readme)
