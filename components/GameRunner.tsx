@@ -11,6 +11,10 @@ import MemoryMatrix from '../games/MemoryMatrix';
 import Labyrinth from '../games/Labyrinth';
 import ColorClash from '../games/ColorClash';
 import WordBuilder from '../games/WordBuilder';
+import QuickMath from '../games/QuickMath';
+import PatternFinder from '../games/PatternFinder';
+import GrammarGuardian from '../games/GrammarGuardian';
+import SudokuLite from '../games/SudokuLite';
 import Logo from './Logo';
 
 interface GameRunnerProps {
@@ -77,6 +81,10 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
       case 'labyrinth': return <Labyrinth onGameOver={handleGameOver} isPlaying={isPlaying} />;
       case 'color-clash': return <ColorClash onGameOver={handleGameOver} isPlaying={isPlaying} />;
       case 'word-builder': return <WordBuilder onGameOver={handleGameOver} isPlaying={isPlaying} isDarkMode={isDarkMode} />;
+      case 'quick-math': return <QuickMath onGameOver={handleGameOver} isPlaying={isPlaying} />;
+      case 'pattern-finder': return <PatternFinder onGameOver={handleGameOver} isPlaying={isPlaying} />;
+      case 'grammar-guardian': return <GrammarGuardian onGameOver={handleGameOver} isPlaying={isPlaying} />;
+      case 'sudoku-lite': return <SudokuLite onGameOver={handleGameOver} isPlaying={isPlaying} />;
       default:
         return (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">

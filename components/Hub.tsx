@@ -35,8 +35,8 @@ const Hub: React.FC<HubProps> = ({
           <div className="flex items-center gap-6 group">
             <Logo size={64} className="group-hover:rotate-[360deg] transition-transform duration-1000 ease-in-out" />
             <div>
-              <h1 className="text-4xl md:text-6xl font-black italic tracking-tighter uppercase dark:text-white text-slate-900 leading-none transition-colors duration-500">
-                Khan's <span className="text-gradient">PlayHub</span>
+              <h1 className="text-4xl md:text-6xl font-black italic tracking-tight uppercase dark:text-white text-slate-900 leading-tight transition-colors duration-500 pr-2">
+                Khan's <span className="text-gradient inline-block pr-1">PlayHub</span>
               </h1>
               <div className="h-1.5 w-32 bg-gradient-to-r from-indigo-600 to-transparent mt-2 rounded-full" />
             </div>
@@ -88,7 +88,7 @@ const Hub: React.FC<HubProps> = ({
         ))}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12 mb-20">
         {filteredGames.map((game, idx) => (
           <div key={game.id} className="animate-in fade-in slide-in-from-bottom-8 duration-700" style={{ animationDelay: `${idx * 100}ms` }}>
             <GameCard 
@@ -101,11 +101,47 @@ const Hub: React.FC<HubProps> = ({
         ))}
       </div>
 
-      <div className="mt-32 flex flex-col items-center gap-4">
+      {/* About Us Section */}
+      <section className="mb-24 max-w-2xl mx-auto">
+        <div className="glass-card rounded-[2.5rem] p-6 md:p-8 border border-indigo-500/10 shadow-xl relative overflow-hidden group transition-all duration-700 hover:border-indigo-500/30">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+          
+          <div className="relative z-10 flex flex-col items-center text-center">
+            <h2 className="text-2xl font-black italic uppercase tracking-tighter dark:text-white text-slate-900 mb-3">
+              The <span className="text-indigo-500">Nexus</span> Mission
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium text-sm mb-6 max-w-lg">
+              Curated high-fidelity mini-games crafted for the modern web. Instant entertainment—no downloads, pure gameplay.
+            </p>
+            
+            <div className="flex flex-wrap justify-center gap-3 w-full">
+              <a 
+                href="mailto:kmasroor50@gmail.com" 
+                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-indigo-500/10 border border-white/10 hover:border-indigo-500/30 rounded-xl transition-all group/link"
+              >
+                <i className="fas fa-envelope text-indigo-500 group-hover/link:scale-110 transition-transform text-xs"></i>
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-300">kmasroor50@gmail.com</span>
+              </a>
+              
+              <a 
+                href="https://wa.me/923331306603" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-emerald-500/10 border border-white/10 hover:border-emerald-500/30 rounded-xl transition-all group/link"
+              >
+                <i className="fab fa-whatsapp text-emerald-500 group-hover/link:scale-110 transition-transform text-sm"></i>
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-300">+92 333 1306603</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="flex flex-col items-center gap-4">
         <div className="h-px w-24 bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent" />
         <span className="px-6 py-2 glass-card border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-[0.3em] shadow-inner flex items-center gap-3 transition-colors duration-500">
           <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping" />
-          App Version 1.9.9 Alpha
+          App Version 2.0.0 Stable
         </span>
       </div>
     </div>

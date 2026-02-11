@@ -19,6 +19,70 @@ export const GAMES: Game[] = [
     imageUrl: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&q=80&w=400'
   },
   {
+    id: 'quick-math',
+    name: 'Quick Math',
+    tagline: 'Hyper-speed mental arithmetic.',
+    category: Category.Educational,
+    icon: 'fa-calculator',
+    color: 'from-blue-600 to-indigo-700',
+    description: 'Solve as many arithmetic problems as possible in 60 seconds. Accuracy and speed are key!',
+    instructions: [
+      'An equation will appear on screen.',
+      'Type or select the correct answer as fast as possible.',
+      'Correct answers add time and points.',
+      'Wrong answers subtract time. Keep your streak alive!'
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1518133910546-b6c2fb7d79e3?auto=format&fit=crop&q=80&w=400'
+  },
+  {
+    id: 'pattern-finder',
+    name: 'Pattern Finder',
+    tagline: 'Identify the missing sequence.',
+    category: Category.BrainTeaser,
+    icon: 'fa-shapes',
+    color: 'from-amber-400 to-orange-500',
+    description: 'Analyze the sequence of symbols and find the logic to predict the next one.',
+    instructions: [
+      'Observe the row of shapes or numbers.',
+      'Identify the underlying pattern (addition, rotation, color shift).',
+      'Select the correct missing piece from the options.',
+      'Higher levels introduce multi-layered patterns.'
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1516245834210-c4c142787335?auto=format&fit=crop&q=80&w=400'
+  },
+  {
+    id: 'grammar-guardian',
+    name: 'Grammar Guardian',
+    tagline: 'Master the art of language.',
+    category: Category.Educational,
+    icon: 'fa-book-open',
+    color: 'from-emerald-500 to-teal-600',
+    description: 'Identify and fix common grammatical errors in this fast-paced language challenge.',
+    instructions: [
+      'A sentence with a missing or wrong word will appear.',
+      'Choose the grammatically correct option.',
+      'Focus on subject-verb agreement and punctuation.',
+      'Level up to unlock more complex linguistic puzzles.'
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=400'
+  },
+  {
+    id: 'sudoku-lite',
+    name: 'Sudoku Lite',
+    tagline: 'Mini 4x4 Sudoku puzzles.',
+    category: Category.BrainTeaser,
+    icon: 'fa-table-cells',
+    color: 'from-slate-600 to-slate-900',
+    description: 'Perfect for quick brain training sessions. Fill the 4x4 grid without repeating digits.',
+    instructions: [
+      'Each row, column, and 2x2 square must contain digits 1-4.',
+      'Click an empty cell and select a number.',
+      'Solve the grid as fast as possible for bonus points.',
+      'Mistakes will flash red—be careful!'
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1605870445919-838d190e8e1b?auto=format&fit=crop&q=80&w=400'
+  },
+  {
     id: 'number-ninja',
     name: 'Number Ninja',
     tagline: 'Slice the correct answers!',
