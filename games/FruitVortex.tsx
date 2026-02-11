@@ -341,7 +341,7 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
         <div className="flex justify-between items-end">
           <div className="flex flex-col">
             <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Juice Points</p>
-            <p className="text-5xl font-black text-white tabular-nums tracking-tighter drop-shadow-[0_0_15px_rgba(249,115,22,0.6)]">
+            <p className="text-5xl font-black dark:text-white text-slate-900 tabular-nums tracking-tighter drop-shadow-[0_0_15px_rgba(249,115,22,0.6)] transition-colors">
               {score.toLocaleString()}
             </p>
           </div>
@@ -358,7 +358,7 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
       </div>
 
       <div 
-        className={`relative p-4 bg-white/[0.03] rounded-[2.5rem] border border-white/10 shadow-2xl backdrop-blur-sm overflow-hidden group`}
+        className={`relative p-4 bg-white/[0.03] rounded-[2.5rem] border border-white/10 shadow-2xl backdrop-blur-sm overflow-hidden group transition-transform`}
         style={{ transform: shakeIntensity > 0 ? `translate(${Math.random() * shakeIntensity - shakeIntensity/2}px, ${Math.random() * shakeIntensity - shakeIntensity/2}px)` : 'none' }}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
@@ -405,11 +405,11 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
       </div>
 
       <div className="flex flex-col items-center gap-2">
-        <div className={`flex items-center gap-3 text-slate-400/60 bg-white/5 px-6 py-2 rounded-full border border-white/5 text-xs font-medium transition-all ${comboRef.current > 0 ? 'scale-110 text-orange-400 border-orange-500/40 bg-orange-500/10 shadow-[0_0_20px_rgba(249,115,22,0.2)]' : ''}`}>
-          <i className={`fas fa-apple-whole transition-transform ${isExploding ? 'animate-spin' : ''} ${comboRef.current > 0 ? 'text-orange-400' : 'text-slate-500'}`}></i>
-          <span>{comboRef.current > 1 ? `JUICE COMBO x${comboRef.current}!` : 'Match 3+ in a line for juice!'}</span>
+        <div className={`flex items-center gap-3 text-slate-500 dark:text-slate-400/60 bg-white/5 px-6 py-2 rounded-full border border-white/5 text-xs font-medium transition-all ${comboRef.current > 0 ? 'scale-110 text-orange-600 border-orange-500/40 bg-orange-500/10 shadow-[0_0_20px_rgba(249,115,22,0.2)]' : ''}`}>
+          <i className={`fas fa-apple-whole transition-transform ${isExploding ? 'animate-spin' : ''} ${comboRef.current > 0 ? 'text-orange-600' : 'text-slate-500'}`}></i>
+          <span className="dark:text-slate-400 text-slate-500 font-bold">{comboRef.current > 1 ? `JUICE COMBO x${comboRef.current}!` : 'Match 3+ in a line for juice!'}</span>
         </div>
-        <div className="flex gap-4 text-[10px] text-slate-600 font-black uppercase tracking-[0.2em]">
+        <div className="flex gap-4 text-[10px] text-slate-600 font-black uppercase tracking-[0.2em] transition-colors">
           <span className="flex items-center gap-1"><i className="fas fa-burst text-red-500"></i> Full Grid Scan</span>
           <span className="flex items-center gap-1"><i className="fas fa-wand-magic-sparkles text-yellow-500"></i> Cascade</span>
         </div>

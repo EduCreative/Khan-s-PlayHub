@@ -101,23 +101,23 @@ const RiddleRift: React.FC<{ onGameOver: (s: number) => void }> = ({ onGameOver 
         <div className="flex items-center gap-4">
           <Logo size={40} />
           <div>
-            <h2 className="text-xl font-black italic text-white uppercase tracking-tighter">Riddle Rift</h2>
+            <h2 className="text-xl font-black italic dark:text-white text-slate-900 uppercase tracking-tighter">Riddle Rift</h2>
             <div className="flex gap-1 mt-1">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className={`h-1 w-4 rounded-full ${i < streak ? 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]' : 'bg-white/10'}`} />
+                <div key={i} className={`h-1 w-4 rounded-full ${i < streak ? 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]' : 'bg-slate-300 dark:bg-white/10'}`} />
               ))}
             </div>
           </div>
         </div>
         <div className="text-right">
           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Score</span>
-          <p className="text-3xl font-black text-indigo-400 italic">{score.toLocaleString()}</p>
+          <p className="text-3xl font-black text-indigo-400 italic tabular-nums">{score.toLocaleString()}</p>
         </div>
       </div>
 
       <div className={`w-full glass-card p-10 rounded-[3rem] border-2 transition-all duration-500 relative overflow-hidden ${feedback === 'correct' ? 'border-emerald-500 shadow-[0_0_50px_rgba(16,185,129,0.3)]' : feedback === 'wrong' ? 'border-rose-500 animate-shake' : 'border-indigo-500/20'}`}>
         <div className="absolute top-0 right-0 p-4 opacity-10">
-          <i className="fas fa-brain text-8xl"></i>
+          <i className="fas fa-brain text-8xl dark:text-white text-slate-900"></i>
         </div>
 
         {isLoading ? (
@@ -127,7 +127,7 @@ const RiddleRift: React.FC<{ onGameOver: (s: number) => void }> = ({ onGameOver 
           </div>
         ) : (
           <>
-            <h3 className="text-2xl md:text-3xl font-bold text-white mb-8 leading-relaxed text-center italic">
+            <h3 className="text-2xl md:text-3xl font-bold dark:text-white text-slate-800 mb-8 leading-relaxed text-center italic transition-colors">
               "{currentRiddle.question}"
             </h3>
 
@@ -138,7 +138,7 @@ const RiddleRift: React.FC<{ onGameOver: (s: number) => void }> = ({ onGameOver 
                 onChange={(e) => setUserInput(e.target.value)}
                 placeholder="TYPE YOUR ANSWER..."
                 autoFocus
-                className="w-full bg-black/40 border-2 border-white/10 rounded-2xl py-4 px-6 text-center text-2xl font-black uppercase tracking-widest focus:border-indigo-500 focus:outline-none transition-all placeholder:text-slate-700 text-indigo-400"
+                className="w-full bg-slate-100 dark:bg-black/40 border-2 border-slate-200 dark:border-white/10 rounded-2xl py-4 px-6 text-center text-2xl font-black uppercase tracking-widest focus:border-indigo-500 focus:outline-none transition-all dark:placeholder:text-slate-700 placeholder:text-slate-400 dark:text-indigo-400 text-indigo-700"
               />
 
               <div className="grid grid-cols-2 gap-4">
@@ -146,7 +146,7 @@ const RiddleRift: React.FC<{ onGameOver: (s: number) => void }> = ({ onGameOver 
                   type="button"
                   onClick={() => { setShowHint(true); setHintUsed(true); }}
                   disabled={showHint}
-                  className="py-4 glass-card border-indigo-500/20 text-slate-400 font-black uppercase text-xs tracking-[0.2em] hover:text-indigo-400 transition-all active:scale-95"
+                  className="py-4 glass-card border-indigo-500/20 text-slate-500 dark:text-slate-400 font-black uppercase text-xs tracking-[0.2em] hover:text-indigo-400 transition-all active:scale-95"
                 >
                   <i className="fas fa-lightbulb mr-2"></i> {showHint ? currentRiddle.hint : "Need a Hint?"}
                 </button>
@@ -164,7 +164,7 @@ const RiddleRift: React.FC<{ onGameOver: (s: number) => void }> = ({ onGameOver 
 
       <button 
         onClick={() => onGameOver(score)}
-        className="mt-12 text-slate-500 hover:text-white font-black uppercase tracking-[0.3em] text-[10px] transition-colors"
+        className="mt-12 text-slate-400 dark:text-slate-500 hover:text-indigo-500 dark:hover:text-white font-black uppercase tracking-[0.3em] text-[10px] transition-colors"
       >
         <i className="fas fa-power-off mr-2"></i> Terminate Connection
       </button>

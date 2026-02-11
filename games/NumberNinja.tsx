@@ -96,12 +96,12 @@ const NumberNinja: React.FC<NumberNinjaProps> = ({ onGameOver, isPlaying }) => {
             <i className="fas fa-hourglass-end animate-bounce"></i>
           </div>
 
-          <h2 className="text-5xl font-black italic tracking-tighter uppercase dark:text-white text-slate-900 mb-2">
+          <h2 className="text-5xl font-black italic tracking-tighter uppercase dark:text-white text-slate-900 mb-2 transition-colors">
             Time <span className="text-rose-500">Over</span>
           </h2>
           <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs mb-8">Session Completed</p>
 
-          <div className="bg-indigo-500/5 dark:bg-white/5 rounded-3xl p-8 border border-white/5 mb-8">
+          <div className="bg-slate-100 dark:bg-white/5 rounded-3xl p-8 border border-slate-200 dark:border-white/5 mb-8">
             <p className="text-[10px] uppercase font-black text-slate-500 tracking-[0.3em] mb-2">Final Ninja Score</p>
             <p className="text-6xl font-black text-indigo-500 tabular-nums drop-shadow-sm italic">
               {score.toLocaleString()}
@@ -121,25 +121,25 @@ const NumberNinja: React.FC<NumberNinjaProps> = ({ onGameOver, isPlaying }) => {
 
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-lg px-4 select-none">
-      <div className="flex justify-between w-full glass-card p-6 rounded-3xl border-indigo-500/20">
+      <div className="flex justify-between w-full glass-card p-6 rounded-3xl border-indigo-500/20 transition-colors">
         <div className="text-center">
           <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Power</p>
-          <p className="text-2xl font-black text-cyan-400 italic">x{Math.floor(score/1000) + 1}</p>
+          <p className="text-2xl font-black text-cyan-500 dark:text-cyan-400 italic">x{Math.floor(score/1000) + 1}</p>
         </div>
         <div className="text-center">
           <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Juice</p>
-          <p className="text-4xl font-black text-indigo-600 dark:text-indigo-400 italic drop-shadow-sm">{score.toLocaleString()}</p>
+          <p className="text-4xl font-black text-indigo-600 dark:text-indigo-400 italic drop-shadow-sm transition-colors">{score.toLocaleString()}</p>
         </div>
         <div className="text-center">
           <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Limit</p>
-          <p className={`text-2xl font-black tabular-nums transition-colors ${timeLeft < 5 ? 'text-rose-500 animate-pulse' : 'text-slate-400'}`}>
+          <p className={`text-2xl font-black tabular-nums transition-colors ${timeLeft < 5 ? 'text-rose-500 animate-pulse' : 'text-slate-400 dark:text-slate-500'}`}>
             {timeLeft}s
           </p>
         </div>
       </div>
 
       <div className={`text-center py-16 transition-transform duration-75 ${isShaking ? 'animate-bounce translate-x-2' : ''}`}>
-        <h2 className={`text-8xl md:text-9xl font-black neon-text italic game-font transition-all ${isShaking ? 'text-rose-500 scale-95' : 'text-white'}`}>
+        <h2 className={`text-8xl md:text-9xl font-black neon-text italic game-font transition-all duration-300 ${isShaking ? 'text-rose-500 scale-95' : 'dark:text-white text-slate-900'}`}>
           {equation}
         </h2>
       </div>
@@ -156,21 +156,21 @@ const NumberNinja: React.FC<NumberNinjaProps> = ({ onGameOver, isPlaying }) => {
               className={`
                 group relative h-32 glass-card rounded-[2rem] flex items-center justify-center text-5xl font-black transition-all overflow-hidden border-2
                 ${isCorrect ? 'bg-emerald-500 border-emerald-400 scale-110 z-20 shadow-[0_0_40px_rgba(52,211,153,0.5)]' : ''}
-                ${isWrong ? 'bg-rose-500 border-rose-400 scale-95 shadow-[0_0_40px_rgba(244,63,94,0.5)]' : 'border-indigo-500/10 hover:border-indigo-500/40'}
+                ${isWrong ? 'bg-rose-500 border-rose-400 scale-95 shadow-[0_0_40px_rgba(244,63,94,0.5)]' : 'border-slate-200 dark:border-indigo-500/10 hover:border-indigo-500/40'}
                 ${!feedback ? 'hover:scale-105 active:scale-95' : ''}
               `}
               disabled={!!feedback}
             >
-               <div className={`absolute inset-0 transition-colors ${!feedback ? 'bg-white/5 group-hover:bg-indigo-500/10' : ''}`} />
-               <span className={`relative z-10 ${isCorrect || isWrong ? 'text-white' : ''}`}>{opt}</span>
+               <div className={`absolute inset-0 transition-colors ${!feedback ? 'bg-slate-100/50 dark:bg-white/5 group-hover:bg-indigo-500/10' : ''}`} />
+               <span className={`relative z-10 transition-colors ${isCorrect || isWrong ? 'text-white' : 'dark:text-white text-slate-900'}`}>{opt}</span>
             </button>
           );
         })}
       </div>
 
-      <div className="flex items-center gap-3 text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] bg-white/5 px-6 py-2 rounded-full border border-white/5">
-        <i className="fas fa-bolt text-cyan-400"></i>
-        <span>Correct Slices build Multipliers</span>
+      <div className="flex items-center gap-3 text-slate-500 dark:text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] bg-slate-100 dark:bg-white/5 px-6 py-2 rounded-full border border-slate-200 dark:border-white/5">
+        <i className="fas fa-bolt text-cyan-500 dark:text-cyan-400"></i>
+        <span className="dark:text-slate-400 text-slate-500">Correct Slices build Multipliers</span>
       </div>
     </div>
   );

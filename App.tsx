@@ -37,13 +37,24 @@ const App: React.FC = () => {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // Check for service worker readiness
+    // Check for service worker readiness with an extra layer of safety
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then(() => {
-        setIsOfflineReady(true);
-        // Hide notification after a few seconds
-        setTimeout(() => setIsOfflineReady(false), 5000);
-      });
+      // Use a racing timeout to ensure we don't wait forever for 'ready'
+      // if registration failed silently or was blocked by the environment.
+      const readyCheck = Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+      ]);
+
+      readyCheck
+        .then(() => {
+          setIsOfflineReady(true);
+          setTimeout(() => setIsOfflineReady(false), 5000);
+        })
+        .catch(() => {
+          // SW registration failed or timed out, which is expected in some preview environments
+          console.debug('Service Worker not ready or timed out - continuing in standard mode');
+        });
     }
 
     return () => {

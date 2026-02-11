@@ -351,7 +351,7 @@ const GemVortex: React.FC<GemVortexProps> = ({ onGameOver, isPlaying }) => {
         <div className="flex justify-between items-end">
           <div className="flex flex-col">
             <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Score Bank</p>
-            <p className="text-5xl font-black text-white tabular-nums tracking-tighter drop-shadow-[0_0_10px_rgba(167,139,250,0.5)]">
+            <p className="text-5xl font-black dark:text-white text-slate-900 tabular-nums tracking-tighter drop-shadow-[0_0_10px_rgba(167,139,250,0.5)] transition-colors">
               {score.toLocaleString()}
             </p>
           </div>
@@ -407,11 +407,11 @@ const GemVortex: React.FC<GemVortexProps> = ({ onGameOver, isPlaying }) => {
       </div>
 
       <div className="flex flex-col items-center gap-2">
-        <div className="flex items-center gap-3 text-slate-400/60 bg-white/5 px-6 py-2 rounded-full border border-white/5 text-xs font-medium">
+        <div className="flex items-center gap-3 text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] bg-white/5 px-6 py-2 rounded-full border border-white/5">
           <i className={`fas fa-magic transition-transform ${isExploding ? 'animate-spin' : ''} text-purple-400`}></i>
-          <span>{comboRef.current > 1 ? `COMBO x${comboRef.current}!` : 'Chain matches for massive points!'}</span>
+          <span className="dark:text-slate-400 text-slate-500 font-bold">{comboRef.current > 1 ? `COMBO x${comboRef.current}!` : 'Chain matches for massive points!'}</span>
         </div>
-        <div className="flex gap-4 text-[10px] text-slate-600 font-bold uppercase tracking-widest">
+        <div className="flex gap-4 text-[10px] text-slate-600 font-bold uppercase tracking-widest transition-colors">
           <span className="flex items-center gap-1"><i className="fas fa-bomb"></i> 4+ Blast</span>
           <span className="flex items-center gap-1"><i className="fas fa-bolt"></i> Special</span>
         </div>

@@ -73,7 +73,7 @@ const ColorClash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
 
   return (
     <div className="flex flex-col items-center gap-12 w-full max-w-sm px-4 select-none">
-      <div className="w-full h-5 bg-white/5 rounded-full overflow-hidden border-2 border-white/10 p-1 shadow-inner relative">
+      <div className="w-full h-5 bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden border-2 border-slate-300 dark:border-white/10 p-1 shadow-inner relative transition-colors">
         <div 
           className={`h-full rounded-full transition-all duration-75 ease-linear shadow-[0_0_20px_rgba(236,72,153,0.5)] ${timeLeft < 0.3 ? 'bg-red-500 animate-pulse' : 'bg-gradient-to-r from-pink-500 to-indigo-500'}`}
           style={{ width: `${Math.max(0, timeLeft * 100)}%` }}
@@ -85,7 +85,7 @@ const ColorClash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
         <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em] mb-4">Read the Word, Ignore the Color</p>
         <div className="relative group">
            <h2 
-            className="text-8xl font-black italic game-font transition-all duration-150 transform group-hover:scale-105"
+            className="text-8xl font-black italic game-font transition-all duration-300 transform group-hover:scale-105"
             style={{ 
               color: COLORS[textColor].hex, 
               textShadow: `0 0 30px ${COLORS[textColor].hex}88, 0 4px 0 rgba(0,0,0,0.5)` 
@@ -102,7 +102,7 @@ const ColorClash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
             key={color.name}
             onClick={() => handleMatch(idx)}
             className={`
-              h-24 rounded-[2.5rem] border-4 border-white/10 transition-all 
+              h-24 rounded-[2.5rem] border-4 border-slate-200 dark:border-white/10 transition-all 
               hover:scale-105 active:scale-90 shadow-2xl hover:brightness-110
               ${color.bg} flex items-center justify-center
             `}
@@ -112,9 +112,9 @@ const ColorClash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
         ))}
       </div>
 
-      <div className="text-center bg-white/5 px-8 py-4 rounded-3xl border border-white/10 shadow-xl w-full">
+      <div className="text-center bg-slate-100 dark:bg-white/5 px-8 py-4 rounded-3xl border border-slate-200 dark:border-white/10 shadow-xl w-full transition-colors">
         <p className="text-slate-500 text-[10px] font-black uppercase mb-1 tracking-widest">Score Multiplier x{difficultyRef.current.toFixed(1)}</p>
-        <p className="text-5xl font-black text-white italic tabular-nums drop-shadow-md tracking-tighter">
+        <p className="text-5xl font-black dark:text-white text-slate-900 italic tabular-nums drop-shadow-md tracking-tighter transition-colors">
           {score.toLocaleString()}
         </p>
       </div>

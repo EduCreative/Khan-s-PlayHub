@@ -92,11 +92,9 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
     const neighbors = [];
     const isOdd = row % 2 !== 0;
     
-    // Correct Hexagonal Neighbors based on row parity
-    // Even rows are shifted left relative to Odd rows
     const directions = isOdd 
-      ? [[0, 1], [0, -1], [-1, 0], [-1, 1], [1, 0], [1, 1]] // Neighbors for Odd Row
-      : [[0, 1], [0, -1], [-1, -1], [-1, 0], [1, -1], [1, 0]]; // Neighbors for Even Row
+      ? [[0, 1], [0, -1], [-1, 0], [-1, 1], [1, 0], [1, 1]] 
+      : [[0, 1], [0, -1], [-1, -1], [-1, 0], [1, -1], [1, 0]]; 
 
     for (const [dr, dc] of directions) {
       const nr = row + dr;
@@ -108,18 +106,12 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
   };
 
   const processHit = (nx: number, ny: number, color: string) => {
-    // Find the best grid cell to snap to by checking nearby empty slots
     let bestCell = { row: 0, col: 0, dist: Infinity };
-    
-    // Check local neighborhood of rows/cols
     const centerRow = Math.round((ny - BUBBLE_RADIUS - 20) / ROW_HEIGHT);
-    const centerCol = Math.round((nx - BUBBLE_RADIUS) / (BUBBLE_RADIUS * 2));
 
-    for (let r = centerRow - 1; r <= centerRow + 1; r++) {
-      if (r < 0) continue;
+    for (let r = Math.max(0, centerRow - 2); r <= centerRow + 2; r++) {
       const colsInRow = r % 2 === 0 ? 10 : 9;
       for (let c = 0; c < colsInRow; c++) {
-        // Only consider if slot is empty
         if (!bubbles.some(b => b.row === r && b.col === c)) {
           const coords = getBubbleCoords(r, c);
           const d = Math.sqrt((nx - coords.x) ** 2 + (ny - coords.y) ** 2);
@@ -135,7 +127,6 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
 
     setBubbles(prev => {
       const updated = [...prev, newBubble];
-      
       const matches = new Set<string>();
       const queue = [newBubble];
       matches.add(newBubble.id);
@@ -157,7 +148,6 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
         let remaining = updated.filter(b => !matches.has(b.id));
         setScore(s => s + matches.size * 100);
 
-        // BFS from ceiling to find truly connected bubbles
         const connected = new Set<string>();
         const ceilingBubbles = remaining.filter(b => b.row === 0);
         ceilingBubbles.forEach(b => connected.add(b.id));
@@ -180,8 +170,8 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
 
         const fallingPool = [...toBurst, ...toFall].map(b => ({
           ...b,
-          vx: (Math.random() - 0.5) * 4,
-          vy: Math.random() * 2 + 2,
+          vx: (Math.random() - 0.5) * 6,
+          vy: Math.random() * -4 - 2,
           opacity: 1
         }));
         
@@ -210,8 +200,9 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
             ...b,
             x: b.x + b.vx,
             y: b.y + b.vy,
-            vy: b.vy + 0.3,
-            opacity: b.opacity - 0.015
+            vy: b.vy + 0.4,
+            vx: b.vx * 0.98,
+            opacity: b.opacity - 0.012
           }))
           .filter(b => b.y < HEIGHT + 50 && b.opacity > 0);
       });
@@ -224,7 +215,7 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
   useEffect(() => {
     if (!isShooting || !shotBubble) return;
 
-    const speed = 18;
+    const speed = 20;
     let vx = Math.sin(angle) * speed;
     let vy = -Math.cos(angle) * speed;
     let curX = shotBubble.x;
@@ -272,15 +263,16 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
     return () => { if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current); };
   }, [isShooting, angle, bubbles]);
 
-  const getTargetingPoints = () => {
-    if (isShooting) return [];
+  const getTrajectoryData = () => {
+    if (isShooting) return { points: [], ghost: null };
     let curX = WIDTH / 2;
     let curY = HEIGHT - 30;
     let curVx = Math.sin(angle) * 18;
     let curVy = -Math.cos(angle) * 18;
     const points = [];
+    let ghost = null;
     
-    for (let i = 0; i < 35; i++) {
+    for (let i = 0; i < 60; i++) {
       curX += curVx;
       curY += curVy;
       if (curX < BUBBLE_RADIUS || curX > WIDTH - BUBBLE_RADIUS) curVx = -curVx;
@@ -292,11 +284,16 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
           if (dist < BUBBLE_RADIUS * 2 - 5) { hit = true; break; }
         }
       }
-      if (i % 2 === 0) points.push({ x: curX, y: curY });
-      if (hit) break;
+      if (i % 3 === 0) points.push({ x: curX, y: curY });
+      if (hit) {
+        ghost = { x: curX, y: curY };
+        break;
+      }
     }
-    return points;
+    return { points, ghost };
   };
+
+  const trajectory = getTrajectoryData();
 
   return (
     <div className="flex flex-col items-center gap-6 w-full max-w-md select-none p-4">
@@ -307,7 +304,7 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
         </div>
         <div className="flex flex-col items-end gap-1">
           <span className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Loadout</span>
-          <div className="w-10 h-10 rounded-full border-4 border-white/20 shadow-inner flex items-center justify-center" style={{ backgroundColor: nextColor }}>
+          <div className="w-10 h-10 rounded-full border-4 border-white/20 shadow-inner flex items-center justify-center relative" style={{ backgroundColor: nextColor }}>
              <div className="w-2 h-2 bg-white/40 rounded-full blur-[1px] absolute top-2 left-2" />
           </div>
         </div>
@@ -321,19 +318,37 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
       >
         <div className="absolute inset-0 bg-grid-white/[0.03] pointer-events-none" />
         
-        {!isShooting && getTargetingPoints().map((p, i) => (
+        {/* Trajectory Dots */}
+        {trajectory.points.map((p, i) => (
           <div 
             key={i} 
-            className="absolute rounded-full w-1.5 h-1.5 opacity-40 blur-[0.5px]"
+            className="absolute rounded-full w-1.5 h-1.5 opacity-60"
             style={{ 
               left: `${(p.x / WIDTH) * 100}%`, 
               top: `${(p.y / HEIGHT) * 100}%`, 
               backgroundColor: nextColor,
-              boxShadow: `0 0 10px ${nextColor}` 
+              boxShadow: `0 0 8px ${nextColor}`,
+              transform: 'translate(-50%, -50%)'
             }} 
           />
         ))}
 
+        {/* Target Ghost */}
+        {trajectory.ghost && (
+          <div 
+            className="absolute rounded-full border-2 border-dashed opacity-30 animate-pulse z-0"
+            style={{ 
+              width: `${(BUBBLE_RADIUS * 2 / WIDTH) * 100}%`, 
+              height: `${(BUBBLE_RADIUS * 2 / HEIGHT) * 100}%`, 
+              left: `${(trajectory.ghost.x / WIDTH) * 100}%`, 
+              top: `${(trajectory.ghost.y / HEIGHT) * 100}%`, 
+              borderColor: nextColor,
+              transform: 'translate(-50%, -50%)'
+            }}
+          />
+        )}
+
+        {/* Falling Bubbles */}
         {fallingBubbles.map(b => (
           <div 
             key={b.id} 
@@ -352,6 +367,7 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
           </div>
         ))}
 
+        {/* Active Grid Bubbles */}
         {bubbles.map(b => (
           <div 
             key={b.id} 
@@ -369,6 +385,7 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
           </div>
         ))}
 
+        {/* Bubbles in Flight */}
         {shotBubble && (
           <div 
             className="absolute rounded-full border-2 border-white z-20 shadow-[0_0_30px_white]"
@@ -385,6 +402,7 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
           </div>
         )}
 
+        {/* Launcher */}
         <div 
           className="absolute bottom-[-15px] left-1/2 -translate-x-1/2 w-16 h-24 z-30 transition-transform duration-75"
           style={{ transform: `translateX(-50%) rotate(${angle}rad)`, transformOrigin: 'bottom center' }}
@@ -401,6 +419,7 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
       
       <div className="flex flex-col items-center gap-2">
         <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">Match 3+ Color Blast</p>
+        <p className="text-slate-600 text-[9px] font-bold uppercase tracking-widest">Orphaned clusters fall for bonus points</p>
       </div>
     </div>
   );

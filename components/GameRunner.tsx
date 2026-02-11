@@ -44,6 +44,27 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
     setIsPlaying(false);
   };
 
+  const handleShareScore = async () => {
+    const text = `I just scored ${currentScore.toLocaleString()} in ${game.name} on Khan's PlayHub! 🕹️🔥 Can you beat my score?`;
+    const url = window.location.origin;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Khan's PlayHub",
+          text: text,
+          url: url,
+        });
+      } catch (err) {
+        console.log('Share cancelled or failed', err);
+      }
+    } else {
+      // Fallback to Twitter
+      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+      window.open(twitterUrl, '_blank');
+    }
+  };
+
   const renderGame = () => {
     switch (game.id) {
       case 'fruit-vortex': return <FruitVortex onGameOver={handleGameOver} isPlaying={isPlaying} />;
@@ -129,19 +150,31 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
               </ul>
             </div>
 
-            <button 
-              onClick={() => { setIsPlaying(true); setCurrentScore(0); }}
-              className="w-[calc(100%-2rem)] mx-4 py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-[2rem] font-black text-2xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-500/40 uppercase italic tracking-tighter mb-4"
-            >
-              START SESSION
-            </button>
-            
-            {currentScore > 0 && (
-              <div className="mt-4 p-4 bg-indigo-500/5 rounded-2xl border border-indigo-500/10 shadow-inner mx-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Previous Run</p>
-                <p className="text-3xl font-black text-indigo-500 drop-shadow-sm">{currentScore.toLocaleString()}</p>
-              </div>
-            )}
+            <div className="flex flex-col gap-3 px-4">
+              <button 
+                onClick={() => { setIsPlaying(true); setCurrentScore(0); }}
+                className="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-[2rem] font-black text-2xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-500/40 uppercase italic tracking-tighter"
+              >
+                START SESSION
+              </button>
+
+              {currentScore > 0 && (
+                <div className="p-5 bg-indigo-500/5 dark:bg-white/5 rounded-3xl border border-indigo-500/10 dark:border-white/10 shadow-inner flex flex-col items-center gap-3 animate-in slide-in-from-bottom-2">
+                  <div className="text-center">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Last Run Score</p>
+                    <p className="text-4xl font-black text-indigo-500 drop-shadow-sm">{currentScore.toLocaleString()}</p>
+                  </div>
+                  
+                  <button 
+                    onClick={handleShareScore}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-indigo-200 dark:hover:bg-indigo-800/50 transition-all active:scale-95 border border-indigo-500/20"
+                  >
+                    <i className="fas fa-share-nodes text-xs"></i>
+                    Share Your Victory
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center">

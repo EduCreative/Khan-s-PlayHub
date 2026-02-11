@@ -9,24 +9,30 @@ if (!rootElement) {
 }
 
 // Register Service Worker for Offline Functionality
-if ('serviceWorker' in navigator) {
+// Enhanced with defensive checks for preview/sandbox environments
+if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
   window.addEventListener('load', () => {
-    /**
-     * Fix: Ensure the Service Worker is registered on the same origin as the application page.
-     * In preview environments, the JS modules might be served from a different origin (e.g., ai.studio),
-     * so resolving sw.js relative to the module URL (import.meta.url) or using a plain relative path 
-     * can lead to origin mismatch errors. Using window.location.origin ensures the browser
-     * looks for sw.js on the current preview domain.
-     */
+    // Construct the URL safely
     const swUrl = new URL('sw.js', window.location.origin).href;
-    
-    navigator.serviceWorker.register(swUrl)
-      .then(registration => {
-        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-      })
-      .catch(err => {
-        console.error('ServiceWorker registration failed: ', err);
-      });
+
+    // Use a small timeout to ensure the document has reached a stable state.
+    // This specifically mitigates the "The document is in an invalid state" error
+    // which can occur if registration is attempted during rapid hot-reloads.
+    setTimeout(() => {
+      navigator.serviceWorker.register(swUrl)
+        .then(registration => {
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        })
+        .catch(err => {
+          // If the error is specifically about the document state, we log it as a warning
+          // as it's common in frame-based previews and doesn't break core app logic.
+          if (err.message && err.message.includes('state')) {
+            console.warn('ServiceWorker registration skipped: Document is currently in a transitional state.');
+          } else {
+            console.error('ServiceWorker registration failed: ', err);
+          }
+        });
+    }, 1500); // 1.5s delay for environment stabilization
   });
 }
 

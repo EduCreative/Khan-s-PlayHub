@@ -168,16 +168,16 @@ const SumSurge: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }
 
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-md select-none px-4">
-      <div className="w-full flex justify-between items-center p-6 glass-card rounded-3xl border-indigo-500/20 shadow-xl border-2">
-        <h2 className="text-3xl font-black italic tracking-tighter uppercase leading-none">SUM <br/><span className="text-indigo-400">SURGE</span></h2>
+      <div className="w-full flex justify-between items-center p-6 glass-card rounded-3xl border-indigo-500/20 shadow-xl border-2 transition-colors">
+        <h2 className="text-3xl font-black italic tracking-tighter uppercase leading-none dark:text-white text-slate-900 transition-colors">SUM <br/><span className="text-indigo-600 dark:text-indigo-400">SURGE</span></h2>
         <div className="text-right">
           <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Merge Score</p>
-          <p className="text-4xl font-black text-indigo-600 dark:text-indigo-400 italic tabular-nums">{score.toLocaleString()}</p>
+          <p className="text-4xl font-black text-indigo-600 dark:text-indigo-400 italic tabular-nums transition-colors">{score.toLocaleString()}</p>
         </div>
       </div>
 
       <div 
-        className="grid grid-cols-4 gap-3 p-4 bg-slate-900/50 rounded-[2.5rem] border-4 border-white/5 w-full aspect-square shadow-2xl relative overflow-hidden"
+        className="grid grid-cols-4 gap-3 p-4 bg-slate-900/50 rounded-[2.5rem] border-4 border-slate-200 dark:border-white/5 w-full aspect-square shadow-2xl relative overflow-hidden"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -206,10 +206,10 @@ const SumSurge: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }
 
       <div className="flex flex-col items-center gap-4 w-full">
         <div className="flex gap-6">
-          <div className="text-slate-500 text-[10px] font-black uppercase flex items-center gap-2 tracking-widest">
+          <div className="text-slate-500 dark:text-slate-500 text-[10px] font-black uppercase flex items-center gap-2 tracking-widest transition-colors">
             <i className="fas fa-arrows-alt text-indigo-500"></i> Swipe or Arrows
           </div>
-          <div className="text-slate-500 text-[10px] font-black uppercase flex items-center gap-2 tracking-widest">
+          <div className="text-slate-500 dark:text-slate-500 text-[10px] font-black uppercase flex items-center gap-2 tracking-widest transition-colors">
             <i className="fas fa-layer-group text-cyan-500"></i> Merge Identical
           </div>
         </div>

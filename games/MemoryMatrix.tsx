@@ -159,11 +159,11 @@ const MemoryMatrix: React.FC<{ onGameOver: (s: number) => void; isPlaying: boole
 
   return (
     <div className="flex flex-col items-center gap-6 w-full max-w-lg px-4 select-none">
-      <div className="w-full flex justify-between items-center glass-card p-4 rounded-3xl border-teal-500/20 shadow-xl border-2">
+      <div className="w-full flex justify-between items-center glass-card p-4 rounded-3xl border-teal-500/20 shadow-xl border-2 transition-colors">
         <div className="flex flex-col">
           <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Matrix Level</p>
           <div className="flex items-center gap-2">
-             <span className="text-3xl font-black text-teal-400 italic">0{level}</span>
+             <span className="text-3xl font-black text-teal-500 italic">0{level}</span>
              <div className="h-1.5 w-12 bg-white/5 rounded-full overflow-hidden">
                 <div className="h-full bg-teal-500" style={{ width: `${(level/5)*100}%` }} />
              </div>
@@ -171,11 +171,11 @@ const MemoryMatrix: React.FC<{ onGameOver: (s: number) => void; isPlaying: boole
         </div>
         <div className="text-center">
           <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Juice</p>
-          <p className="text-3xl font-black text-indigo-400 tabular-nums drop-shadow-sm">{score.toLocaleString()}</p>
+          <p className="text-3xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums drop-shadow-sm transition-colors">{score.toLocaleString()}</p>
         </div>
         <div className="text-right">
           <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Moves</p>
-          <p className="text-2xl font-black text-slate-400 tabular-nums">{moves}</p>
+          <p className="text-2xl font-black text-slate-500 dark:text-slate-400 tabular-nums transition-colors">{moves}</p>
         </div>
       </div>
 
@@ -232,9 +232,9 @@ const MemoryMatrix: React.FC<{ onGameOver: (s: number) => void; isPlaying: boole
       </div>
 
       <div className="flex flex-col items-center gap-2 mt-4">
-        <div className="flex items-center gap-3 text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] bg-white/5 px-6 py-2 rounded-full border border-white/5">
-          <i className="fas fa-brain text-teal-400"></i>
-          <span>Memorize before the flip!</span>
+        <div className="flex items-center gap-3 text-slate-500 dark:text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] bg-slate-100 dark:bg-white/5 px-6 py-2 rounded-full border border-slate-200 dark:border-white/5 transition-colors">
+          <i className="fas fa-brain text-teal-500 dark:text-teal-400"></i>
+          <span className="dark:text-slate-400 text-slate-500 font-bold">Memorize before the flip!</span>
         </div>
       </div>
     </div>

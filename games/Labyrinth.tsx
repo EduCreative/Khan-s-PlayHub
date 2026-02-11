@@ -105,31 +105,31 @@ const Labyrinth: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean 
 
   return (
     <div className="flex flex-col items-center gap-6">
-      <div className="w-full flex justify-between items-center glass-card p-4 rounded-3xl border-orange-500/20">
+      <div className="w-full flex justify-between items-center glass-card p-4 rounded-3xl border-orange-500/20 transition-colors">
         <div>
           <p className="text-[10px] text-slate-500 uppercase font-black">Maze Lvl</p>
-          <p className="text-2xl font-black text-orange-400 tabular-nums">{level}</p>
+          <p className="text-2xl font-black text-orange-500 tabular-nums transition-colors">{level}</p>
         </div>
         <div className="text-right">
           <p className="text-[10px] text-slate-500 uppercase font-black">XP Gained</p>
-          <p className="text-2xl font-black text-indigo-400 tabular-nums">{score}</p>
+          <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums transition-colors">{score.toLocaleString()}</p>
         </div>
       </div>
       <canvas 
         ref={canvasRef} 
         width={cols * cellSize} 
         height={rows * cellSize} 
-        className="rounded-2xl border-4 border-white/10 shadow-2xl bg-slate-900"
+        className="rounded-2xl border-4 border-slate-200 dark:border-white/10 shadow-2xl bg-slate-900 transition-colors"
       />
       <div className="grid grid-cols-3 gap-2 md:hidden">
          <div /> 
-         <button className="w-12 h-12 glass-card rounded-xl flex items-center justify-center text-white" onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', {key:'ArrowUp'}))}><i className="fas fa-chevron-up"></i></button>
+         <button className="w-12 h-12 glass-card rounded-xl flex items-center justify-center dark:text-white text-slate-900" onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', {key:'ArrowUp'}))}><i className="fas fa-chevron-up"></i></button>
          <div />
-         <button className="w-12 h-12 glass-card rounded-xl flex items-center justify-center text-white" onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', {key:'ArrowLeft'}))}><i className="fas fa-chevron-left"></i></button>
-         <button className="w-12 h-12 glass-card rounded-xl flex items-center justify-center text-white" onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', {key:'ArrowDown'}))}><i className="fas fa-chevron-down"></i></button>
-         <button className="w-12 h-12 glass-card rounded-xl flex items-center justify-center text-white" onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', {key:'ArrowRight'}))}><i className="fas fa-chevron-right"></i></button>
+         <button className="w-12 h-12 glass-card rounded-xl flex items-center justify-center dark:text-white text-slate-900" onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', {key:'ArrowLeft'}))}><i className="fas fa-chevron-left"></i></button>
+         <button className="w-12 h-12 glass-card rounded-xl flex items-center justify-center dark:text-white text-slate-900" onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', {key:'ArrowDown'}))}><i className="fas fa-chevron-down"></i></button>
+         <button className="w-12 h-12 glass-card rounded-xl flex items-center justify-center dark:text-white text-slate-900" onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', {key:'ArrowRight'}))}><i className="fas fa-chevron-right"></i></button>
       </div>
-      <p className="text-slate-500 text-xs">Reach the green portal to escape!</p>
+      <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Reach the green portal to escape!</p>
     </div>
   );
 };
