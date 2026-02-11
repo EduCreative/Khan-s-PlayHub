@@ -102,35 +102,35 @@ const Hub: React.FC<HubProps> = ({
       </div>
 
       {/* About Us Section */}
-      <section className="mb-24 max-w-2xl mx-auto">
-        <div className="glass-card rounded-[2.5rem] p-6 md:p-8 border border-indigo-500/10 shadow-xl relative overflow-hidden group transition-all duration-700 hover:border-indigo-500/30">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+      <section className="mb-24 max-w-lg mx-auto">
+        <div className="glass-card rounded-[2rem] p-6 border border-indigo-500/10 shadow-lg relative overflow-hidden group transition-all duration-700 hover:border-indigo-500/30">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
           
           <div className="relative z-10 flex flex-col items-center text-center">
-            <h2 className="text-2xl font-black italic uppercase tracking-tighter dark:text-white text-slate-900 mb-3">
+            <h2 className="text-xl font-black italic uppercase tracking-tighter dark:text-white text-slate-900 mb-2">
               The <span className="text-indigo-500">Nexus</span> Mission
             </h2>
-            <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium text-sm mb-6 max-w-lg">
-              Curated high-fidelity mini-games crafted for the modern web. Instant entertainment—no downloads, pure gameplay.
+            <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium text-[12px] mb-5 max-w-sm">
+              Curated high-fidelity mini-games crafted for the modern web. Instant entertainment—no downloads.
             </p>
             
-            <div className="flex flex-wrap justify-center gap-3 w-full">
+            <div className="flex flex-wrap justify-center gap-2 w-full">
               <a 
                 href="mailto:kmasroor50@gmail.com" 
-                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-indigo-500/10 border border-white/10 hover:border-indigo-500/30 rounded-xl transition-all group/link"
+                className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-indigo-500/10 border border-white/10 hover:border-indigo-500/30 rounded-lg transition-all group/link"
               >
-                <i className="fas fa-envelope text-indigo-500 group-hover/link:scale-110 transition-transform text-xs"></i>
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-300">kmasroor50@gmail.com</span>
+                <i className="fas fa-envelope text-indigo-500 group-hover/link:scale-110 transition-transform text-[10px]"></i>
+                <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-300">kmasroor50@gmail.com</span>
               </a>
               
               <a 
                 href="https://wa.me/923331306603" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-emerald-500/10 border border-white/10 hover:border-emerald-500/30 rounded-xl transition-all group/link"
+                className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-emerald-500/10 border border-white/10 hover:border-emerald-500/30 rounded-lg transition-all group/link"
               >
-                <i className="fab fa-whatsapp text-emerald-500 group-hover/link:scale-110 transition-transform text-sm"></i>
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-300">+92 333 1306603</span>
+                <i className="fab fa-whatsapp text-emerald-500 group-hover/link:scale-110 transition-transform text-[12px]"></i>
+                <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-300">+92 333 1306603</span>
               </a>
             </div>
           </div>

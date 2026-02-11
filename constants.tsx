@@ -69,18 +69,18 @@ export const GAMES: Game[] = [
   {
     id: 'sudoku-lite',
     name: 'Sudoku Lite',
-    tagline: 'Mini 4x4 Sudoku puzzles.',
+    tagline: 'The ultimate 9x9 logic challenge.',
     category: Category.BrainTeaser,
     icon: 'fa-table-cells',
     color: 'from-slate-600 to-slate-900',
-    description: 'Perfect for quick brain training sessions. Fill the 4x4 grid without repeating digits.',
+    description: 'A full 9x9 Sudoku experience with multiple difficulty levels. Sharpen your logic with classic placement puzzles.',
     instructions: [
-      'Each row, column, and 2x2 square must contain digits 1-4.',
-      'Click an empty cell and select a number.',
-      'Solve the grid as fast as possible for bonus points.',
-      'Mistakes will flash red—be careful!'
+      'Each row, column, and 3x3 box must contain digits 1-9.',
+      'Select a difficulty to begin: Easy, Medium, or Hard.',
+      'Click a cell and choose a number to fill the grid.',
+      'Solve it correctly to win!'
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1605870445919-838d190e8e1b?auto=format&fit=crop&q=80&w=400'
+    imageUrl: 'https://images.unsplash.com/photo-1529154031157-1758d601dca8?auto=format&fit=crop&q=80&w=400'
   },
   {
     id: 'number-ninja',

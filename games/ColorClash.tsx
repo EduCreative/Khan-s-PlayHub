@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
+type Difficulty = 'Easy' | 'Medium' | 'Hard';
+
 const COLORS = [
   { name: 'PINK', hex: '#ec4899', bg: 'bg-pink-500' },
   { name: 'CYAN', hex: '#06b6d4', bg: 'bg-cyan-500' },
@@ -9,12 +11,12 @@ const COLORS = [
 ];
 
 const ColorClash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
+  const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [target, setTarget] = useState(0);
   const [textColor, setTextColor] = useState(1);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(1.0);
   
-  // Use refs for values that change frequently to keep the interval stable
   const difficultyRef = useRef(1.0);
   const scoreRef = useRef(0);
   const isGameOverTriggered = useRef(false);
@@ -27,21 +29,22 @@ const ColorClash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
 
   useEffect(() => {
     if (isPlaying) {
-      nextRound();
+      setDifficulty(null);
       setScore(0);
       scoreRef.current = 0;
       difficultyRef.current = 1.0;
       isGameOverTriggered.current = false;
     }
-  }, [isPlaying, nextRound]);
+  }, [isPlaying]);
 
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!isPlaying || !difficulty) return;
+
+    const baseDecay = difficulty === 'Easy' ? 0.002 : difficulty === 'Medium' ? 0.004 : 0.007;
 
     const interval = setInterval(() => {
       setTimeLeft(prev => {
-        // Reduced decay rate from 0.008 to 0.004 for more forgiving play
-        const next = prev - (0.004 * difficultyRef.current);
+        const next = prev - (baseDecay * difficultyRef.current);
         
         if (next <= 0 && !isGameOverTriggered.current) {
           isGameOverTriggered.current = true;
@@ -53,17 +56,19 @@ const ColorClash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
     }, 16);
 
     return () => clearInterval(interval);
-  }, [isPlaying, onGameOver]);
+  }, [isPlaying, difficulty, onGameOver]);
 
   const handleMatch = (index: number) => {
-    if (!isPlaying || isGameOverTriggered.current) return;
+    if (!isPlaying || isGameOverTriggered.current || !difficulty) return;
 
     if (index === target) {
-      const newScore = scoreRef.current + 100;
+      const difficultyBonus = difficulty === 'Easy' ? 1 : difficulty === 'Medium' ? 2 : 3;
+      const newScore = scoreRef.current + (100 * difficultyBonus);
       scoreRef.current = newScore;
       setScore(newScore);
       
-      difficultyRef.current = Math.min(4.0, difficultyRef.current + 0.06); // Slower difficulty ramp
+      const rampSpeed = difficulty === 'Hard' ? 0.1 : 0.06;
+      difficultyRef.current = Math.min(5.0, difficultyRef.current + rampSpeed);
       nextRound();
     } else {
       isGameOverTriggered.current = true;
@@ -71,8 +76,40 @@ const ColorClash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
     }
   };
 
+  if (!difficulty) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-8 w-full max-w-md p-8 animate-in fade-in zoom-in duration-500">
+        <div className="text-center">
+          <i className="fas fa-palette text-5xl text-rose-500 mb-4"></i>
+          <h2 className="text-3xl font-black italic tracking-tighter uppercase text-slate-900 dark:text-white">Color Synapse</h2>
+          <p className="text-slate-500 dark:text-slate-400 font-medium">Calibrate your response latency.</p>
+        </div>
+        <div className="grid grid-cols-1 gap-4 w-full">
+          {(['Easy', 'Medium', 'Hard'] as Difficulty[]).map(level => (
+            <button
+              key={level}
+              onClick={() => { setDifficulty(level); nextRound(); }}
+              className="group relative overflow-hidden glass-card p-6 rounded-3xl border-2 border-rose-500/10 hover:border-rose-500 transition-all active:scale-95"
+            >
+              <div className="flex items-center justify-between relative z-10">
+                <div className="text-left">
+                  <h3 className="text-xl font-black uppercase italic text-slate-800 dark:text-white">{level}</h3>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+                    {level === 'Easy' ? 'Patient Spectrum' : level === 'Medium' ? 'Reflex Pulse' : 'Neural Overload'}
+                  </p>
+                </div>
+                <i className="fas fa-chevron-right text-rose-500 group-hover:translate-x-2 transition-transform"></i>
+              </div>
+              <div className="absolute inset-0 bg-rose-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col items-center gap-12 w-full max-w-sm px-4 select-none">
+    <div className="flex flex-col items-center gap-12 w-full max-w-sm px-4 select-none animate-in fade-in zoom-in duration-500">
       <div className="w-full h-5 bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden border-2 border-slate-300 dark:border-white/10 p-1 shadow-inner relative transition-colors">
         <div 
           className={`h-full rounded-full transition-all duration-75 ease-linear shadow-[0_0_20px_rgba(236,72,153,0.5)] ${timeLeft < 0.3 ? 'bg-red-500 animate-pulse' : 'bg-gradient-to-r from-pink-500 to-indigo-500'}`}
@@ -113,7 +150,7 @@ const ColorClash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
       </div>
 
       <div className="text-center bg-slate-100 dark:bg-white/5 px-8 py-4 rounded-3xl border border-slate-200 dark:border-white/10 shadow-xl w-full transition-colors">
-        <p className="text-slate-500 text-[10px] font-black uppercase mb-1 tracking-widest">Score Multiplier x{difficultyRef.current.toFixed(1)}</p>
+        <p className="text-slate-500 text-[10px] font-black uppercase mb-1 tracking-widest">{difficulty} Multiplier x{difficultyRef.current.toFixed(1)}</p>
         <p className="text-5xl font-black dark:text-white text-slate-900 italic tabular-nums drop-shadow-md tracking-tighter transition-colors">
           {score.toLocaleString()}
         </p>
