@@ -53,7 +53,7 @@ const RiddleRift: React.FC<{ onGameOver: (s: number) => void }> = ({ onGameOver 
           }
         }
       });
-      return JSON.parse(response.text);
+      return JSON.parse(response.text || '{}');
     } catch (e) {
       return LOCAL_RIDDLES[Math.floor(Math.random() * LOCAL_RIDDLES.length)];
     } finally {

@@ -11,7 +11,16 @@ if (!rootElement) {
 // Register Service Worker for Offline Functionality
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    /**
+     * Fix: Ensure the Service Worker is registered on the same origin as the application page.
+     * In preview environments, the JS modules might be served from a different origin (e.g., ai.studio),
+     * so resolving sw.js relative to the module URL (import.meta.url) or using a plain relative path 
+     * can lead to origin mismatch errors. Using window.location.origin ensures the browser
+     * looks for sw.js on the current preview domain.
+     */
+    const swUrl = new URL('sw.js', window.location.origin).href;
+    
+    navigator.serviceWorker.register(swUrl)
       .then(registration => {
         console.log('ServiceWorker registration successful with scope: ', registration.scope);
       })

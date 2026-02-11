@@ -1,7 +1,7 @@
 
-const CACHE_NAME = 'khans-playhub-v1.1.0';
+const CACHE_NAME = 'khans-playhub-v1.1.1';
 
-// Core local assets
+// Core local assets - using absolute paths relative to origin for clarity
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -39,7 +39,10 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('Pre-caching assets...');
-      return cache.addAll([...STATIC_ASSETS, ...EXTERNAL_ASSETS]);
+      // Use Promise.allSettled to ensure that one failing asset doesn't break the whole install
+      return Promise.allSettled([...STATIC_ASSETS, ...EXTERNAL_ASSETS].map(url => {
+        return cache.add(url).catch(err => console.warn(`Failed to cache: ${url}`, err));
+      }));
     })
   );
   self.skipWaiting();
@@ -61,21 +64,21 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Strategy: Stale-While-Revalidate for most assets
-  // This allows immediate offline access while updating in the background
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request).then((networkResponse) => {
         // Only cache successful GET requests
-        if (networkResponse && networkResponse.status === 200 && event.request.method === 'GET') {
+        if (networkResponse && networkResponse.status === 200) {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
           });
         }
         return networkResponse;
-      }).catch(() => {
-        // If fetch fails (offline), return cached version if exists
+      }).catch((err) => {
+        console.debug('Fetch failed, serving from cache if available', err);
         return cachedResponse;
       });
 

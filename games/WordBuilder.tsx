@@ -206,7 +206,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
         contents: `Is "${word}" a valid, real English word? Reply with only TRUE or FALSE.`,
         config: { temperature: 0 }
       });
-      return response.text.trim().toUpperCase().includes("TRUE");
+      return (response.text || "").trim().toUpperCase().includes("TRUE");
     } catch (err) { return false; } finally { setIsValidating(false); }
   };
 
