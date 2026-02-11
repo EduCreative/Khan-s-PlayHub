@@ -123,7 +123,7 @@ const SudokuLite: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
       <div className="flex flex-col items-center justify-center gap-8 w-full max-w-md p-8 animate-in fade-in zoom-in duration-500">
         <div className="text-center">
           <i className="fas fa-table-cells text-5xl text-indigo-500 mb-4"></i>
-          <h2 className="text-3xl font-black italic tracking-tighter uppercase text-slate-900 dark:text-white">Choose Your Level</h2>
+          <h2 className="text-3xl font-black italic tracking-tighter uppercase text-slate-900 dark:text-white">Sudoku Master</h2>
           <p className="text-slate-500 dark:text-slate-400 font-medium">Test your logic with a 9x9 grid.</p>
         </div>
         

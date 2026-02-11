@@ -68,7 +68,7 @@ export const GAMES: Game[] = [
   },
   {
     id: 'sudoku-lite',
-    name: 'Sudoku Lite',
+    name: 'Sudoku',
     tagline: 'The ultimate 9x9 logic challenge.',
     category: Category.BrainTeaser,
     icon: 'fa-table-cells',
@@ -80,7 +80,7 @@ export const GAMES: Game[] = [
       'Click a cell and choose a number to fill the grid.',
       'Solve it correctly to win!'
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1529154031157-1758d601dca8?auto=format&fit=crop&q=80&w=400'
+    imageUrl: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=80&w=400'
   },
   {
     id: 'number-ninja',
@@ -143,9 +143,10 @@ export const GAMES: Game[] = [
       'Click/Tap to fire a bubble of the current color.',
       'Match 3 or more of the same color to pop the cluster.',
       'Detached bubbles will fall for bonus points!',
-      'Don\'t let the bubbles reach the bottom of the screen.'
+      'Don\'t let the bubbles reach the bottom of the screen.',
+      'Choose Easy, Medium, or Hard to set the pace!'
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80&w=400'
+    imageUrl: 'https://images.unsplash.com/photo-1559466273-d95e72debaf8?auto=format&fit=crop&q=80&w=400'
   },
   {
     id: 'word-builder',

@@ -7,6 +7,8 @@ const WIDTH = 400;
 const HEIGHT = 500;
 const ROW_HEIGHT = BUBBLE_RADIUS * 1.7;
 
+type Difficulty = 'Easy' | 'Medium' | 'Hard';
+
 interface Bubble {
   x: number;
   y: number;
@@ -23,6 +25,7 @@ interface FallingBubble extends Bubble {
 }
 
 const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
+  const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const [fallingBubbles, setFallingBubbles] = useState<FallingBubble[]>([]);
   const [nextColor, setNextColor] = useState(COLORS[0]);
@@ -34,6 +37,7 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
   const containerRef = useRef<HTMLDivElement>(null);
   const gameLoopRef = useRef<number | null>(null);
   const fallingLoopRef = useRef<number | null>(null);
+  const rowIntervalRef = useRef<number | null>(null);
 
   const getBubbleCoords = (row: number, col: number) => {
     const isOdd = row % 2 !== 0;
@@ -42,9 +46,10 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
     return { x, y };
   };
 
-  const initGrid = useCallback(() => {
+  const initGrid = useCallback((diff: Difficulty) => {
     const initial: Bubble[] = [];
-    for (let r = 0; r < 6; r++) {
+    const startingRows = diff === 'Easy' ? 4 : diff === 'Medium' ? 6 : 8;
+    for (let r = 0; r < startingRows; r++) {
       const colsInRow = r % 2 === 0 ? 10 : 9;
       for (let c = 0; c < colsInRow; c++) {
         const { x, y } = getBubbleCoords(r, c);
@@ -58,17 +63,56 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
     setBubbles(initial);
     setNextColor(COLORS[Math.floor(Math.random() * COLORS.length)]);
     setFallingBubbles([]);
+    setDifficulty(diff);
   }, []);
 
   useEffect(() => {
     if (isPlaying) {
-      initGrid();
+      setDifficulty(null);
+      setBubbles([]);
       setScore(0);
     }
-  }, [isPlaying, initGrid]);
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (!isPlaying || !difficulty) return;
+
+    const rowSpeed = difficulty === 'Easy' ? 25000 : difficulty === 'Medium' ? 18000 : 12000;
+    
+    rowIntervalRef.current = window.setInterval(() => {
+      setBubbles(prev => {
+        const newGrid = prev.map(b => ({
+          ...b,
+          row: b.row + 1,
+          y: b.y + ROW_HEIGHT
+        }));
+
+        const firstRow: Bubble[] = [];
+        const colsInRow = 0 % 2 === 0 ? 10 : 9;
+        for (let c = 0; c < colsInRow; c++) {
+          const { x, y } = getBubbleCoords(0, c);
+          firstRow.push({
+            x, y, row: 0, col: c,
+            color: COLORS[Math.floor(Math.random() * COLORS.length)],
+            id: `0-${c}-${Math.random()}`
+          });
+        }
+
+        const updated = [...firstRow, ...newGrid];
+        if (updated.some(b => b.row > 14)) {
+           onGameOver(score);
+        }
+        return updated;
+      });
+    }, rowSpeed);
+
+    return () => {
+      if (rowIntervalRef.current) clearInterval(rowIntervalRef.current);
+    };
+  }, [isPlaying, difficulty, score, onGameOver]);
 
   const shoot = () => {
-    if (isShooting || !isPlaying) return;
+    if (isShooting || !isPlaying || !difficulty) return;
     setIsShooting(true);
     const startDistance = 40;
     setShotBubble({
@@ -146,7 +190,8 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
       if (matches.size >= 3) {
         const toBurst = updated.filter(b => matches.has(b.id));
         let remaining = updated.filter(b => !matches.has(b.id));
-        setScore(s => s + matches.size * 100);
+        const difficultyMult = difficulty === 'Easy' ? 1 : difficulty === 'Medium' ? 1.5 : 2;
+        setScore(s => s + Math.floor(matches.size * 100 * difficultyMult));
 
         const connected = new Set<string>();
         const ceilingBubbles = remaining.filter(b => b.row === 0);
@@ -176,7 +221,7 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
         }));
         
         setFallingBubbles(prevFalling => [...prevFalling, ...fallingPool]);
-        if (toFall.length > 0) setScore(s => s + toFall.length * 150);
+        if (toFall.length > 0) setScore(s => s + Math.floor(toFall.length * 150 * difficultyMult));
         
         if (finalSafe.length === 0) {
             setTimeout(() => onGameOver(score + 10000), 1000);
@@ -295,8 +340,40 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
 
   const trajectory = getTrajectoryData();
 
+  if (!difficulty) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-8 w-full max-w-md p-8 animate-in fade-in zoom-in duration-500">
+        <div className="text-center">
+          <i className="fas fa-soap text-5xl text-rose-500 mb-4"></i>
+          <h2 className="text-3xl font-black italic tracking-tighter uppercase text-slate-900 dark:text-white">Bubble Flux</h2>
+          <p className="text-slate-500 dark:text-slate-400 font-medium">Select your clearing velocity.</p>
+        </div>
+        <div className="grid grid-cols-1 gap-4 w-full">
+          {(['Easy', 'Medium', 'Hard'] as Difficulty[]).map(level => (
+            <button
+              key={level}
+              onClick={() => initGrid(level)}
+              className="group relative overflow-hidden glass-card p-6 rounded-3xl border-2 border-rose-500/10 hover:border-rose-500 transition-all active:scale-95"
+            >
+              <div className="flex items-center justify-between relative z-10">
+                <div className="text-left">
+                  <h3 className="text-xl font-black uppercase italic text-slate-800 dark:text-white">{level}</h3>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+                    {level === 'Easy' ? 'Gentle Drifts' : level === 'Medium' ? 'Rapid Burst' : 'Overload Stream'}
+                  </p>
+                </div>
+                <i className="fas fa-chevron-right text-rose-500 group-hover:translate-x-2 transition-transform"></i>
+              </div>
+              <div className="absolute inset-0 bg-rose-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col items-center gap-6 w-full max-w-md select-none p-4">
+    <div className="flex flex-col items-center gap-6 w-full max-w-md select-none p-4 animate-in fade-in zoom-in duration-500">
       <div className="w-full flex justify-between items-center glass-card p-4 rounded-3xl border-red-500/20 shadow-xl border-2">
         <div>
           <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Fury Score</p>
@@ -318,6 +395,23 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
       >
         <div className="absolute inset-0 bg-grid-white/[0.03] pointer-events-none" />
         
+        {/* Background Bubbles for depth */}
+        <div className="absolute inset-0 opacity-10 pointer-events-none overflow-hidden">
+           {[...Array(6)].map((_, i) => (
+             <div 
+              key={i} 
+              className="absolute rounded-full bg-white/20 blur-md animate-pulse"
+              style={{
+                width: `${40 + i * 20}px`,
+                height: `${40 + i * 20}px`,
+                left: `${(i * 20) % 90}%`,
+                top: `${(i * 30) % 90}%`,
+                animationDelay: `${i * 0.5}s`
+              }}
+             />
+           ))}
+        </div>
+
         {/* Trajectory Dots */}
         {trajectory.points.map((p, i) => (
           <div 
@@ -419,7 +513,9 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
       
       <div className="flex flex-col items-center gap-2">
         <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">Match 3+ Color Blast</p>
-        <p className="text-slate-600 text-[9px] font-bold uppercase tracking-widest">Orphaned clusters fall for bonus points</p>
+        <div className="flex items-center gap-3 px-4 py-1.5 rounded-full bg-rose-500/5 border border-rose-500/10">
+           <span className="text-[9px] font-bold uppercase text-rose-400 tracking-widest">{difficulty} Mode active</span>
+        </div>
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ const COLORS = ['#ef4444', '#facc15', '#a855f7', '#22c55e', '#f97316'];
 const GRID_SIZE = 6;
 
 type FruitType = 'normal' | 'row' | 'col' | 'bomb';
+type Difficulty = 'Easy' | 'Medium' | 'Hard';
 
 interface Fruit {
   color: string;
@@ -134,6 +135,7 @@ const FruitIcon: React.FC<FruitIconProps> = ({ color, shapeIndex, type, isMatchi
 };
 
 const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
+  const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [grid, setGrid] = useState<Fruit[][]>([]);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
@@ -155,7 +157,7 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
     return { color, type, id: Math.random().toString(36).substr(2, 9), shapeIndex: colorIndex };
   }, []);
 
-  const initGrid = useCallback(() => {
+  const initGrid = useCallback((diff: Difficulty) => {
     const newGrid: Fruit[][] = [];
     for (let r = 0; r < GRID_SIZE; r++) {
       const row: Fruit[] = [];
@@ -165,20 +167,23 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
       newGrid.push(row);
     }
     setGrid(newGrid);
+    const startingTime = diff === 'Easy' ? 90 : diff === 'Medium' ? 60 : 45;
+    setTimeLeft(startingTime);
+    setDifficulty(diff);
   }, [getRandomFruit]);
 
   useEffect(() => {
     if (isPlaying) {
-      initGrid();
+      setDifficulty(null);
+      setGrid([]);
       setScore(0);
-      setTimeLeft(60);
       setMatchingCells(new Set());
       comboRef.current = 0;
     }
-  }, [isPlaying, initGrid]);
+  }, [isPlaying]);
 
   useEffect(() => {
-    if (!isPlaying || timeLeft <= 0) return;
+    if (!isPlaying || !difficulty || timeLeft <= 0) return;
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 10 && prev > 0) sounds.playTick();
@@ -187,7 +192,7 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [isPlaying, timeLeft, score, onGameOver]);
+  }, [isPlaying, difficulty, timeLeft, score, onGameOver]);
 
   const scanGridForMatches = (currentGrid: Fruit[][]): Set<string> => {
     const matches = new Set<string>();
@@ -263,10 +268,8 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
       setScore(s => s + (clearCount * 75));
     }
 
-    // SLOW MOTION: Wait longer to show the "pop"
     await new Promise(res => setTimeout(res, 800));
 
-    const newGrid = grid.map(row => [...row]);
     setGrid(prev => {
       const updated = prev.map(row => [...row]);
       matchesToClear.forEach(id => {
@@ -274,10 +277,9 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
         updated[tr][tc] = getRandomFruit();
       });
       
-      // Check for cascading matches after refill
       const cascadeMatches = scanGridForMatches(updated);
       if (cascadeMatches.size > 0) {
-        setTimeout(() => processClear(cascadeMatches), 300); // Slower cascade
+        setTimeout(() => processClear(cascadeMatches), 300); 
       } else {
         comboRef.current = 0;
       }
@@ -289,7 +291,7 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
   };
 
   const handleCellClick = async (r: number, c: number) => {
-    if (matchingCells.size > 0 || swapping) return;
+    if (matchingCells.size > 0 || swapping || !difficulty) return;
     sounds.init();
 
     if (!selected) {
@@ -303,7 +305,6 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
         setSwapping([sr, sc, r, c]);
         sounds.playSwap();
         
-        // SLOW MOTION: Slower swap transition
         await new Promise(res => setTimeout(res, 750));
         
         const newGrid = grid.map(row => [...row]);
@@ -332,11 +333,43 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
     }
   };
 
-  const timerPercentage = (timeLeft / 60) * 100;
+  if (!difficulty) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-8 w-full max-w-md p-8 animate-in fade-in zoom-in duration-500">
+        <div className="text-center">
+          <i className="fas fa-apple-whole text-5xl text-orange-500 mb-4"></i>
+          <h2 className="text-3xl font-black italic tracking-tighter uppercase text-slate-900 dark:text-white">Fruit Phase</h2>
+          <p className="text-slate-500 dark:text-slate-400 font-medium">Calibrate the session frequency.</p>
+        </div>
+        <div className="grid grid-cols-1 gap-4 w-full">
+          {(['Easy', 'Medium', 'Hard'] as Difficulty[]).map(level => (
+            <button
+              key={level}
+              onClick={() => initGrid(level)}
+              className="group relative overflow-hidden glass-card p-6 rounded-3xl border-2 border-orange-500/10 hover:border-orange-500 transition-all active:scale-95"
+            >
+              <div className="flex items-center justify-between relative z-10">
+                <div className="text-left">
+                  <h3 className="text-xl font-black uppercase italic text-slate-800 dark:text-white">{level}</h3>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+                    {level === 'Easy' ? '90 Second Session' : level === 'Medium' ? '60 Second Session' : '45 Second Session'}
+                  </p>
+                </div>
+                <i className="fas fa-chevron-right text-orange-500 group-hover:translate-x-2 transition-transform"></i>
+              </div>
+              <div className="absolute inset-0 bg-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const timerPercentage = (timeLeft / (difficulty === 'Easy' ? 90 : difficulty === 'Medium' ? 60 : 45)) * 100;
   const timerColor = timeLeft < 15 ? 'from-red-500 to-rose-600' : 'from-orange-500 to-red-600';
 
   return (
-    <div className="flex flex-col items-center gap-6 w-full max-w-md px-4 select-none">
+    <div className="flex flex-col items-center gap-6 w-full max-w-md px-4 select-none animate-in fade-in zoom-in duration-500">
       <div className="w-full flex flex-col gap-4">
         <div className="flex justify-between items-end">
           <div className="flex flex-col">
@@ -410,8 +443,7 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
           <span className="dark:text-slate-400 text-slate-500 font-bold">{comboRef.current > 1 ? `JUICE COMBO x${comboRef.current}!` : 'Match 3+ in a line for juice!'}</span>
         </div>
         <div className="flex gap-4 text-[10px] text-slate-600 font-black uppercase tracking-[0.2em] transition-colors">
-          <span className="flex items-center gap-1"><i className="fas fa-burst text-red-500"></i> Full Grid Scan</span>
-          <span className="flex items-center gap-1"><i className="fas fa-wand-magic-sparkles text-yellow-500"></i> Cascade</span>
+          <span className="flex items-center gap-1"><i className="fas fa-burst text-red-500"></i> {difficulty} Calibration</span>
         </div>
       </div>
     </div>
