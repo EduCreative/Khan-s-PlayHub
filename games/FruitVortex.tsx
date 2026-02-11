@@ -114,7 +114,7 @@ const FruitIcon: React.FC<FruitIconProps> = ({ color, shapeIndex, type, isMatchi
   ];
 
   return (
-    <svg viewBox="0 0 100 100" className={`w-full h-full p-2 drop-shadow-md transition-all duration-500 ${isMatching ? 'scale-[3.5] rotate-[180deg] brightness-[300%] opacity-0' : 'scale-100'}`}>
+    <svg viewBox="0 0 100 100" className={`w-full h-full p-2 drop-shadow-md transition-all duration-[800ms] ${isMatching ? 'scale-[4] rotate-[270deg] brightness-[400%] opacity-0' : 'scale-100'}`}>
       <defs>
         <linearGradient id={`fruit-grad-${shapeIndex}`} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="white" stopOpacity="0.5" />
@@ -243,7 +243,7 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
 
   const triggerShake = (intensity: number) => {
     setShakeIntensity(intensity);
-    setTimeout(() => setShakeIntensity(0), 400);
+    setTimeout(() => setShakeIntensity(0), 600);
   };
 
   const processClear = async (matchesToClear: Set<string>) => {
@@ -263,7 +263,8 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
       setScore(s => s + (clearCount * 75));
     }
 
-    await new Promise(res => setTimeout(res, 450));
+    // SLOW MOTION: Wait longer to show the "pop"
+    await new Promise(res => setTimeout(res, 800));
 
     const newGrid = grid.map(row => [...row]);
     setGrid(prev => {
@@ -276,7 +277,7 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
       // Check for cascading matches after refill
       const cascadeMatches = scanGridForMatches(updated);
       if (cascadeMatches.size > 0) {
-        setTimeout(() => processClear(cascadeMatches), 100);
+        setTimeout(() => processClear(cascadeMatches), 300); // Slower cascade
       } else {
         comboRef.current = 0;
       }
@@ -302,7 +303,8 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
         setSwapping([sr, sc, r, c]);
         sounds.playSwap();
         
-        await new Promise(res => setTimeout(res, 450));
+        // SLOW MOTION: Slower swap transition
+        await new Promise(res => setTimeout(res, 750));
         
         const newGrid = grid.map(row => [...row]);
         const temp = newGrid[r][c];
@@ -317,7 +319,7 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
           processClear(allMatches);
         } else {
           sounds.playTick();
-          await new Promise(res => setTimeout(res, 50));
+          await new Promise(res => setTimeout(res, 150));
           setSwapping(null);
           comboRef.current = 0;
         }
@@ -385,17 +387,17 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
                   relative w-12 h-12 md:w-16 md:h-16 rounded-2xl transition-all transform 
                   ${isSelected ? 'scale-110 z-30 ring-4 ring-white shadow-[0_0_30px_white] brightness-125 rotate-3' : 'hover:scale-110 active:scale-90'}
                   ${isMatching ? 'z-50' : 'opacity-100'}
-                  ${swapping ? 'duration-[450ms] ease-[cubic-bezier(0.34,1.56,0.64,1)]' : 'duration-300'}
+                  ${swapping ? 'duration-[750ms] ease-[cubic-bezier(0.34,1.56,0.64,1)]' : 'duration-500'}
                 `}
                 style={{ 
                   backgroundColor: 'rgba(255,255,255,0.05)',
                   boxShadow: isSelected ? `0 0 30px ${fruit.color}88` : `0 8px 15px -3px ${fruit.color}33`,
                   border: isSelected ? '3px solid white' : `1px solid rgba(255,255,255,0.1)`,
-                  transform: `translate(${visualOffset.x}%, ${visualOffset.y}%) ${isSelected ? 'scale(1.15) rotate(5deg)' : ''}`
+                  transform: `translate(${visualOffset.x}%, ${visualOffset.y}%) ${isSelected ? 'scale(1.15) rotate(8deg)' : ''}`
                 }}
               >
                 <FruitIcon color={fruit.color} shapeIndex={fruit.shapeIndex} type={fruit.type} isMatching={isMatching} />
-                <div className={`absolute inset-0 w-full h-full bg-white transition-opacity duration-500 pointer-events-none rounded-2xl ${isMatching ? 'opacity-80 scale-150' : 'opacity-0'}`} />
+                <div className={`absolute inset-0 w-full h-full bg-white transition-opacity duration-[800ms] pointer-events-none rounded-2xl ${isMatching ? 'opacity-80 scale-150' : 'opacity-0'}`} />
               </button>
             );
           }))}
@@ -407,7 +409,7 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
           <i className={`fas fa-apple-whole transition-transform ${isExploding ? 'animate-spin' : ''} ${comboRef.current > 0 ? 'text-orange-400' : 'text-slate-500'}`}></i>
           <span>{comboRef.current > 1 ? `JUICE COMBO x${comboRef.current}!` : 'Match 3+ in a line for juice!'}</span>
         </div>
-        <div className="flex gap-4 text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em]">
+        <div className="flex gap-4 text-[10px] text-slate-600 font-black uppercase tracking-[0.2em]">
           <span className="flex items-center gap-1"><i className="fas fa-burst text-red-500"></i> Full Grid Scan</span>
           <span className="flex items-center gap-1"><i className="fas fa-wand-magic-sparkles text-yellow-500"></i> Cascade</span>
         </div>

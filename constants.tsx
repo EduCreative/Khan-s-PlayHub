@@ -37,14 +37,16 @@ export const GAMES: Game[] = [
   {
     id: 'riddle-rift',
     name: 'Riddle Rift',
-    tagline: 'AI Portal under calibration...',
+    tagline: 'Break the code, solve the rift.',
     category: Category.BrainTeaser,
     icon: 'fa-brain',
-    color: 'from-slate-400 to-slate-600',
-    description: 'Our AI-powered riddle engine is currently undergoing maintenance. Check back soon for daily challenges!',
+    color: 'from-purple-500 to-indigo-600',
+    description: 'A logic challenge using a mix of classic riddles and AI-generated enigmas.',
     instructions: [
-      'This game is currently undergoing calibration.',
-      'Check back in the next update for AI-powered riddles.'
+      'Read the riddle presented in the rift.',
+      'Type your answer and analyze it.',
+      'Use hints if the enigma is too complex.',
+      'Build a streak to prove your neural dominance.'
     ],
     imageUrl: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&q=80&w=400'
   },
@@ -88,11 +90,11 @@ export const GAMES: Game[] = [
     category: Category.Educational,
     icon: 'fa-font',
     color: 'from-violet-500 to-fuchsia-600',
-    description: 'Form words from falling letters to build your tower higher. Unlock diverse themes as you rise.',
+    description: 'Form words from falling letters to build your tower higher. Form Bounty answers for Mega Blocks.',
     instructions: [
       'Select letters from the pool to form a valid English word.',
       'Words must be at least 3 letters long.',
-      'Longer words build higher towers and grant more points.',
+      'Solve the "Mega Riddle Bounty" for massive bonus height.',
       'Complete the height target to level up and change the theme.'
     ],
     imageUrl: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=400'

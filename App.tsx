@@ -13,6 +13,7 @@ const App: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallBtn, setShowInstallBtn] = useState(false);
+  const [isOfflineReady, setIsOfflineReady] = useState(false);
 
   useEffect(() => {
     // Initial load from storage
@@ -35,6 +36,15 @@ const App: React.FC = () => {
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // Check for service worker readiness
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(() => {
+        setIsOfflineReady(true);
+        // Hide notification after a few seconds
+        setTimeout(() => setIsOfflineReady(false), 5000);
+      });
+    }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -123,6 +133,16 @@ const App: React.FC = () => {
           />
         )}
       </main>
+
+      {/* Offline Ready Toast */}
+      {isOfflineReady && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="glass-card px-6 py-3 rounded-2xl border-emerald-500/30 bg-emerald-500/10 flex items-center gap-3 shadow-2xl">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-xs font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Offline Access Ready</span>
+          </div>
+        </div>
+      )}
 
       {/* Persistent App Actions Bar */}
       <div className="fixed bottom-6 right-6 z-[60] flex flex-col gap-4">

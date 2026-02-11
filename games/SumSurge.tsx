@@ -5,6 +5,7 @@ const SumSurge: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }
   const [grid, setGrid] = useState<number[][]>(Array(4).fill(0).map(() => Array(4).fill(0)));
   const [score, setScore] = useState(0);
   const [isGameOver, setIsGameOver] = useState(false);
+  const [isSpawning, setIsSpawning] = useState<[number, number] | null>(null);
   
   const touchStart = useRef<{ x: number, y: number } | null>(null);
 
@@ -19,6 +20,8 @@ const SumSurge: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }
     const [r, c] = empty[Math.floor(Math.random() * empty.length)];
     const newGrid = currentGrid.map(row => [...row]);
     newGrid[r][c] = Math.random() > 0.9 ? 4 : 2;
+    setIsSpawning([r, c]);
+    setTimeout(() => setIsSpawning(null), 800); // Slower spawn clear
     return newGrid;
   }, []);
 
@@ -99,13 +102,19 @@ const SumSurge: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }
       for (let i = 0; i < (4 - rotations) % 4; i++) currentGrid = rotateGrid(currentGrid);
 
       if (moved) {
-        const gridWithNewTile = spawn(currentGrid);
-        setScore(newScore);
-        if (checkGameOver(gridWithNewTile)) {
-          setIsGameOver(true);
-          setTimeout(() => onGameOver(newScore), 1500);
-        }
-        return gridWithNewTile;
+        // Wait for the slide to visually "complete" before spawning
+        setTimeout(() => {
+          setGrid(current => {
+            const finalGrid = spawn(current);
+            setScore(newScore);
+            if (checkGameOver(finalGrid)) {
+              setIsGameOver(true);
+              setTimeout(() => onGameOver(newScore), 2000);
+            }
+            return finalGrid;
+          });
+        }, 200); // Brief delay for movement visibility
+        return currentGrid;
       }
       return prevGrid;
     });
@@ -175,11 +184,12 @@ const SumSurge: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }
         <div className="absolute inset-0 bg-grid-white/[0.02] pointer-events-none" />
         {grid.map((row, r) => row.map((val, c) => (
           <div 
-            key={`${r}-${c}`}
+            key={`${r}-${c}-${val}`} // Keying with val helps trigger re-animations on change
             className={`
-              w-full h-full rounded-2xl border-2 flex items-center justify-center text-2xl font-black transition-all duration-200 
+              w-full h-full rounded-2xl border-2 flex items-center justify-center text-2xl font-black transition-all duration-[600ms] 
               ${val === 0 ? 'bg-white/5 border-transparent' : getTileColor(val)}
-              ${val !== 0 ? 'animate-in zoom-in-50 duration-300' : ''}
+              ${val !== 0 ? 'animate-in zoom-in-50 duration-[800ms]' : ''}
+              ${isSpawning?.[0] === r && isSpawning?.[1] === c ? 'scale-125 brightness-150' : ''}
             `}
           >
             {val !== 0 && val}
@@ -187,7 +197,7 @@ const SumSurge: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }
         )))}
 
         {isGameOver && (
-          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center z-50 rounded-[2rem] animate-in fade-in duration-500">
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center z-50 rounded-[2rem] animate-in fade-in duration-[1000ms]">
             <h3 className="text-5xl font-black text-white italic tracking-tighter mb-4">BOARD FULL</h3>
             <p className="text-indigo-400 font-bold uppercase tracking-widest text-sm">Game Over</p>
           </div>

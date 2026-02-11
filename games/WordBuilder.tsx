@@ -1,15 +1,24 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { GoogleGenAI } from "@google/genai";
 
-const DICTIONARY = new Set([
+// Essential fallback dictionary
+const ESSENTIAL_DICT = ['CAT', 'DOG', 'HAT', 'BAT', 'SUN', 'MOON', 'RUN', 'WIN', 'TOP', 'BOX', 'JOY', 'WAR', 'YES', 'NO', 'AND', 'THE', 'FOR', 'PLAY', 'GAME', 'LIFE', 'TIME', 'LOVE', 'FAST'];
+
+const SEED_DICTIONARY = new Set([
+  ...ESSENTIAL_DICT,
   'AND','BAD','CAT','DOG','END','FUN','GET','HAT','ITS','JOY','KEY','LOG','MAP','NOT','OUT','PUT','RUN','SAY','TOP','USE','VAN','WAR','YES','ZOO',
-  'BACK','CITY','DARK','EACH','FAST','GAME','HAND','IDEA','JUST','KEEP','LIFE','MAKE','NEXT','OPEN','PART','QUIT','REAL','STAY','TIME','UNIT','VERY','WANT','YEAR','ZONE',
-  'ABOUT','BRING','CLEAR','DRIVE','EVERY','FIRST','GREAT','HAPPY','INNER','JUDGE','KNOWS','LIGHT','MUSIC','NIGHT','ORDER','PIXEL','QUICK','RIGHT','SPACE','TOUCH','UNDER','VOICE','WORLD','YOUTH',
-  'ALWAYS','BECOME','CHANGE','DURING','ENERGY','FINISH','GROUND','HEALTH','INSTANT','JUNGLE','KINDLY','LAYOUT','MARKET','NOTICE','OUTPUT','PLAYER','RANDOM','STRONG','TOWERS','URGENT','VISUAL','WINDOW','YELLOW',
-  'BETWEEN','CONTROL','DYNAMIC','EXAMPLE','FOCUSED','GENERAL','HISTORY','IMPROVE','JUSTICE','KITCHEN','LIBRARY','MESSAGE','NETWORK','OPINION','PROCESS','QUALITY','RECORDS','STRETCH','THROUGH','UNKNOWN','VILLAGE','WEATHER','ZENITH',
-  // Expanded dictionary words
-  'ACT','AGE','AIR','ALL','ANY','ART','ASK','ATE','AWE','BAT','BED','BEE','BIG','BIT','BOX','BOY','BUS','BUT','BYE','CAP','CAR','CUP','DAY','DID','DIE','DIG','DOT','DRY','DUE','EAT','EGG','ERA','EYE','FAR','FAT','FED','FEW','FIX','FLY','FOR','GAS','GAY','GEM','GOD','GOT','GUM','GUY','HAD','HAS','HER','HEY','HIM','HIP','HIT','HOT','HOW','HUB','ICE','ILL','INK','ION','ITS','JAM','JAR','JET','JOB','JOG','JOT','JOY','KID','KIN','KIT','LAB','LAD','LAP','LAW','LAY','LEG','LET','LID','LIE','LIP','LIT','LOW','MAD','MAN','MAT','MAX','MAY','MEN','MET','MIX','MOM','MUD','NET','NEW','NIL','NIP','NOD','NOR','NOW','NUT','OAF','OAK','OAR','OFF','OIL','OLD','ONE','OPT','ORE','OUR','OWN','PAD','PAN','PAY','PEN','PET','PIE','PIG','PIN','POT','PRO','PRY','PUB','RAM','RAT','RAW','RED','RIM','ROB','ROD','ROT','ROW','RUB','RUG','SAD','SAT','SEA','SEE','SET','SEW','SHE','SHY','SIN','SIP','SIR','SIX','SKI','SKY','SLY','SON','SOY','SPA','SUN','TAB','TAG','TAN','TAP','TAR','TAX','TEA','TEN','THE','TIE','TIN','TIP','TOE','TOO','TOY','TRY','TUB','TUG','TWO','URN','VAN','VIA','VIE','VOW','WAS','WAY','WEB','WED','WHO','WHY','WIG','WIN','WIP','WIT','WON','YAK','YAM','YAY','YET','YOU','ZIP','ACTS','AGES','AIRS','ALSO','AREA','ARMS','ARMY','ARTS','ATOM','AUTO','AWAY','BABY','BANK','BARE','BASE','BEAR','BEAT','BELL','BEST','BILL','BIRD','BLUE','BOAT','BODY','BOMB','BOND','BONE','BOOK','BOOM','BOOT','BORN','BOSS','BOTH','BOWL','BULK','BURN','BUSH','BUSY','CAGE','CAKE','CALL','CALM','CAMP','CARD','CARE','CASE','CASH','CAST','CELL','CENT','CHIP','CLUB','COAL','CODE','COLD','COME','COOK','COOL','COPY','CORE','COST','CREW','CROP','CURE','DATA','DATE','DEAF','DEAL','DEAR','DEBT','DEEP','DENY','DESK','DIET','DIRT','DISK','DOES','DONE','DOOR','DOSE','DOWN','DRAW','DREW','DROP','DRUG','DUAL','DUKE','DUST','DUTY','EARN','EAST','EASY','ECHO','EDGE','ELSE','ENVY','EVEN','EVER','EVIL','EXIT','FACE','FACT','FAIR','FALL','FARM','FATE','FEAR','FEED','FEEL','FEES','FELL','FELT','FILE','FILL','FILM','FIND','FINE','FIRE','FIRM','FISH','FIVE','FLAT','FLOW','FOOD','FOOT','FORD','FORM','FORT','FOUR','FREE','FROM','FUEL','FULL','GAIN','GATE','GEAR','GIFT','GIRL','GIVE','GLAD','GOAL','GOAT','GOLD','GOLF','GONE','GOOD','GRAY','GREW','GREY','GRID','GROW','GULF','HAIR','HALF','HALL','HANG','HARD','HARM','HATE','HAVE','HEAD','HEAL','HEAR','HEAT','HELL','HELP','HERE','HERO','HIGH','HILL','HIRE','HOLD','HOLE','HOLY','HOME','HOPE','HOST','HOUR','HUGE','HULL','HUNG','HUNT','HURT','ICON','IDLE','INCH','IRON','ITEM','JACK','JAZZ','JOIN','JUMP','JURY','JUST','KEPT','KEYS','KICK','KILL','KIND','KING','KISS','KNEE','KNEW','KNIT','KNOT','KNOW','LACK','LADY','LAID','LAKE','LAND','LANE','LAST','LATE','LEAD','LEAF','LEAN','LEFT','LEND','LESS','LIFT','LIKE','LINE','LINK','LIST','LIVE','LOAD','LOAN','LOCK','LOGO','LONG','LOOK','LORD','LOSE','LOSS','LOST','LOUD','LOVE','LUCK','LUMP','LUNG','MAIL','MAIN','MALE','MANY','MARK','MASK','MASS','MEAL','MEAN','MEAT','MEET','MENU','MERE','MICE','MILD','MILE','MILK','MIND','MINE','MINT','MISS','MIST','MODE','MOOD','MOON','MORE','MOST','MOVE','MUCH','MUST','NAME','NEAR','NECK','NEED','NEWS','NICE','NINE','NONE','NOSE','NOTE','OAKS','OBEY','ODDS','ONLY','ONTO','ORAL','OVER','PACE','PACK','PAGE','PAID','PAIN','PAIR','PALM','PARK','PASS','PAST','PATH','PEAK','PEER','PICK','PILE','PINK','PIPE','PLAN','PLAT','PLAY','PLOT','PLUG','PLUS','POEM','POET','POLL','POOL','POOR','PORT','POST','PULL','PURE','PUSH','RACE','RAIL','RAIN','RARE','RATE','READ','REAR','RELY','RENT','REST','RICE','RICH','RIDE','RING','RISE','RISK','ROAD','ROCK','ROLE','ROOF','ROOM','ROOT','ROSE','RULE','RUSH','RUTH','SAFE','SAID','SAIL','SALE','SALT','SAME','SAND','SAVE','SCAN','SEAL','SEAT','SEED','SEEK','SEEM','SEEN','SELF','SELL','SEND','SENT','SEPT','SHIP','SHOP','SHOT','SHOW','SHUT','SICK','SIDE','SIGN','SILK','SITE','SIZE','SKIN','SLIP','SLOW','SNOW','SOFT','SOIL','SOLD','SOLE','SOME','SONG','SOON','SORT','SOUL','SOUP','SPOT','STAY','STEP','STOP','SUCH','SUIT','SURE','SWIM','TAIL','TAKE','TALE','TALK','TALL','TANK','TAPE','TASK','TEAM','TEAR','TELL','TENT','TERM','TEST','TEXT','THAN','THAT','THEM','THEN','THEY','THIN','THIS','THOU','THUS','TICK','TIDE','TIDY','TIED','TIER','TILE','TILL','TILT','TIME','TINY','TIPS','TIRE','TOLL','TONE','TONS','TOOK','TOOL','TOUR','TOWN','TREE','TRIP','TRUE','TUNE','TURN','TWIN','TYPE','UNIT','UPON','URGE','USED','USER','VARY','VAST','VERY','VICE','VIEW','VOTE','WAGE','WAIT','WAKE','WALK','WALL','WANT','WARE','WARM','WASH','WAVE','WAYS','WEAK','WEAR','WEEK','WELL','WENT','WERE','WEST','WHAT','WHEN','WHOM','WIDE','WIFE','WILD','WILL','WIND','WINE','WING','WINS','WIRE','WISE','WISH','WITH','WOLF','WOOD','WORD','WORK','WORM','WRAP','YARD','YEAR','YELL','YOGA','YOUR','ZERO','ZONE'
+  'BACK','CITY','DARK','EACH','FAST','GAME','HAND','IDEA','JUST','KEEP','LIFE','MAKE','NEXT','OPEN','PART','QUIT','REAL','STAY','TIME','UNIT','VERY','WANT','YEAR','ZONE'
 ]);
+
+// Bounty riddles for Word Builder
+const BOUNTIES = [
+  { hint: "I have keys but no locks", word: "KEYBOARD" },
+  { hint: "Always in front, never seen", word: "FUTURE" },
+  { hint: "It belongs to you, but others use it more", word: "NAME" },
+  { hint: "Found in your socks", word: "FEET" },
+  { hint: "I follow you at noon", word: "SHADOW" }
+];
 
 interface WordBuilderProps {
   onGameOver: (score: number) => void;
@@ -45,20 +54,51 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
   const [pool, setPool] = useState<string[]>([]);
   const [themeIndex, setThemeIndex] = useState(0);
   const [isShaking, setIsShaking] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [dictLoaded, setDictLoaded] = useState(false);
+  const [bounty, setBounty] = useState(BOUNTIES[0]);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const blocksRef = useRef<Block[]>([]);
+  const dictionaryRef = useRef<Set<string>>(new Set(SEED_DICTIONARY));
   const themes = ['indigo', 'pink', 'emerald', 'cyan', 'amber'];
+
+  useEffect(() => {
+    const loadDictionary = async () => {
+      try {
+        const response = await fetch('https://raw.githubusercontent.com/first20hours/google-10000-english/master/google-10000-english-no-swears.txt');
+        if (response.ok) {
+          const text = await response.text();
+          const words = text.split('\n').map(w => w.trim().toUpperCase()).filter(w => w.length >= 3);
+          words.forEach(w => dictionaryRef.current.add(w));
+          setDictLoaded(true);
+        }
+      } catch (err) {}
+    };
+    loadDictionary();
+  }, []);
 
   const generatePool = useCallback(() => {
     const vowels = 'AEIOU';
     const consonants = 'BCDFGHJKLMNPQRSTVWXYZ';
     const newPool = [];
-    for (let i = 0; i < 3; i++) newPool.push(vowels[Math.floor(Math.random() * vowels.length)]);
-    for (let i = 0; i < 7; i++) newPool.push(consonants[Math.floor(Math.random() * consonants.length)]);
+    
+    // Check if we should inject bounty letters
+    const shouldInject = Math.random() > 0.5;
+    const bountyChars = bounty.word.split('');
+    
+    for (let i = 0; i < 4; i++) {
+      if (shouldInject && bountyChars.length > i) newPool.push(bountyChars[i]);
+      else newPool.push(vowels[Math.floor(Math.random() * vowels.length)]);
+    }
+    for (let i = 0; i < 6; i++) {
+      const bIdx = i + 4;
+      if (shouldInject && bountyChars.length > bIdx) newPool.push(bountyChars[bIdx]);
+      else newPool.push(consonants[Math.floor(Math.random() * consonants.length)]);
+    }
     setPool(newPool.sort(() => Math.random() - 0.5));
-  }, []);
+  }, [bounty]);
 
   const spawnParticles = () => {
     const canvas = canvasRef.current;
@@ -66,27 +106,24 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
     const color = themes[themeIndex] === 'indigo' ? '#6366f1' : themes[themeIndex] === 'pink' ? '#ec4899' : '#10b981';
     for (let i = 0; i < 20; i++) {
       particlesRef.current.push({
-        x: canvas.width / 2,
-        y: canvas.height - 100,
-        vx: (Math.random() - 0.5) * 8,
-        vy: (Math.random() - 0.5) * 8 - 8,
-        life: 1,
-        color
+        x: canvas.width / 2, y: canvas.height - 100,
+        vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8 - 8,
+        life: 1, color
       });
     }
   };
 
-  const spawnBlock = (length: number) => {
+  const spawnBlock = (length: number, isMega: boolean = false) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const color = themes[(themeIndex + 1) % themes.length];
-    const hexColor = color === 'indigo' ? '#6366f1' : color === 'pink' ? '#ec4899' : '#10b981';
+    const color = isMega ? '#fbbf24' : themes[(themeIndex + 1) % themes.length];
+    const hexColor = color === 'indigo' ? '#6366f1' : color === 'pink' ? '#ec4899' : color === 'emerald' ? '#10b981' : color;
     blocksRef.current.push({
       y: -50,
       targetY: canvas.height - (blocksRef.current.length * 40) - 40,
       color: hexColor,
-      w: 120 + (length * 10),
-      shake: 10
+      w: (isMega ? 200 : 120) + (length * 10),
+      shake: isMega ? 30 : 10
     });
   };
 
@@ -100,6 +137,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
       setTime(90);
       blocksRef.current = [];
       particlesRef.current = [];
+      setBounty(BOUNTIES[Math.floor(Math.random() * BOUNTIES.length)]);
       generatePool();
     }
   }, [isPlaying, generatePool]);
@@ -108,10 +146,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
     if (!isPlaying || time <= 0) return;
     const timer = setInterval(() => {
       setTime(prev => {
-        if (prev <= 1) {
-          onGameOver(score);
-          return 0;
-        }
+        if (prev <= 1) { onGameOver(score); return 0; }
         return prev - 1;
       });
     }, 1000);
@@ -123,30 +158,23 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
     let animFrame: number;
     const render = () => {
       canvas.width = canvas.clientWidth;
       canvas.height = canvas.clientHeight;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Render Blocks
       blocksRef.current.forEach((b) => {
         if (b.y < b.targetY) b.y += (b.targetY - b.y) * 0.1;
         if (b.shake > 0) b.shake -= 0.5;
         const sx = Math.sin(Date.now() * 0.05) * b.shake;
-
         ctx.save();
         ctx.translate(canvas.width / 2 + sx, b.y);
         ctx.fillStyle = b.color;
         ctx.shadowBlur = 15;
         ctx.shadowColor = b.color;
-        
         ctx.beginPath();
         ctx.roundRect(-b.w / 2, 0, b.w, 35, 12);
         ctx.fill();
-
-        // Eyes
         ctx.fillStyle = 'white';
         ctx.beginPath();
         ctx.arc(-20, 15, 3, 0, Math.PI * 2);
@@ -154,33 +182,36 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
         ctx.fill();
         ctx.restore();
       });
-
-      // Render Particles
       particlesRef.current = particlesRef.current.filter(p => p.life > 0);
       particlesRef.current.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.2;
-        p.life -= 0.02;
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = p.life;
+        p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.life -= 0.02;
+        ctx.fillStyle = p.color; ctx.globalAlpha = p.life;
         ctx.fillRect(p.x, p.y, 4, 4);
       });
       ctx.globalAlpha = 1;
-
       animFrame = requestAnimationFrame(render);
     };
-
     render();
     return () => cancelAnimationFrame(animFrame);
   }, [themeIndex]);
 
-  const selectLetter = (char: string, index: number) => {
-    if (currentWord.some(item => item.index === index)) return;
-    setCurrentWord([...currentWord, { char, index }]);
+  const validateWithAI = async (word: string): Promise<boolean> => {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey || apiKey === "undefined") return false;
+    try {
+      setIsValidating(true);
+      const ai = new GoogleGenAI({ apiKey });
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: `Is "${word}" a valid, real English word? Reply with only TRUE or FALSE.`,
+        config: { temperature: 0 }
+      });
+      return response.text.trim().toUpperCase().includes("TRUE");
+    } catch (err) { return false; } finally { setIsValidating(false); }
   };
 
-  const submitWord = () => {
+  const submitWord = async () => {
+    if (isValidating) return;
     const word = currentWord.map(i => i.char).join('');
     if (word.length < 3) {
       setIsShaking(true);
@@ -188,13 +219,23 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
       return;
     }
 
-    if (DICTIONARY.has(word)) {
-      const blocks = Math.floor(word.length / 2);
+    const isBounty = word === bounty.word;
+    let isValid = isBounty || dictionaryRef.current.has(word);
+    
+    if (!isValid && word.length >= 3) {
+      isValid = await validateWithAI(word);
+      if (isValid) dictionaryRef.current.add(word);
+    }
+
+    if (isValid) {
+      const blocks = isBounty ? 10 : Math.floor(word.length / 2);
       setTowerHeight(h => h + blocks);
       setStreak(s => s + 1);
-      setScore(s => s + (word.length * 150) + (streak > 2 ? streak * 50 : 0));
+      setScore(s => s + (isBounty ? 5000 : word.length * 150) + (streak > 2 ? streak * 50 : 0));
       spawnParticles();
-      spawnBlock(word.length);
+      spawnBlock(word.length, isBounty);
+      
+      if (isBounty) setBounty(BOUNTIES[Math.floor(Math.random() * BOUNTIES.length)]);
       
       if (towerHeight + blocks >= targetHeight) {
         setLevel(l => l + 1);
@@ -213,7 +254,20 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
   };
 
   return (
-    <div className="flex flex-col items-center justify-between w-full max-w-lg h-full px-4 py-8 select-none">
+    <div className="flex flex-col items-center justify-between w-full max-w-lg h-full px-4 py-8 select-none relative">
+      {/* Bounty Overlay */}
+      <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[90%] z-30">
+        <div className="glass-card p-3 rounded-2xl border-amber-500/30 flex items-center gap-4 bg-amber-500/5 backdrop-blur-md">
+           <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500">
+              <i className="fas fa-scroll"></i>
+           </div>
+           <div>
+              <p className="text-[8px] font-black text-amber-500 uppercase tracking-widest leading-none mb-1">Mega Riddle Bounty</p>
+              <p className="text-[11px] font-bold text-slate-300 leading-tight italic">"{bounty.hint}"</p>
+           </div>
+        </div>
+      </div>
+
       <div className="w-full flex justify-between items-center z-20">
         <div className="flex flex-col">
           <span className="text-[10px] uppercase font-black text-slate-500 tracking-widest">Global Score</span>
@@ -233,6 +287,12 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
 
       <div className="flex-1 w-full relative flex flex-col items-center justify-end overflow-hidden">
         <canvas ref={canvasRef} className="w-full h-full max-h-[50vh]" />
+        <div className="absolute top-4 left-4 z-10">
+           <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase transition-colors ${dictLoaded ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
+              <i className={`fas ${dictLoaded ? 'fa-check-circle' : 'fa-sync-alt fa-spin'}`}></i>
+              {dictLoaded ? '10K Dict Loaded' : 'Syncing Lexicon...'}
+           </div>
+        </div>
         <div className="absolute top-4 left-1/2 -translate-x-1/2 glass-card px-6 py-2 border-indigo-500/30 flex items-center gap-4 z-10">
           <div className="flex flex-col items-center">
             <span className="text-[10px] uppercase font-black text-slate-500">Tower Goal</span>
@@ -242,7 +302,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
       </div>
 
       <div className="w-full space-y-4 z-20">
-        <div className={`glass-card h-20 flex items-center justify-center gap-2 p-2 border-2 transition-transform duration-75 ${isShaking ? 'animate-bounce border-rose-500/50' : 'border-white/5'}`}>
+        <div className={`glass-card h-20 flex items-center justify-center gap-2 p-2 border-2 transition-transform duration-75 relative ${isShaking ? 'animate-bounce border-rose-500/50' : 'border-white/5'}`}>
           <div className="flex items-center gap-2 min-h-[48px]">
             {currentWord.map((item, idx) => (
               <div key={idx} className="w-10 h-10 flex items-center justify-center font-black text-xl bg-indigo-600 rounded-xl shadow-lg animate-in zoom-in duration-200">
@@ -252,7 +312,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
           </div>
           {currentWord.length > 0 && (
             <button onClick={() => setCurrentWord([])} className="absolute right-4 text-slate-500 hover:text-rose-500 transition-colors">
-              <i className="fas fa-times-circle"></i>
+              <i className="fas fa-times-circle text-lg"></i>
             </button>
           )}
         </div>
@@ -264,11 +324,8 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
               <button
                 key={idx}
                 disabled={isSelected}
-                onClick={() => selectLetter(letter, idx)}
-                className={`
-                  aspect-square glass-card rounded-2xl flex items-center justify-center text-2xl font-black uppercase transition-all
-                  ${isSelected ? 'opacity-20 scale-90' : 'hover:scale-105 active:scale-95 hover:border-indigo-500/50'}
-                `}
+                onClick={() => setCurrentWord([...currentWord, { char: letter, index: idx }])}
+                className={`aspect-square glass-card rounded-2xl flex items-center justify-center text-2xl font-black uppercase transition-all ${isSelected ? 'opacity-20 scale-90' : 'hover:scale-105 active:scale-95 hover:border-indigo-500/50'}`}
               >
                 {letter}
               </button>
@@ -277,11 +334,22 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
         </div>
 
         <div className="grid grid-cols-3 gap-3">
-          <button onClick={generatePool} className="glass-card h-14 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 uppercase font-black text-xs tracking-widest">
+          <button 
+            onClick={() => { setCurrentWord([]); generatePool(); }} 
+            className="glass-card h-14 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 uppercase font-black text-xs tracking-widest"
+          >
             <i className="fas fa-sync-alt mr-2"></i> Scramble
           </button>
-          <button onClick={submitWord} className="col-span-2 glass-card h-14 bg-indigo-600 border-indigo-400 text-white font-black italic text-lg shadow-xl shadow-indigo-500/30 active:scale-95 transition-all uppercase">
-            Construct <i className="fas fa-arrow-up ml-2"></i>
+          <button 
+            onClick={submitWord} 
+            disabled={isValidating}
+            className={`col-span-2 glass-card h-14 bg-indigo-600 border-indigo-400 text-white font-black italic text-lg shadow-xl shadow-indigo-500/30 active:scale-95 transition-all uppercase flex items-center justify-center gap-2 ${isValidating ? 'opacity-80' : ''}`}
+          >
+            {isValidating ? (
+              <><i className="fas fa-brain animate-pulse"></i><span className="text-sm">NEURAL LINK...</span></>
+            ) : (
+              <>CONSTRUCT <i className="fas fa-arrow-up"></i></>
+            )}
           </button>
         </div>
       </div>

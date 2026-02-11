@@ -11,6 +11,7 @@ import MemoryMatrix from '../games/MemoryMatrix';
 import Labyrinth from '../games/Labyrinth';
 import ColorClash from '../games/ColorClash';
 import WordBuilder from '../games/WordBuilder';
+import Logo from './Logo';
 
 interface GameRunnerProps {
   game: Game;
@@ -75,9 +76,13 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
           <button onClick={onClose} className="w-12 h-12 rounded-2xl bg-white/10 dark:bg-white/5 hover:bg-white/20 dark:hover:bg-white/10 flex items-center justify-center border border-white/10 transition-all dark:text-white text-slate-900 shadow-lg">
             <i className="fas fa-arrow-left"></i>
           </button>
-          <div className="flex flex-col drop-shadow-md">
-            <h2 className="text-xl font-black italic dark:text-white text-slate-900 uppercase tracking-tighter transition-colors">{game.name}</h2>
-            <span className="text-[10px] font-bold uppercase text-indigo-500 tracking-widest">Best: {highScore.toLocaleString()}</span>
+          
+          <div className="flex items-center gap-3 bg-white/5 dark:bg-black/20 px-4 py-2 rounded-2xl border border-white/10 backdrop-blur-md">
+            <Logo size={24} showGlow={false} />
+            <div className="flex flex-col drop-shadow-md">
+              <h2 className="text-sm font-black italic dark:text-white text-slate-900 uppercase tracking-tighter transition-colors leading-none">{game.name}</h2>
+              <span className="text-[8px] font-bold uppercase text-indigo-500 tracking-[0.2em]">Best: {highScore.toLocaleString()}</span>
+            </div>
           </div>
         </div>
         
