@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 const QUESTIONS = [
   { sentence: "They ____ going to the park yesterday.", options: ["were", "was", "are", "be"], answer: "were" },
@@ -7,7 +7,23 @@ const QUESTIONS = [
   { sentence: "Neither of the boys ____ here.", options: ["is", "are", "am", "be"], answer: "is" },
   { sentence: "Whose/Who's bag is this?", options: ["Whose", "Who's"], answer: "Whose" },
   { sentence: "Your/You're doing a great job!", options: ["You're", "Your"], answer: "You're" },
-  { sentence: "I should have ____ better.", options: ["known", "knew", "knowed", "know"], answer: "known" }
+  { sentence: "I should have ____ better.", options: ["known", "knew", "knowed", "know"], answer: "known" },
+  { sentence: "The building was taller ____ the tree.", options: ["than", "then"], answer: "than" },
+  { sentence: "It's/Its important to feed the cat.", options: ["It's", "Its"], answer: "It's" },
+  { sentence: "They went ____ the house together.", options: ["into", "in to"], answer: "into" },
+  { sentence: "I can't believe it's already ____.", options: ["loose", "lose"], answer: "lose" },
+  { sentence: "There/Their/They're going to the concert.", options: ["They're", "There", "Their"], answer: "They're" },
+  { sentence: "He is the person ____ I met at the party.", options: ["whom", "who"], answer: "whom" },
+  { sentence: "Every one of the cookies ____ delicious.", options: ["is", "are"], answer: "is" },
+  { sentence: "The group ____ decided on a plan.", options: ["has", "have"], answer: "has" },
+  { sentence: "I feel ____ today.", options: ["bad", "badly"], answer: "bad" },
+  { sentence: "She plays the piano ____.", options: ["well", "good"], answer: "well" },
+  { sentence: "This is between you and ____.", options: ["me", "I"], answer: "me" },
+  { sentence: "The cat licked ____ paws.", options: ["its", "it's"], answer: "its" },
+  { sentence: "I ____ finished my homework already.", options: ["have", "has"], answer: "have" },
+  { sentence: "None of the students ____ the answer.", options: ["know", "knows"], answer: "know" },
+  { sentence: "I will ____ the book on the table.", options: ["lay", "lie"], answer: "lay" },
+  { sentence: "He has ____ in that bed for hours.", options: ["lain", "laid"], answer: "lain" }
 ];
 
 const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
@@ -15,9 +31,19 @@ const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: bo
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
+  
+  const questionPool = useRef<number[]>([]);
 
   const nextQuestion = useCallback(() => {
-    setCurrent(QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)]);
+    // Implement non-repeating shuffle logic
+    if (questionPool.current.length === 0) {
+      // Re-fill and shuffle indices
+      questionPool.current = Array.from({ length: QUESTIONS.length }, (_, i) => i)
+        .sort(() => Math.random() - 0.5);
+    }
+    
+    const nextIndex = questionPool.current.pop()!;
+    setCurrent(QUESTIONS[nextIndex]);
     setFeedback(null);
   }, []);
 
@@ -25,6 +51,7 @@ const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: bo
     if (isPlaying) {
       setScore(0);
       setTimeLeft(60);
+      questionPool.current = [];
       nextQuestion();
     }
   }, [isPlaying, nextQuestion]);
@@ -44,11 +71,11 @@ const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: bo
     if (feedback) return;
     if (opt === current.answer) {
       setFeedback('correct');
-      setScore(s => s + 500);
+      setScore(s => s + 600);
       setTimeout(nextQuestion, 500);
     } else {
       setFeedback('wrong');
-      setTimeLeft(t => Math.max(0, t - 10));
+      setTimeLeft(t => Math.max(0, t - 8)); // 8s penalty
       setTimeout(() => setFeedback(null), 800);
     }
   };
@@ -68,8 +95,9 @@ const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: bo
 
       <div className="w-full text-center space-y-8">
         <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Repair the Syntax Rift</p>
-        <div className="glass-card p-8 rounded-[2.5rem] border-2 border-emerald-500/10 min-h-[160px] flex items-center justify-center">
-          <h2 className="text-2xl md:text-3xl font-bold italic dark:text-white text-slate-800 leading-relaxed">
+        <div className="glass-card p-8 rounded-[2.5rem] border-2 border-emerald-500/10 min-h-[160px] flex items-center justify-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-emerald-500/5 pointer-events-none" />
+          <h2 className="text-2xl md:text-3xl font-bold italic dark:text-white text-slate-800 leading-relaxed z-10 animate-in fade-in slide-in-from-top-2">
             "{current.sentence}"
           </h2>
         </div>
@@ -82,7 +110,7 @@ const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: bo
             onClick={() => handleChoice(opt)}
             className={`
               h-20 glass-card rounded-2xl flex items-center justify-center text-xl font-black transition-all border-2
-              ${feedback === 'correct' && opt === current.answer ? 'bg-emerald-500 border-emerald-400 text-white' : ''}
+              ${feedback === 'correct' && opt === current.answer ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_20px_emerald]' : ''}
               ${feedback === 'wrong' && opt !== current.answer ? 'opacity-50' : 'hover:scale-105 active:scale-95 border-emerald-500/10'}
             `}
           >

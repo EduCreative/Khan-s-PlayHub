@@ -61,8 +61,17 @@ const QuickMath: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean 
       setScore(0);
       scoreRef.current = 0;
       setTime(60);
+      setEquation('');
+      setOptions([]);
     }
   }, [isPlaying]);
+
+  // Handle first generation when difficulty is selected
+  useEffect(() => {
+    if (difficulty && equation === '') {
+      generateProblem();
+    }
+  }, [difficulty, equation, generateProblem]);
 
   useEffect(() => {
     if (!isPlaying || !difficulty || time <= 0) return;
@@ -94,10 +103,6 @@ const QuickMath: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean 
   const selectDifficulty = (diff: Difficulty) => {
     setDifficulty(diff);
     setTime(diff === 'Hard' ? 45 : 60);
-    // Trigger problem generation immediately after state update
-    setTimeout(() => {
-      generateProblem();
-    }, 0);
   };
 
   if (!difficulty) {
@@ -148,7 +153,7 @@ const QuickMath: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean 
       <div className={`text-center py-12 transition-all duration-300 ${feedback === 'wrong' ? 'animate-shake' : ''}`}>
         <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-4">Solve the Nexus Logic</p>
         <h2 className={`text-7xl font-black italic game-font transition-colors ${feedback === 'correct' ? 'text-emerald-500 scale-110' : feedback === 'wrong' ? 'text-rose-500' : 'dark:text-white text-slate-900'}`}>
-          {equation}
+          {equation || '...'}
         </h2>
       </div>
 

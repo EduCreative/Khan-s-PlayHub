@@ -15,6 +15,11 @@ const GameCard: React.FC<GameCardProps> = ({ game, onPlay, highScore }) => {
       className="group relative glass-card rounded-[2.5rem] overflow-hidden cursor-pointer transition-all duration-500 hover:-translate-y-4 hover:shadow-3xl hover:shadow-indigo-500/30 active:scale-95 border-2 border-transparent hover:border-indigo-500/50 dark:hover:border-indigo-400/50"
       onClick={onPlay}
     >
+      {/* Shine Effect */}
+      <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden rounded-[2.5rem]">
+        <div className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-shine transition-opacity" />
+      </div>
+
       {/* Game Image Preview */}
       <div className="h-44 md:h-52 overflow-hidden relative">
         <img 

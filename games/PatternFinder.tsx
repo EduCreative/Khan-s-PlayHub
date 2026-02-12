@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 const PatternFinder: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
   const [sequence, setSequence] = useState<(string | number)[]>([]);
@@ -8,29 +8,95 @@ const PatternFinder: React.FC<{ onGameOver: (s: number) => void; isPlaying: bool
   const [score, setScore] = useState(0);
   const [level, setLevel] = useState(1);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
+  
+  const usedPatterns = useRef<Set<string>>(new Set());
 
   const generatePattern = useCallback(() => {
-    const types = ['arithmetic', 'geometric', 'rotation', 'symbols'];
-    const type = types[Math.floor(Math.random() * types.length)];
+    // Enhanced Pattern Types
+    const types = ['arithmetic', 'geometric', 'fibonacci', 'squares', 'cubes', 'symbols', 'letters'];
+    let type = types[Math.floor(Math.random() * types.length)];
+    
     let seq: (string | number)[] = [];
     let next: string | number = '';
+    let patternId = "";
 
-    if (type === 'arithmetic') {
-      const start = Math.floor(Math.random() * 20);
-      const step = Math.floor(Math.random() * 10) + 1;
-      for (let i = 0; i < 4; i++) seq.push(start + i * step);
-      next = start + 4 * step;
-    } else if (type === 'symbols') {
-      const syms = ['▲', '■', '●', '◆', '★', '✖'];
-      const a = syms[Math.floor(Math.random() * syms.length)];
-      const b = syms[Math.floor(Math.random() * syms.length)];
-      seq = [a, b, a, b];
-      next = a;
-    } else {
-      const start = Math.floor(Math.random() * 5) + 1;
-      const mult = 2;
-      for (let i = 0; i < 4; i++) seq.push(start * Math.pow(mult, i));
-      next = start * Math.pow(mult, 4);
+    // Prevent immediate repeats by generating a unique ID for each pattern configuration
+    let attempts = 0;
+    while (attempts < 5) {
+      if (type === 'arithmetic') {
+        const start = Math.floor(Math.random() * 20);
+        const step = Math.floor(Math.random() * 8) + 1;
+        patternId = `arith-${start}-${step}`;
+        if (!usedPatterns.current.has(patternId)) {
+          for (let i = 0; i < 4; i++) seq.push(start + i * step);
+          next = start + 4 * step;
+          break;
+        }
+      } else if (type === 'geometric') {
+        const start = Math.floor(Math.random() * 5) + 1;
+        const mult = [2, 3][Math.floor(Math.random() * 2)];
+        patternId = `geo-${start}-${mult}`;
+        if (!usedPatterns.current.has(patternId)) {
+          for (let i = 0; i < 4; i++) seq.push(start * Math.pow(mult, i));
+          next = start * Math.pow(mult, 4);
+          break;
+        }
+      } else if (type === 'fibonacci') {
+        const a = Math.floor(Math.random() * 5) + 1;
+        const b = Math.floor(Math.random() * 5) + 1;
+        patternId = `fib-${a}-${b}`;
+        if (!usedPatterns.current.has(patternId)) {
+          let fib = [a, b];
+          for (let i = 2; i < 4; i++) fib.push(fib[i-1] + fib[i-2]);
+          seq = fib;
+          next = fib[3] + fib[2];
+          break;
+        }
+      } else if (type === 'squares') {
+        const startIdx = Math.floor(Math.random() * 8) + 1;
+        patternId = `sq-${startIdx}`;
+        if (!usedPatterns.current.has(patternId)) {
+          for (let i = 0; i < 4; i++) seq.push(Math.pow(startIdx + i, 2));
+          next = Math.pow(startIdx + 4, 2);
+          break;
+        }
+      } else if (type === 'cubes') {
+        const startIdx = Math.floor(Math.random() * 5) + 1;
+        patternId = `cu-${startIdx}`;
+        if (!usedPatterns.current.has(patternId)) {
+          for (let i = 0; i < 4; i++) seq.push(Math.pow(startIdx + i, 3));
+          next = Math.pow(startIdx + 4, 3);
+          break;
+        }
+      } else if (type === 'letters') {
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const startIdx = Math.floor(Math.random() * 15);
+        const step = Math.floor(Math.random() * 3) + 1;
+        patternId = `let-${startIdx}-${step}`;
+        if (!usedPatterns.current.has(patternId)) {
+          for (let i = 0; i < 4; i++) seq.push(alphabet[(startIdx + i * step) % 26]);
+          next = alphabet[(startIdx + 4 * step) % 26];
+          break;
+        }
+      } else {
+        const syms = ['▲', '■', '●', '◆', '★', '✖', '✚', '⬢'];
+        const a = syms[Math.floor(Math.random() * syms.length)];
+        const b = syms[Math.floor(Math.random() * syms.length)];
+        patternId = `sym-${a}-${b}`;
+        if (!usedPatterns.current.has(patternId) && a !== b) {
+          seq = [a, b, a, b];
+          next = a;
+          break;
+        }
+      }
+      attempts++;
+      type = types[Math.floor(Math.random() * types.length)];
+    }
+
+    usedPatterns.current.add(patternId);
+    if (usedPatterns.current.size > 20) {
+      const first = usedPatterns.current.values().next().value;
+      if (first) usedPatterns.current.delete(first);
     }
 
     setSequence(seq);
@@ -40,10 +106,13 @@ const PatternFinder: React.FC<{ onGameOver: (s: number) => void; isPlaying: bool
     opts.add(next);
     while (opts.size < 4) {
       if (typeof next === 'number') {
-        const fake = next + (Math.random() > 0.5 ? 2 : -2) * (Math.floor(Math.random() * 5) + 1);
+        const fake = next + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 10) + 1);
         if (fake > 0) opts.add(fake);
+      } else if (type === 'letters') {
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        opts.add(alphabet[Math.floor(Math.random() * 26)]);
       } else {
-        const syms = ['▲', '■', '●', '◆', '★', '✖'];
+        const syms = ['▲', '■', '●', '◆', '★', '✖', '✚', '⬢'];
         opts.add(syms[Math.floor(Math.random() * syms.length)]);
       }
     }
@@ -54,6 +123,7 @@ const PatternFinder: React.FC<{ onGameOver: (s: number) => void; isPlaying: bool
     if (isPlaying) {
       setScore(0);
       setLevel(1);
+      usedPatterns.current.clear();
       generatePattern();
     }
   }, [isPlaying, generatePattern]);
@@ -62,7 +132,7 @@ const PatternFinder: React.FC<{ onGameOver: (s: number) => void; isPlaying: bool
     if (feedback) return;
     if (val === correctAnswer) {
       setFeedback('correct');
-      setScore(s => s + (level * 200));
+      setScore(s => s + (level * 250));
       setLevel(l => l + 1);
       setTimeout(() => { setFeedback(null); generatePattern(); }, 500);
     } else {
@@ -86,9 +156,9 @@ const PatternFinder: React.FC<{ onGameOver: (s: number) => void; isPlaying: bool
 
       <div className="w-full text-center space-y-8">
         <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Predict the Next Vector</p>
-        <div className="flex justify-center gap-4">
+        <div className="flex justify-center gap-4 flex-wrap">
           {sequence.map((s, i) => (
-            <div key={i} className="w-16 h-16 md:w-20 md:h-20 glass-card rounded-2xl flex items-center justify-center text-3xl font-black shadow-inner border border-white/5">
+            <div key={i} className="w-16 h-16 md:w-20 md:h-20 glass-card rounded-2xl flex items-center justify-center text-3xl font-black shadow-inner border border-white/5 animate-in slide-in-from-right-4" style={{ animationDelay: `${i * 100}ms` }}>
               {s}
             </div>
           ))}
@@ -105,7 +175,7 @@ const PatternFinder: React.FC<{ onGameOver: (s: number) => void; isPlaying: bool
             onClick={() => handleChoice(opt)}
             className={`
               h-24 glass-card rounded-2xl flex items-center justify-center text-3xl font-black transition-all border-2
-              ${feedback === 'correct' && opt === correctAnswer ? 'bg-amber-500 border-amber-400 text-white' : ''}
+              ${feedback === 'correct' && opt === correctAnswer ? 'bg-amber-500 border-amber-400 text-white shadow-[0_0_20px_amber]' : ''}
               ${feedback === 'wrong' && opt !== correctAnswer ? 'opacity-50' : 'hover:scale-105 active:scale-95 border-amber-500/10'}
             `}
           >

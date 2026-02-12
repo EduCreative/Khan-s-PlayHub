@@ -29,7 +29,7 @@ const Hub: React.FC<HubProps> = ({
     : games.filter(g => g.category === filter);
 
   return (
-    <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-12 md:py-20 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+    <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-12 md:py-20 animate-in fade-in slide-in-from-bottom-6 duration-1000">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-16">
         <div className="space-y-4">
           <div className="flex items-center gap-6 group">
@@ -38,7 +38,7 @@ const Hub: React.FC<HubProps> = ({
               <h1 className="text-4xl md:text-6xl font-black italic tracking-tight uppercase dark:text-white text-slate-900 leading-tight transition-colors duration-500 pr-2">
                 Khan's <span className="text-gradient inline-block pr-1">PlayHub</span>
               </h1>
-              <div className="h-1.5 w-32 bg-gradient-to-r from-indigo-600 to-transparent mt-2 rounded-full" />
+              <div className="h-1.5 w-32 bg-gradient-to-r from-indigo-600 to-transparent mt-2 rounded-full shadow-[0_0_10px_rgba(79,70,229,0.3)]" />
             </div>
           </div>
           <p className="text-slate-600 dark:text-slate-400 font-medium max-w-xl text-lg leading-relaxed transition-colors duration-500">
@@ -76,7 +76,7 @@ const Hub: React.FC<HubProps> = ({
             key={cat}
             onClick={() => setFilter(cat)}
             className={`
-              whitespace-nowrap px-6 py-3 md:px-8 md:py-4 rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest transition-all border-2 duration-500
+              whitespace-nowrap px-6 py-3 md:px-8 md:py-4 rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest transition-all border-2 duration-500 ease-bounce-elite
               ${filter === cat 
                 ? 'bg-indigo-600 border-indigo-400 text-white shadow-2xl shadow-indigo-500/50 scale-105 z-10' 
                 : 'glass-card border-indigo-500/10 dark:text-slate-400 text-slate-600 hover:border-indigo-500/40 hover:bg-white/5'
@@ -90,7 +90,7 @@ const Hub: React.FC<HubProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12 mb-20">
         {filteredGames.map((game, idx) => (
-          <div key={game.id} className="animate-in fade-in slide-in-from-bottom-8 duration-700" style={{ animationDelay: `${idx * 100}ms` }}>
+          <div key={game.id} className="animate-in fade-in slide-in-from-bottom-12 duration-1000" style={{ animationDelay: `${idx * 80}ms` }}>
             <GameCard 
               game={game}
               index={idx}
@@ -117,7 +117,7 @@ const Hub: React.FC<HubProps> = ({
             <div className="flex flex-wrap justify-center gap-2 w-full">
               <a 
                 href="mailto:kmasroor50@gmail.com" 
-                className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-indigo-500/10 border border-white/10 hover:border-indigo-500/30 rounded-lg transition-all group/link"
+                className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-indigo-500/10 border border-white/10 hover:border-indigo-500/30 rounded-lg transition-all group/link shadow-sm"
               >
                 <i className="fas fa-envelope text-indigo-500 group-hover/link:scale-110 transition-transform text-[10px]"></i>
                 <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-300">kmasroor50@gmail.com</span>
@@ -127,7 +127,7 @@ const Hub: React.FC<HubProps> = ({
                 href="https://wa.me/923331306603" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-emerald-500/10 border border-white/10 hover:border-emerald-500/30 rounded-lg transition-all group/link"
+                className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-emerald-500/10 border border-white/10 hover:border-emerald-500/30 rounded-lg transition-all group/link shadow-sm"
               >
                 <i className="fab fa-whatsapp text-emerald-500 group-hover/link:scale-110 transition-transform text-[12px]"></i>
                 <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-300">+92 333 1306603</span>
@@ -141,7 +141,7 @@ const Hub: React.FC<HubProps> = ({
         <div className="h-px w-24 bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent" />
         <span className="px-6 py-2 glass-card border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-[0.3em] shadow-inner flex items-center gap-3 transition-colors duration-500">
           <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping" />
-          App Version 2.0.0 Stable
+          App Version 2.1.0 Stable
         </span>
       </div>
     </div>

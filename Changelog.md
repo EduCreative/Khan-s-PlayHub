@@ -1,14 +1,22 @@
+
 # Changelog
 
-## [1.9.8] - 2024-05-25
+## [2.1.0] - 2024-05-25
 ### Added
-- **New Visual Identity**: Launched the official Khan's PlayHub logo—a modern geometric "K" combined with a Play icon.
-- **Logo Component**: Introduced `Logo.tsx` for high-fidelity SVG rendering with neon glow effects.
-- **Dynamic Favicon**: The browser tab now features the brand logo as an SVG favicon.
+- **No-Repeat Logic**: Pattern Finder and Grammar Guardian now track used indices to ensure variety and prevent immediate question repetition.
+- **Blitz Runner Parallax**: Implemented a multi-layer starfield and nebula parallax system for deeper immersion.
+- **Reactive Exhaust**: Exhaust particles in Blitz Runner now drift dynamically based on player movement vector.
+- **Focus Pulse**: Added a visual "Focus" hit effect for near-miss dodges in Blitz Runner.
+- **Fluid Easing**: Switched all core transitions to `cubic-bezier(0.22, 1, 0.36, 1)` for an ultra-premium "Out-Quint" feel.
 
 ### Changed
-- **Header Redesign**: Replaced generic icons with the new brand logo and updated typography with premium gradient effects.
-- **UI Polish**: Refined dark mode contrast and neon text shadows for better accessibility and aesthetics.
+- **Branding**: Updated Version to 2.1.0 "Nexus Pulse".
+- **Question Banks**: Tripled the number of questions in Grammar Guardian.
+- **Math Logic**: Expanded Pattern Finder to include Fibonacci, Squares, and Cubes logic.
 
-## [1.9.7] - 2024-05-25
-... (rest of changelog)
+## [2.0.0] - 2024-05-25
+### Added
+- **Portal Transitions**: Implemented specialized entry/exit animations for games using scale and blur keyframes.
+- **Card Shimmer**: Added a subtle light-sweep animation to GameCards on hover.
+- **Tactile Feedback**: Enhanced GameCard scaling and tilt effects for a more premium feel.
+- **Water-fall Stagger**: Adjusted Hub loading animation to stagger cards rhythmically.
