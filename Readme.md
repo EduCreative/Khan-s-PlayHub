@@ -3,14 +3,13 @@
 
 A vibrant, neon-cyberpunk inspired gaming hub for quick free-time play sessions. Built with React and Tailwind CSS.
 
-**Version:** 2.0.0 "Fluidity Update"
+**Version:** 2.3.2 "Speed & Style"
 
 ## Core Features
-- **Portal Transitions**: Dynamic entry animations for an immersive game-launching experience.
-- **Enhanced Physics**: Fruit Vortex now features "juicier" animations and comprehensive match detection.
-- **Tactile UI**: Cards and buttons feature bounce-back easing and shimmer effects.
-- **Mobile First**: Optimized touch response and vertical orientation across all games.
-- **Vast Vocabulary**: Word Builder Quest supports an expanded dictionary for creative play.
+- **Cinematic Blitz Runner**: Extreme parallax effects and reactive speed particles for an immersive arcade experience.
+- **Intelligent Sudoku**: New visual aids for Sudoku players including conflict detection and completion tracking.
+- **Victory Celebrations**: Integrated confetti and cinematic win-states across all logic and arcade games.
+- **Hex-Grid Bubble Shooting**: Precision aiming and connectivity-based falling mechanics in Bubble Fury.
 
 ## Developer Contact
 - **Email**: kmasroor50@gmail.com

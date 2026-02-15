@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'khans-playhub-v1.1.1';
+const CACHE_NAME = 'khans-playhub-v1.1.2';
 
 // Core local assets - using absolute paths relative to origin for clarity
 const STATIC_ASSETS = [

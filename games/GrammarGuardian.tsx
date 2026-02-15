@@ -5,25 +5,33 @@ const QUESTIONS = [
   { sentence: "They ____ going to the park yesterday.", options: ["were", "was", "are", "be"], answer: "were" },
   { sentence: "She ____ her keys in the car.", options: ["left", "leaved", "leaf", "laved"], answer: "left" },
   { sentence: "Neither of the boys ____ here.", options: ["is", "are", "am", "be"], answer: "is" },
-  { sentence: "Whose/Who's bag is this?", options: ["Whose", "Who's"], answer: "Whose" },
-  { sentence: "Your/You're doing a great job!", options: ["You're", "Your"], answer: "You're" },
+  { sentence: "____ bag is this?", options: ["Whose", "Who's", "Who", "Whom"], answer: "Whose" },
+  { sentence: "____ doing a great job!", options: ["You're", "Your", "Yore", "Yours"], answer: "You're" },
   { sentence: "I should have ____ better.", options: ["known", "knew", "knowed", "know"], answer: "known" },
-  { sentence: "The building was taller ____ the tree.", options: ["than", "then"], answer: "than" },
-  { sentence: "It's/Its important to feed the cat.", options: ["It's", "Its"], answer: "It's" },
-  { sentence: "They went ____ the house together.", options: ["into", "in to"], answer: "into" },
-  { sentence: "I can't believe it's already ____.", options: ["loose", "lose"], answer: "lose" },
-  { sentence: "There/Their/They're going to the concert.", options: ["They're", "There", "Their"], answer: "They're" },
-  { sentence: "He is the person ____ I met at the party.", options: ["whom", "who"], answer: "whom" },
-  { sentence: "Every one of the cookies ____ delicious.", options: ["is", "are"], answer: "is" },
-  { sentence: "The group ____ decided on a plan.", options: ["has", "have"], answer: "has" },
-  { sentence: "I feel ____ today.", options: ["bad", "badly"], answer: "bad" },
-  { sentence: "She plays the piano ____.", options: ["well", "good"], answer: "well" },
-  { sentence: "This is between you and ____.", options: ["me", "I"], answer: "me" },
-  { sentence: "The cat licked ____ paws.", options: ["its", "it's"], answer: "its" },
-  { sentence: "I ____ finished my homework already.", options: ["have", "has"], answer: "have" },
-  { sentence: "None of the students ____ the answer.", options: ["know", "knows"], answer: "know" },
-  { sentence: "I will ____ the book on the table.", options: ["lay", "lie"], answer: "lay" },
-  { sentence: "He has ____ in that bed for hours.", options: ["lain", "laid"], answer: "lain" }
+  { sentence: "The building was taller ____ the tree.", options: ["than", "then", "them", "that"], answer: "than" },
+  { sentence: "____ important to feed the cat.", options: ["It's", "Its", "Its'", "Is"], answer: "It's" },
+  { sentence: "They went ____ the house together.", options: ["into", "in to", "in", "to"], answer: "into" },
+  { sentence: "I can't believe it's already ____.", options: ["lost", "loose", "lose", "loss"], answer: "lose" },
+  { sentence: "____ going to the concert tonight.", options: ["They're", "There", "Their", "Theirs"], answer: "They're" },
+  { sentence: "He is the person ____ I met at the party.", options: ["whom", "who", "whose", "which"], answer: "whom" },
+  { sentence: "Every one of the cookies ____ delicious.", options: ["is", "are", "was", "were"], answer: "is" },
+  { sentence: "The group ____ decided on a plan.", options: ["has", "have", "had", "having"], answer: "has" },
+  { sentence: "I feel ____ today about the mistake.", options: ["bad", "badly", "worse", "worst"], answer: "bad" },
+  { sentence: "She plays the piano ____.", options: ["well", "good", "better", "best"], answer: "well" },
+  { sentence: "This is between you and ____.", options: ["me", "I", "my", "mine"], answer: "me" },
+  { sentence: "The cat licked ____ paws.", options: ["its", "it's", "it", "its'"], answer: "its" },
+  { sentence: "I ____ finished my homework already.", options: ["have", "has", "had", "having"], answer: "have" },
+  { sentence: "None of the students ____ the answer.", options: ["know", "knows", "knowing", "known"], answer: "knows" },
+  { sentence: "I will ____ the book on the table.", options: ["lay", "lie", "laid", "lain"], answer: "lay" },
+  { sentence: "He has ____ in that bed for hours.", options: ["lain", "laid", "lay", "lied"], answer: "lain" },
+  { sentence: "The ____ of the storm was devastating.", options: ["effect", "affect", "effec", "affec"], answer: "effect" },
+  { sentence: "The weather will ____ our travel plans.", options: ["affect", "effect", "affects", "effects"], answer: "affect" },
+  { sentence: "She is smarter ____ her brother.", options: ["than", "then", "that", "those"], answer: "than" },
+  { sentence: "I have ____ apples than you.", options: ["fewer", "less", "fewest", "least"], answer: "fewer" },
+  { sentence: "There is ____ water in the glass.", options: ["less", "fewer", "least", "fewest"], answer: "less" },
+  { sentence: "He ____ the ball perfectly.", options: ["threw", "through", "throwed", "throne"], answer: "threw" },
+  { sentence: "We walked ____ the tunnel.", options: ["through", "threw", "thorough", "though"], answer: "through" },
+  { sentence: "The principal is my ____.", options: ["principle", "principal", "principl", "principality"], answer: "principal" }
 ];
 
 const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
@@ -35,9 +43,7 @@ const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: bo
   const questionPool = useRef<number[]>([]);
 
   const nextQuestion = useCallback(() => {
-    // Implement non-repeating shuffle logic
     if (questionPool.current.length === 0) {
-      // Re-fill and shuffle indices
       questionPool.current = Array.from({ length: QUESTIONS.length }, (_, i) => i)
         .sort(() => Math.random() - 0.5);
     }
@@ -103,7 +109,7 @@ const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: bo
         </div>
       </div>
 
-      <div className={`grid ${current.options.length > 2 ? 'grid-cols-2' : 'grid-cols-1'} gap-4 w-full`}>
+      <div className="grid grid-cols-2 gap-4 w-full">
         {current.options.map((opt, i) => (
           <button
             key={i}

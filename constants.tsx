@@ -146,7 +146,7 @@ export const GAMES: Game[] = [
       'Don\'t let the bubbles reach the bottom of the screen.',
       'Choose Easy, Medium, or Hard to set the pace!'
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1559466273-d95e72debaf8?auto=format&fit=crop&q=80&w=400'
+    imageUrl: 'https://images.unsplash.com/photo-1516559828984-fb3b92374751?auto=format&fit=crop&q=80&w=400'
   },
   {
     id: 'word-builder',
