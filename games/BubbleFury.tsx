@@ -3,12 +3,13 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import VictoryEffect from '../components/VictoryEffect';
 
 const COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
-const BUBBLE_RADIUS = 18;
-const WIDTH = 400;
+const BUBBLE_RADIUS = 16; // Reduced from 18 to fit mobile screens better
+const WIDTH = 360; // Adjusted from 400 to prevent side-clipping
 const HEIGHT = 500;
 const SPACING_X = BUBBLE_RADIUS * 2;
 const SPACING_Y = BUBBLE_RADIUS * 1.732; // Hexagonal height spacing
 const DEAD_LINE_Y = HEIGHT - 100;
+const SHOT_ORIGIN_Y = HEIGHT - 30; // Consistent anchor for shot and trajectory
 
 type Difficulty = 'Easy' | 'Medium' | 'Hard';
 
@@ -133,7 +134,7 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
     const rad = (angle - 90) * (Math.PI / 180);
     setShotBubble({
       x: WIDTH / 2,
-      y: HEIGHT - 30,
+      y: SHOT_ORIGIN_Y,
       color: currentColor,
       vx: Math.cos(rad) * speed,
       vy: Math.sin(rad) * speed,
@@ -194,14 +195,9 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
     const { row, col } = getGridPosition(x, y);
     const coords = getBubbleCoords(row, col);
     
-    // Safety check: ensure no overlap at the exact spot
     setBubbles(prev => {
       const existing = prev.find(b => b.row === row && b.col === col);
-      if (existing) {
-        // Find nearest empty neighbor instead of overlapping
-        // Simplified fallback: just use current row/col if empty
-        return prev; 
-      }
+      if (existing) return prev; 
       const newB = { ...coords, row, col, color, id: `${row}-${col}-${Math.random()}` };
       const updated = [...prev, newB];
       handleMatches(updated, newB);
@@ -298,7 +294,7 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
     if (!containerRef.current || isGameOver || showVictory) return;
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left, y = e.clientY - rect.top;
-    const dx = x - WIDTH / 2, dy = y - (HEIGHT - 30);
+    const dx = x - WIDTH / 2, dy = y - SHOT_ORIGIN_Y;
     let newAngle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
     setAngle(Math.max(-80, Math.min(80, newAngle)));
     if (e.type === 'pointerup') fire();
@@ -328,6 +324,21 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
         </div>
       </div>
     );
+  }
+
+  // Trajectory Dots
+  const trajectoryDots = [];
+  if (!isShooting && !isGameOver && !showVictory) {
+    const dotCount = 12;
+    const dotSpacing = 30;
+    const rad = (angle - 90) * (Math.PI / 180);
+    for (let i = 1; i <= dotCount; i++) {
+      const dist = i * dotSpacing;
+      trajectoryDots.push({
+        x: WIDTH / 2 + Math.cos(rad) * dist,
+        y: SHOT_ORIGIN_Y + Math.sin(rad) * dist
+      });
+    }
   }
 
   return (
@@ -366,9 +377,21 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
           <div key={b.id} className="absolute rounded-full border-2 border-white/10 shadow-lg" style={{ width: BUBBLE_RADIUS * 2, height: BUBBLE_RADIUS * 2, left: b.x - BUBBLE_RADIUS, top: b.y - BUBBLE_RADIUS, backgroundColor: b.color, opacity: b.opacity, transform: `scale(${b.opacity})` }} />
         ))}
 
-        {!isShooting && !isGameOver && !showVictory && (
-           <div className="absolute left-1/2 bottom-[30px] border-l-2 border-dashed border-white/20 origin-bottom pointer-events-none" style={{ height: 400, transform: `translateX(-50%) rotate(${angle}deg)` }} />
-        )}
+        {/* Trajectory Micro-Bubbles */}
+        {trajectoryDots.map((dot, i) => (
+          <div 
+            key={i} 
+            className="absolute rounded-full bg-white/40 pointer-events-none" 
+            style={{ 
+              width: 4, 
+              height: 4, 
+              left: dot.x - 2, 
+              top: dot.y - 2,
+              opacity: 1 - (i / 12),
+              boxShadow: '0 0 5px white'
+            }} 
+          />
+        ))}
 
         {shotBubble && (
           <div className="absolute rounded-full border-2 border-white/40 shadow-2xl z-20" style={{ width: BUBBLE_RADIUS * 2, height: BUBBLE_RADIUS * 2, left: shotBubble.x - BUBBLE_RADIUS, top: shotBubble.y - BUBBLE_RADIUS, backgroundColor: shotBubble.color, boxShadow: `0 0 20px ${shotBubble.color}` }} />

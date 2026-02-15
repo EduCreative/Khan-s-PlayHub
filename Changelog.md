@@ -1,20 +1,18 @@
 
 # Changelog
 
-## [2.3.2] - 2024-05-25
+## [2.3.5] - 2024-05-25
 ### Added
-- **Blitz Runner Overhaul**:
-  - Multi-layered parallax backgrounds for extreme depth.
-  - Speed-reactive particle systems including high-speed "warp" lines.
-  - Cinematic dodge feedback with "PERFECT DODGE!" text pop-ups and chromatic aberration effects.
-  - Enhanced ship animations with ghosting and better tilt response.
+- **Blitz Runner Mobile Controls**:
+  - Implemented relative swipe movement (drag anywhere to steer).
+  - Integrated device tilt (gyroscope) to control the visual ship tilt.
+  - Added motion permission requester for iOS/modern mobile browsers.
 
-## [2.3.1] - 2024-05-25
+## [2.3.4] - 2024-05-25
 ### Added
-- **Sudoku Visual Aids**: Added level-based highlighting in Sudoku Lite.
-  - Numbers at bottom reflect completion status (9/9).
-  - 'Easy' mode shows rule-breaking conflicts in red.
-  - 'Easy' and 'Medium' modes highlight the neighborhood (row/col/block) of the selected cell.
-- **Sudoku Logic Update**: Win condition now validates against the actual generated solution.
+- **Bubble Fury Trajectory Update**: Replaced dashed line with high-fidelity micro-bubbles for aiming.
+- **Mobile Grid Support**: Resized the game board and bubbles to ensure 100% visibility on all smartphone screens.
+- **Precision Alignment**: Corrected the cannon pivot and shot trajectory synchronization.
 
+## [2.3.3] - 2024-05-25
 ... (rest of changelog)

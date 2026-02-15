@@ -99,6 +99,7 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
   const [isWarping, setIsWarping] = useState(false);
   const [parallaxY, setParallaxY] = useState(0);
   const [dodgeFeedback, setDodgeFeedback] = useState<{ x: number, y: number, text: string } | null>(null);
+  const [needsMotionPermission, setNeedsMotionPermission] = useState(false);
   
   const gameRef = useRef<number | null>(null);
   const lastUpdate = useRef<number>(0);
@@ -109,6 +110,10 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
   const isGameOverRef = useRef(false);
   const shieldRef = useRef(0);
   const keysPressed = useRef<Set<string>>(new Set());
+  
+  // Touch & Tilt Refs
+  const touchLastX = useRef<number | null>(null);
+  const deviceTiltRef = useRef(0);
 
   const triggerShake = (intensity: number) => {
     setShake(intensity);
@@ -157,14 +162,50 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
     onGameOver(Math.floor(scoreRef.current));
   }, [onGameOver]);
 
+  // Motion Permission Logic
+  const requestMotionPermission = async () => {
+    if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+      try {
+        const permissionState = await (DeviceOrientationEvent as any).requestPermission();
+        if (permissionState === 'granted') {
+          setNeedsMotionPermission(false);
+          window.addEventListener('deviceorientation', handleOrientation);
+        }
+      } catch (e) {
+        console.error('DeviceOrientation permission request failed:', e);
+      }
+    } else {
+      // Standard browsers
+      window.addEventListener('deviceorientation', handleOrientation);
+    }
+  };
+
+  const handleOrientation = (e: DeviceOrientationEvent) => {
+    if (e.gamma !== null) {
+      // Gamma is left-to-right tilt in degrees [-90, 90]
+      // We clamp and normalize it
+      const tilt = Math.max(-30, Math.min(30, e.gamma));
+      deviceTiltRef.current = tilt;
+    }
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => keysPressed.current.add(e.key.toLowerCase());
     const handleKeyUp = (e: KeyboardEvent) => keysPressed.current.delete(e.key.toLowerCase());
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+    
+    // Check if motion permission is needed (iOS 13+)
+    if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+      setNeedsMotionPermission(true);
+    } else {
+      window.addEventListener('deviceorientation', handleOrientation);
+    }
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('deviceorientation', handleOrientation);
     };
   }, []);
 
@@ -199,9 +240,10 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
         const newX = playerXRef.current + moveDir * moveSpeed * dt;
         playerXRef.current = Math.max(10, Math.min(90, newX));
         setPlayerX(playerXRef.current);
-        setPlayerTilt(moveDir * 20);
+        setPlayerTilt(moveDir * 20 + deviceTiltRef.current);
       } else {
-        setPlayerTilt(prev => prev * 0.85);
+        // Smoothly blend the artificial tilt and device tilt
+        setPlayerTilt(prev => (prev * 0.85) + (deviceTiltRef.current * 0.15));
       }
 
       const currentDifficulty = 1 + (scoreRef.current / 12000);
@@ -322,11 +364,40 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
     };
   }, [isPlaying, spawnEntity, endGame, nearMissMsg]);
 
-  const handleInput = (clientX: number, rectWidth: number, rectLeft: number) => {
-    if (keysPressed.current.size > 0) return;
-    const x = ((clientX - rectLeft) / rectWidth) * 100;
+  // Handle Relative Swipe Input for Mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchLastX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchLastX.current === null) return;
+    const currentTouchX = e.touches[0].clientX;
+    const deltaX = currentTouchX - touchLastX.current;
+    
+    // Scale delta to game width
+    const rect = e.currentTarget.getBoundingClientRect();
+    const movementX = (deltaX / rect.width) * 100;
+    
+    const newX = Math.max(10, Math.min(90, playerXRef.current + movementX));
+    playerXRef.current = newX;
+    setPlayerX(newX);
+    
+    // Dynamic tilt based on swipe speed/direction
+    setPlayerTilt(deltaX * 0.8 + deviceTiltRef.current);
+    
+    touchLastX.current = currentTouchX;
+  };
+
+  const handleTouchEnd = () => {
+    touchLastX.current = null;
+  };
+
+  // Keep mouse follow for desktop
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
     const clampedX = Math.max(10, Math.min(90, x));
-    setPlayerTilt((clampedX - playerXRef.current) * 3);
+    setPlayerTilt((clampedX - playerXRef.current) * 3 + deviceTiltRef.current);
     playerXRef.current = clampedX;
     setPlayerX(clampedX);
   };
@@ -335,8 +406,10 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
     <div 
       className={`relative w-full max-w-lg h-[650px] rounded-[3.5rem] overflow-hidden cursor-none shadow-2xl mx-auto border-4 border-white/15 transition-all duration-700 ${isWarping ? 'brightness-125 saturate-150' : ''}`}
       style={{ transform: `translate(${Math.random() * shake}px, ${Math.random() * shake}px)`, perspective: '1400px' }}
-      onMouseMove={(e) => handleInput(e.clientX, e.currentTarget.clientWidth, e.currentTarget.getBoundingClientRect().left)}
-      onTouchMove={(e) => handleInput(e.touches[0].clientX, e.currentTarget.clientWidth, e.currentTarget.getBoundingClientRect().left)}
+      onMouseMove={handleMouseMove}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Background Multi-layered Parallax */}
       <div className={`absolute inset-0 transition-colors duration-1000 ${isWarping ? 'bg-indigo-950' : 'bg-[#020617]'}`} />
@@ -422,6 +495,21 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
           </div>
         )}
       </div>
+
+      {/* Motion Permission Requester Overlay */}
+      {needsMotionPermission && !isGameOverRef.current && (
+        <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-md p-8 text-center pointer-events-auto">
+          <i className="fas fa-compass text-indigo-400 text-4xl mb-4 animate-bounce"></i>
+          <h3 className="text-xl font-black text-white uppercase italic mb-2">Enable Cockpit Tilt</h3>
+          <p className="text-slate-300 text-xs mb-6 max-w-xs">Allow motion access to visually tilt your ship by moving your device.</p>
+          <button 
+            onClick={requestMotionPermission}
+            className="px-8 py-3 bg-indigo-600 text-white font-black uppercase text-xs rounded-2xl shadow-xl shadow-indigo-500/40 active:scale-95 transition-all"
+          >
+            Allow Motion
+          </button>
+        </div>
+      )}
 
       {/* Dodge Text Pop-ups */}
       {dodgeFeedback && (
