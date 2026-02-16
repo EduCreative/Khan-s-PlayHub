@@ -21,12 +21,11 @@ class BlitzAudio {
       if (!this.ctx || this.ctx.state === 'suspended') return;
       const t = this.ctx.currentTime;
       
-      // Cyber-Kick
       const kick = this.ctx.createOscillator();
       const kickGain = this.ctx.createGain();
       kick.frequency.setValueAtTime(120, t);
       kick.frequency.exponentialRampToValueAtTime(0.01, t + 0.15);
-      kickGain.gain.setValueAtTime(0.2, t);
+      kickGain.gain.setValueAtTime(0.15, t);
       kickGain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
       kick.connect(kickGain);
       kickGain.connect(this.ctx.destination);
@@ -52,7 +51,7 @@ class BlitzAudio {
     osc.type = type;
     osc.frequency.setValueAtTime(freq, t);
     osc.frequency.exponentialRampToValueAtTime(10, t + duration);
-    g.gain.setValueAtTime(0.15, t);
+    g.gain.setValueAtTime(0.1, t);
     g.gain.linearRampToValueAtTime(0, t + duration);
     osc.connect(g);
     g.connect(this.ctx.destination);
@@ -114,6 +113,7 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
   // Touch & Tilt Refs
   const touchLastX = useRef<number | null>(null);
   const deviceTiltRef = useRef(0);
+  const smoothedTiltRef = useRef(0);
 
   const triggerShake = (intensity: number) => {
     setShake(intensity);
@@ -162,7 +162,6 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
     onGameOver(Math.floor(scoreRef.current));
   }, [onGameOver]);
 
-  // Motion Permission Logic
   const requestMotionPermission = async () => {
     if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
       try {
@@ -172,19 +171,18 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
           window.addEventListener('deviceorientation', handleOrientation);
         }
       } catch (e) {
-        console.error('DeviceOrientation permission request failed:', e);
+        console.error('Motion permission failed:', e);
       }
     } else {
-      // Standard browsers
       window.addEventListener('deviceorientation', handleOrientation);
+      setNeedsMotionPermission(false);
     }
   };
 
   const handleOrientation = (e: DeviceOrientationEvent) => {
     if (e.gamma !== null) {
-      // Gamma is left-to-right tilt in degrees [-90, 90]
-      // We clamp and normalize it
-      const tilt = Math.max(-30, Math.min(30, e.gamma));
+      // Gamma is left/right tilt [-90, 90]
+      const tilt = Math.max(-45, Math.min(45, e.gamma));
       deviceTiltRef.current = tilt;
     }
   };
@@ -195,7 +193,7 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     
-    // Check if motion permission is needed (iOS 13+)
+    // Auto-check motion permission need
     if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
       setNeedsMotionPermission(true);
     } else {
@@ -236,41 +234,40 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
       if (keysPressed.current.has('arrowright') || keysPressed.current.has('d')) moveDir += 1;
 
       if (moveDir !== 0) {
-        const moveSpeed = 85;
+        const moveSpeed = 100;
         const newX = playerXRef.current + moveDir * moveSpeed * dt;
         playerXRef.current = Math.max(10, Math.min(90, newX));
         setPlayerX(playerXRef.current);
-        setPlayerTilt(moveDir * 20 + deviceTiltRef.current);
-      } else {
-        // Smoothly blend the artificial tilt and device tilt
-        setPlayerTilt(prev => (prev * 0.85) + (deviceTiltRef.current * 0.15));
       }
 
-      const currentDifficulty = 1 + (scoreRef.current / 12000);
-      const baseSpeed = 240 * currentDifficulty;
-      scoreRef.current += dt * (baseSpeed / 5);
+      // Smoothly interpolate tilt visual for ship
+      const targetTilt = (moveDir * 25) + deviceTiltRef.current;
+      smoothedTiltRef.current += (targetTilt - smoothedTiltRef.current) * 0.15;
+      setPlayerTilt(smoothedTiltRef.current);
+
+      const currentDifficulty = 1 + (scoreRef.current / 15000);
+      const baseSpeed = 260 * currentDifficulty;
+      scoreRef.current += dt * (baseSpeed / 6);
       setScore(Math.floor(scoreRef.current));
       
-      const warp = Math.floor(scoreRef.current / 3000) % 2 === 1;
+      const warp = Math.floor(scoreRef.current / 4000) % 2 === 1;
       setIsWarping(warp);
-      setParallaxY(prev => (prev + baseSpeed * dt * 0.6) % 1000);
+      setParallaxY(prev => (prev + baseSpeed * dt * 0.7) % 1000);
 
       if (shieldRef.current > 0) {
         shieldRef.current -= dt;
         setShieldActive(Math.max(0, shieldRef.current));
       }
 
-      // Update Particles
       particlesRef.current = particlesRef.current
         .map(p => ({ 
           ...p, 
           x: p.type === 'speedline' ? p.x : p.x + p.vx * dt * 10, 
           y: p.y + p.vy * dt * 10, 
-          life: p.life - dt * (p.type === 'speedline' ? 4 : 2.5) 
+          life: p.life - dt * (p.type === 'speedline' ? 5 : 3) 
         }))
         .filter(p => p.life > 0);
 
-      // Speed-reactive particles
       if (Math.random() > (warp ? 0.05 : 0.4)) {
         spawnParticle(
           playerXRef.current + (Math.random() - 0.5) * 6, 
@@ -282,31 +279,22 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
         );
       }
 
-      // High-speed lines when warping
-      if (warp && Math.random() > 0.7) {
-        spawnParticle(
-          Math.random() * 100,
-          -10,
-          '#ffffff',
-          currentDifficulty,
-          0,
-          'speedline'
-        );
+      if (warp && Math.random() > 0.6) {
+        spawnParticle(Math.random() * 100, -10, '#ffffff', currentDifficulty, 0, 'speedline');
       }
 
-      // Update Entities
       const nextEntities = entitiesRef.current
-        .map(e => ({ ...e, y: e.y + (baseSpeed * e.speedMult) * dt * 0.18 }))
+        .map(e => ({ ...e, y: e.y + (baseSpeed * e.speedMult) * dt * 0.2 }))
         .filter(e => e.y < 120);
 
-      const spawnThreshold = Math.max(15, 30 - (scoreRef.current / 500));
-      if (nextEntities.length < 7 && (nextEntities.length === 0 || nextEntities[nextEntities.length - 1].y > spawnThreshold)) {
+      const spawnThreshold = Math.max(12, 28 - (scoreRef.current / 600));
+      if (nextEntities.length < 8 && (nextEntities.length === 0 || nextEntities[nextEntities.length - 1].y > spawnThreshold)) {
         nextEntities.push(spawnEntity());
       }
 
       const px = playerXRef.current;
-      const pW = 4.8;
-      const pH = 4.5;
+      const pW = 5.0;
+      const pH = 4.8;
       const pY = 82;
 
       let foundNearMiss = false;
@@ -324,12 +312,12 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
               triggerShake(20);
             } else endGame();
           } else if (e.type === 'core') {
-            scoreRef.current += 2000;
+            scoreRef.current += 1500;
             e.y = 200;
             audio.playEffect(1200, 'triangle', 0.1);
           } else if (e.type === 'shield') {
-            shieldRef.current = 6.0;
-            setShieldActive(6.0);
+            shieldRef.current = 7.0;
+            setShieldActive(7.0);
             e.y = 200;
             audio.playEffect(550, 'sine', 0.4);
           }
@@ -338,14 +326,14 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
           const distToRight = Math.abs((px + pW) - e.x);
           const minHozDist = Math.min(distToLeft, distToRight);
           
-          if (minHozDist < 4.2) {
+          if (minHozDist < 4.5) {
              if (!nearMissMsg) {
-                setDodgeFeedback({ x: px, y: pY - 10, text: 'PERFECT DODGE!' });
+                setDodgeFeedback({ x: px, y: pY - 10, text: 'NEXUS DODGE!' });
                 setTimeout(() => setDodgeFeedback(null), 800);
              }
-             scoreRef.current += 30; 
+             scoreRef.current += 50; 
              foundNearMiss = true;
-             if (Math.random() > 0.3) spawnParticle(px + (distToLeft < distToRight ? -pW : pW), pY, '#06b6d4', 3.0, 0, 'spark');
+             if (Math.random() > 0.4) spawnParticle(px + (distToLeft < distToRight ? -pW : pW), pY, '#06b6d4', 3.5, 0, 'spark');
           }
         }
       });
@@ -364,7 +352,7 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
     };
   }, [isPlaying, spawnEntity, endGame, nearMissMsg]);
 
-  // Handle Relative Swipe Input for Mobile
+  // Enhanced Mobile Relative Swipe Control
   const handleTouchStart = (e: React.TouchEvent) => {
     touchLastX.current = e.touches[0].clientX;
   };
@@ -374,16 +362,13 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
     const currentTouchX = e.touches[0].clientX;
     const deltaX = currentTouchX - touchLastX.current;
     
-    // Scale delta to game width
+    // Scale delta to game width coordinate space
     const rect = e.currentTarget.getBoundingClientRect();
-    const movementX = (deltaX / rect.width) * 100;
+    const movementX = (deltaX / rect.width) * 110; // Slightly amplified for sensitivity
     
     const newX = Math.max(10, Math.min(90, playerXRef.current + movementX));
     playerXRef.current = newX;
     setPlayerX(newX);
-    
-    // Dynamic tilt based on swipe speed/direction
-    setPlayerTilt(deltaX * 0.8 + deviceTiltRef.current);
     
     touchLastX.current = currentTouchX;
   };
@@ -392,69 +377,51 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
     touchLastX.current = null;
   };
 
-  // Keep mouse follow for desktop
   const handleMouseMove = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const clampedX = Math.max(10, Math.min(90, x));
-    setPlayerTilt((clampedX - playerXRef.current) * 3 + deviceTiltRef.current);
     playerXRef.current = clampedX;
     setPlayerX(clampedX);
   };
 
   return (
     <div 
-      className={`relative w-full max-w-lg h-[650px] rounded-[3.5rem] overflow-hidden cursor-none shadow-2xl mx-auto border-4 border-white/15 transition-all duration-700 ${isWarping ? 'brightness-125 saturate-150' : ''}`}
+      className={`relative w-full max-w-lg h-[650px] rounded-[3.5rem] overflow-hidden cursor-none shadow-2xl mx-auto border-4 border-white/10 transition-all duration-700 ${isWarping ? 'brightness-125 saturate-150' : ''}`}
       style={{ transform: `translate(${Math.random() * shake}px, ${Math.random() * shake}px)`, perspective: '1400px' }}
       onMouseMove={handleMouseMove}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Background Multi-layered Parallax */}
       <div className={`absolute inset-0 transition-colors duration-1000 ${isWarping ? 'bg-indigo-950' : 'bg-[#020617]'}`} />
       
-      {/* Layer 1: Stars */}
-      <div className="absolute inset-[-50%] opacity-25 pointer-events-none" 
+      <div className="absolute inset-[-50%] opacity-20 pointer-events-none" 
            style={{ 
              backgroundImage: 'radial-gradient(1.5px 1.5px at 20px 30px, #fff, rgba(0,0,0,0)), radial-gradient(1px 1px at 80px 120px, #fff, rgba(0,0,0,0))',
-             backgroundSize: '250px 250px',
-             transform: `translateY(${parallaxY * 0.15}px)`
+             backgroundSize: '200px 200px',
+             transform: `translateY(${parallaxY * 0.2}px)`
            }} 
       />
 
-      {/* Layer 2: Distant Buildings/Structures */}
-      <div className="absolute inset-x-0 bottom-0 top-0 opacity-15 pointer-events-none"
+      <div className="absolute inset-x-0 bottom-0 top-0 opacity-10 pointer-events-none"
            style={{
              backgroundImage: 'linear-gradient(to top, #4338ca 0%, transparent 60%)',
-             backgroundSize: '400px 100%',
              transform: `translateY(${parallaxY * 0.4}px)`
            }}>
         <div className="absolute inset-0 bg-grid-white/5" style={{ backgroundSize: '100px 200px' }} />
       </div>
 
-      {/* Nebula Gloom */}
-      <div className={`absolute inset-0 transition-all duration-1000 ${isWarping ? 'opacity-40 mix-blend-screen' : 'opacity-15'}`} 
-           style={{ 
-             background: 'radial-gradient(circle at 50% 50%, #6366f1 0%, #a855f7 40%, transparent 80%)',
-             filter: 'blur(100px)',
-             transform: `translateY(${parallaxY * 0.3}px)`
-           }} 
-      />
-
-      {/* Grid Floor with Perspective */}
       <div className="absolute inset-0 origin-bottom" style={{ transform: 'rotateX(75deg)' }}>
         <div 
-          className={`absolute inset-[-200%] transition-opacity duration-1000 ${isWarping ? 'bg-grid-indigo-400/40' : 'bg-grid-indigo-500/10'}`} 
+          className={`absolute inset-[-200%] transition-opacity duration-1000 ${isWarping ? 'bg-grid-indigo-400/30' : 'bg-grid-indigo-500/5'}`} 
           style={{ 
-            backgroundSize: '45px 45px',
+            backgroundSize: '50px 50px',
             transform: `translateY(${parallaxY}px)`
           }} 
         />
-        <div className={`absolute inset-0 bg-gradient-to-t from-indigo-500/50 to-transparent transition-all duration-1000 ${isWarping ? 'opacity-100 scale-110' : 'opacity-0'}`} />
       </div>
 
-      {/* Reactive Particles & Speed Lines */}
       {particles.map(p => (
         <div 
           key={p.id}
@@ -463,143 +430,104 @@ const BlitzRunner: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolea
             left: `${p.x}%`, 
             top: `${p.y}%`, 
             width: p.type === 'speedline' ? '1px' : `${p.size}px`, 
-            height: p.type === 'speedline' ? '60px' : `${p.size}px`, 
+            height: p.type === 'speedline' ? '80px' : `${p.size}px`, 
             backgroundColor: p.color,
             opacity: p.life,
-            boxShadow: p.type === 'speedline' ? `0 0 10px white` : `0 0 ${p.size * 3}px ${p.color}`,
+            boxShadow: p.type === 'speedline' ? `0 0 10px white` : `0 0 ${p.size * 2}px ${p.color}`,
             transform: p.type === 'speedline' ? 'translate(-50%, -100%)' : 'translate(-50%, -50%)',
             zIndex: 5
           }}
         />
       ))}
 
-      {/* UI Elements */}
       <div className="absolute top-10 left-8 right-8 z-50 flex justify-between items-start pointer-events-none">
         <div className="flex flex-col">
-          <span className="text-[10px] text-slate-500 uppercase font-black tracking-[0.5em] mb-1">Blitz Vector</span>
-          <p className={`text-6xl font-black italic tracking-tighter tabular-nums drop-shadow-2xl transition-all duration-300 ${nearMissMsg ? 'text-cyan-400 scale-110' : (isWarping ? 'text-indigo-400' : 'text-white')}`}>
-            {score.toLocaleString()}<span className="text-xl opacity-40 ml-1">m</span>
+          <span className="text-[10px] text-slate-500 uppercase font-black tracking-[0.4em] mb-1">Blitz Sector</span>
+          <p className={`text-6xl font-black italic tracking-tighter tabular-nums drop-shadow-2xl transition-all duration-300 ${nearMissMsg ? 'text-cyan-400 scale-105' : (isWarping ? 'text-indigo-400' : 'text-white')}`}>
+            {score.toLocaleString()}
           </p>
-          {nearMissMsg && (
-            <div className="flex items-center gap-2 mt-3 px-4 py-1.5 bg-cyan-500/20 border border-cyan-400/40 rounded-xl animate-pulse">
-              <i className="fas fa-bolt text-cyan-400 text-xs"></i>
-              <span className="text-[11px] font-black text-cyan-300 uppercase tracking-widest">FOCUS ACCELERATED</span>
-            </div>
-          )}
         </div>
 
         {shieldActive > 0 && (
-          <div className="px-6 py-2.5 rounded-2xl border-2 border-cyan-400/60 bg-cyan-400/25 backdrop-blur-2xl animate-bounce flex items-center gap-3 shadow-[0_0_30px_rgba(34,211,238,0.3)]">
-            <i className="fas fa-shield-halved text-cyan-300 text-sm"></i>
-            <span className="text-[12px] font-black text-cyan-100 uppercase tracking-[0.2em]">{shieldActive.toFixed(1)}s</span>
+          <div className="px-6 py-2.5 rounded-2xl border-2 border-cyan-400/60 bg-cyan-400/20 backdrop-blur-xl animate-bounce flex items-center gap-3 shadow-[0_0_30px_rgba(34,211,238,0.2)]">
+            <i className="fas fa-shield-halved text-cyan-300"></i>
+            <span className="text-sm font-black text-cyan-100 uppercase tracking-widest">{shieldActive.toFixed(1)}s</span>
           </div>
         )}
       </div>
 
-      {/* Motion Permission Requester Overlay */}
-      {needsMotionPermission && !isGameOverRef.current && (
-        <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-md p-8 text-center pointer-events-auto">
-          <i className="fas fa-compass text-indigo-400 text-4xl mb-4 animate-bounce"></i>
-          <h3 className="text-xl font-black text-white uppercase italic mb-2">Enable Cockpit Tilt</h3>
-          <p className="text-slate-300 text-xs mb-6 max-w-xs">Allow motion access to visually tilt your ship by moving your device.</p>
+      {needsMotionPermission && (
+        <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-md p-8 text-center pointer-events-auto">
+          <div className="w-16 h-16 bg-indigo-600/20 rounded-full flex items-center justify-center text-indigo-400 text-3xl mb-6 border border-indigo-400/30">
+             <i className="fas fa-mobile-screen-button animate-bounce"></i>
+          </div>
+          <h3 className="text-2xl font-black text-white uppercase italic mb-2 tracking-tighter">Enable Cockpit Tilt</h3>
+          <p className="text-slate-400 text-xs mb-8 max-w-xs leading-relaxed">Allow cockpit stabilization to use your device's physical orientation to bank and roll the ship.</p>
           <button 
             onClick={requestMotionPermission}
-            className="px-8 py-3 bg-indigo-600 text-white font-black uppercase text-xs rounded-2xl shadow-xl shadow-indigo-500/40 active:scale-95 transition-all"
+            className="px-10 py-4 bg-indigo-600 text-white font-black uppercase text-xs rounded-2xl shadow-xl shadow-indigo-500/30 active:scale-95 transition-all"
           >
-            Allow Motion
+            Authorize Motion
           </button>
         </div>
       )}
 
-      {/* Dodge Text Pop-ups */}
       {dodgeFeedback && (
         <div 
           className="absolute z-[120] pointer-events-none animate-in fade-out slide-out-to-top-12 duration-700"
           style={{ left: `${dodgeFeedback.x}%`, top: `${dodgeFeedback.y}%` }}
         >
-          <span className="text-2xl font-black italic text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.8)] uppercase tracking-tighter whitespace-nowrap">
+          <span className="text-2xl font-black italic text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.6)] uppercase tracking-tighter whitespace-nowrap">
             {dodgeFeedback.text}
           </span>
         </div>
       )}
 
-      {/* Game Entities */}
       {entities.map((e) => (
         <div 
           key={e.id}
           className={`absolute rounded-2xl transition-all duration-75 ${
-            e.type === 'obstacle' ? 'bg-gradient-to-b from-rose-500 to-rose-950 border-t-2 border-rose-400/50 shadow-[0_0_25px_rgba(244,63,94,0.4)]' :
-            e.type === 'core' ? 'bg-indigo-500 animate-spin rounded-xl shadow-[0_0_40px_rgba(99,102,241,0.8)]' :
-            'bg-cyan-400 animate-pulse rounded-full shadow-[0_0_50px_rgba(34,211,238,0.8)]'
+            e.type === 'obstacle' ? 'bg-gradient-to-b from-rose-500 to-rose-950 border-t-2 border-rose-400/40 shadow-[0_0_20px_rgba(244,63,94,0.3)]' :
+            e.type === 'core' ? 'bg-indigo-500 animate-spin rounded-xl shadow-[0_0_30px_rgba(99,102,241,0.6)]' :
+            'bg-cyan-400 animate-pulse rounded-full shadow-[0_0_40px_rgba(34,211,238,0.6)]'
           }`}
           style={{ 
             left: `${e.x}%`, top: `${e.y}%`, width: `${e.w}%`, height: `${e.h}%`,
-            transform: `perspective(500px) rotateX(${e.y / 2.5}deg) scale(${nearMissMsg && e.y > 75 ? 1.1 : 1})`,
+            transform: `perspective(500px) rotateX(${e.y / 2.5}deg)`,
             zIndex: Math.floor(e.y)
           }}
         >
           {e.type !== 'obstacle' && (
-            <div className="absolute inset-0 flex items-center justify-center text-white text-[12px]">
+            <div className="absolute inset-0 flex items-center justify-center text-white text-[10px]">
               <i className={`fas ${e.type === 'core' ? 'fa-bolt' : 'fa-shield'}`}></i>
             </div>
           )}
-          {e.type === 'obstacle' && <div className="absolute inset-0 bg-grid-white/5 opacity-40 pointer-events-none rounded-2xl" />}
         </div>
       ))}
 
-      {/* Player Ship */}
       <div 
-        className="absolute bottom-[10%] w-20 h-20 z-[110] transition-all duration-100"
+        className="absolute bottom-[10%] w-20 h-20 z-[110] transition-transform duration-100 ease-out"
         style={{ 
           left: `${playerX}%`, 
-          transform: `translateX(-50%) rotateY(${playerTilt}deg) rotateZ(${playerTilt / 5}deg) scale(${nearMissMsg ? 1.2 : 1})` 
+          transform: `translateX(-50%) rotateY(${playerTilt}deg) rotateZ(${playerTilt / 4}deg) scale(${nearMissMsg ? 1.15 : 1})` 
         }}
       >
-        {/* Glow Aura - Chrome Aberration during Dodge */}
-        <div className={`absolute inset-[-80%] rounded-full blur-[40px] transition-all duration-500 ${shieldActive > 0 ? 'bg-cyan-400/70 scale-150' : (isWarping ? 'bg-indigo-500/50' : (nearMissMsg ? 'bg-cyan-500/40 animate-pulse' : 'bg-transparent'))}`} />
-        
-        <div className={`relative w-full h-full bg-gradient-to-b from-slate-100 to-slate-400 dark:from-indigo-300 dark:to-indigo-700 rounded-3xl shadow-2xl flex flex-col items-center justify-center border-2 border-white/40 overflow-hidden ${nearMissMsg ? 'ring-4 ring-cyan-400 animate-pulse' : ''}`}>
-          <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/35 skew-x-12" />
+        <div className={`absolute inset-[-60%] rounded-full blur-[30px] transition-all duration-500 ${shieldActive > 0 ? 'bg-cyan-400/60 scale-125' : (isWarping ? 'bg-indigo-500/40' : (nearMissMsg ? 'bg-cyan-500/30' : 'bg-transparent'))}`} />
+        <div className={`relative w-full h-full bg-gradient-to-b from-slate-200 to-slate-400 dark:from-indigo-300 dark:to-indigo-800 rounded-3xl shadow-2xl flex flex-col items-center justify-center border-2 border-white/30 overflow-hidden ${nearMissMsg ? 'ring-2 ring-cyan-400 animate-pulse' : ''}`}>
+          <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/20 skew-x-12" />
           <i className="fas fa-fighter-jet text-slate-900 dark:text-white text-4xl transform -rotate-45"></i>
-          
-          <div className="absolute -bottom-4 flex gap-6">
-             <div className={`w-3 h-12 bg-cyan-400 blur-md rounded-full animate-pulse shadow-[0_0_20px_cyan] transition-all ${isWarping ? 'h-24 brightness-200' : ''}`} />
-             <div className={`w-3 h-12 bg-cyan-400 blur-md rounded-full animate-pulse shadow-[0_0_20px_cyan] transition-all ${isWarping ? 'h-24 brightness-200' : ''}`} />
+          <div className="absolute -bottom-4 flex gap-4">
+             <div className={`w-2 h-10 bg-cyan-400 blur-md rounded-full animate-pulse transition-all ${isWarping ? 'h-20' : ''}`} />
+             <div className={`w-2 h-10 bg-cyan-400 blur-md rounded-full animate-pulse transition-all ${isWarping ? 'h-20' : ''}`} />
           </div>
         </div>
-        
-        {/* Motion Ghosting on high movement */}
-        {Math.abs(playerTilt) > 15 && (
-           <div className="absolute inset-0 bg-white/20 blur-xl scale-125 -z-10 animate-pulse rounded-3xl" />
-        )}
       </div>
 
-      {/* Screen Effects Layer */}
       <div className="absolute inset-0 pointer-events-none z-[130] overflow-hidden">
         <div className={`absolute inset-0 transition-opacity duration-500 ${nearMissMsg ? 'bg-cyan-500/5' : 'bg-transparent'}`} />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.08)_50%)] bg-[length:100%_3px]" />
-        <div className={`absolute inset-0 shadow-[inset_0_0_180px_rgba(0,0,0,0.9)] transition-all duration-1000 ${isWarping ? 'opacity-50' : 'opacity-100'}`} />
-        
-        {/* Chromatic Aberration during Dodge */}
-        {nearMissMsg && (
-          <div className="absolute inset-0 border-[10px] border-cyan-400/20 blur-md animate-pulse" />
-        )}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.05)_50%)] bg-[length:100%_2px]" />
+        <div className={`absolute inset-0 shadow-[inset_0_0_150px_rgba(0,0,0,0.8)] transition-all duration-1000 ${isWarping ? 'opacity-40' : 'opacity-80'}`} />
       </div>
-
-      <style>{`
-        .bg-grid-white\/5 {
-          background-image: linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
-        }
-        .bg-grid-white\/10 {
-          background-image: linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.1) 1px, transparent 1px);
-        }
-        .bg-grid-indigo-500\/10 {
-          background-image: linear-gradient(to right, rgba(99,102,241,0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(99,102,241,0.1) 1px, transparent 1px);
-        }
-        .bg-grid-indigo-400\/40 {
-          background-image: linear-gradient(to right, rgba(129,140,248,0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(129,140,248,0.4) 1px, transparent 1px);
-        }
-      `}</style>
     </div>
   );
 };
