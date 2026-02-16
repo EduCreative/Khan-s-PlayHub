@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 const QUESTIONS = [
@@ -146,42 +147,55 @@ const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: bo
   };
 
   return (
-    <div className="flex flex-col items-center gap-10 w-full max-w-lg px-6 select-none animate-in fade-in zoom-in duration-500">
-      <div className="w-full flex justify-between items-center glass-card p-6 rounded-3xl border-emerald-500/20 shadow-xl">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Integrity</span>
-          <span className={`text-3xl font-black tabular-nums ${timeLeft < 10 ? 'text-rose-500 animate-pulse' : 'text-emerald-500'}`}>{timeLeft}s</span>
-        </div>
-        <div className="text-right flex flex-col">
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Lexicon Rank</span>
-          <span className="text-3xl font-black text-indigo-400 italic tabular-nums">{score.toLocaleString()}</span>
-        </div>
-      </div>
+    <div className="relative flex flex-col items-center gap-10 w-full max-w-lg px-6 py-12 select-none overflow-hidden rounded-[3rem]">
+      {/* Background Layer */}
+      <div 
+        className="absolute inset-0 z-0 opacity-20 dark:opacity-40"
+        style={{
+          backgroundImage: 'url(https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&q=80&w=800)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      />
+      <div className="absolute inset-0 bg-slate-50/70 dark:bg-[#0f172a]/80 backdrop-blur-md z-[1]" />
 
-      <div className="w-full text-center space-y-8">
-        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Repair the Syntax Rift</p>
-        <div className="glass-card p-8 rounded-[2.5rem] border-2 border-emerald-500/10 min-h-[160px] flex items-center justify-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-emerald-500/5 pointer-events-none" />
-          <h2 className="text-2xl md:text-3xl font-bold italic dark:text-white text-slate-800 leading-relaxed z-10 animate-in fade-in slide-in-from-top-2">
-            "{current.sentence}"
-          </h2>
+      <div className="relative z-10 w-full flex flex-col items-center gap-10">
+        <div className="w-full flex justify-between items-center glass-card p-6 rounded-3xl border-emerald-500/20 shadow-xl backdrop-blur-xl bg-white/5">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Integrity</span>
+            <span className={`text-3xl font-black tabular-nums ${timeLeft < 10 ? 'text-rose-500 animate-pulse' : 'text-emerald-500'}`}>{timeLeft}s</span>
+          </div>
+          <div className="text-right flex flex-col">
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Lexicon Rank</span>
+            <span className="text-3xl font-black text-indigo-400 italic tabular-nums">{score.toLocaleString()}</span>
+          </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-2 gap-4 w-full">
-        {current.options.map((opt, i) => (
-          <button
-            key={i}
-            onClick={() => handleChoice(opt)}
-            className={`
-              h-20 glass-card rounded-2xl flex items-center justify-center text-xl font-black transition-all border-2
-              ${feedback === 'correct' && opt === current.answer ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_20px_emerald]' : ''}
-              ${feedback === 'wrong' && opt !== current.answer ? 'opacity-50' : 'hover:scale-105 active:scale-95 border-emerald-500/10'}
-            `}
-          >
-            {opt}
-          </button>
-        ))}
+        <div className="w-full text-center space-y-8">
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Repair the Syntax Rift</p>
+          <div className="glass-card p-8 rounded-[2.5rem] border-2 border-emerald-500/10 min-h-[160px] flex items-center justify-center relative overflow-hidden backdrop-blur-2xl bg-white/5">
+            <div className="absolute inset-0 bg-emerald-500/5 pointer-events-none" />
+            <h2 className="text-2xl md:text-3xl font-bold italic dark:text-white text-slate-800 leading-relaxed z-10 animate-in fade-in slide-in-from-top-2">
+              "{current.sentence}"
+            </h2>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 w-full">
+          {current.options.map((opt, i) => (
+            <button
+              key={i}
+              onClick={() => handleChoice(opt)}
+              className={`
+                h-20 glass-card rounded-2xl flex items-center justify-center text-xl font-black transition-all border-2 backdrop-blur-md
+                ${feedback === 'correct' && opt === current.answer ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_20px_emerald]' : 'bg-white/5'}
+                ${feedback === 'wrong' && opt !== current.answer ? 'opacity-50' : 'hover:scale-105 active:scale-95 border-emerald-500/10'}
+              `}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -162,76 +162,89 @@ const SudokuLite: React.FC<{ onGameOver: (s: number, v: boolean) => void; isPlay
   }
 
   return (
-    <div className="flex flex-col items-center gap-6 w-full max-w-lg px-4 select-none animate-in fade-in zoom-in duration-500">
-      <div className="w-full flex justify-between items-center glass-card p-5 rounded-3xl border-slate-500/20 shadow-xl border-2 transition-colors">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-black text-slate-500 uppercase">Timer</span>
-          <span className="text-2xl font-black text-indigo-500 tabular-nums">{time}s</span>
-        </div>
-        <div className="px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">
-          <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{difficulty} Mode</span>
-        </div>
-        <div className="text-right flex flex-col">
-          <span className="text-[10px] font-black text-slate-500 uppercase">Target</span>
-          <span className="text-2xl font-black text-slate-400 italic">Nexus Clear</span>
-        </div>
-      </div>
+    <div className="relative flex flex-col items-center gap-6 w-full max-w-lg px-4 py-8 select-none overflow-hidden rounded-[3rem]">
+      {/* Background Layer */}
+      <div 
+        className="absolute inset-0 z-0 opacity-15 dark:opacity-30"
+        style={{
+          backgroundImage: 'url(https://images.unsplash.com/photo-1557682250-33bd709cbe85?auto=format&fit=crop&q=80&w=800)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      />
+      <div className="absolute inset-0 bg-slate-50/80 dark:bg-[#0f172a]/80 backdrop-blur-md z-[1]" />
 
-      <div className="relative w-full aspect-square bg-slate-900 rounded-[2rem] border-4 border-slate-800 p-1 shadow-2xl overflow-hidden transition-all duration-500">
-        <div className="grid grid-cols-9 h-full w-full">
-          {grid.map((row, r) => row.map((cell, c) => {
-            const isSel = selectedCell?.[0] === r && selectedCell?.[1] === c;
-            const inNeighborhood = isNeighborhood(r, c);
-            const hasConflict = isConflict(r, c);
-            const isBlockEndR = (r + 1) % 3 === 0 && r !== 8;
-            const isBlockEndC = (c + 1) % 3 === 0 && c !== 8;
-            
+      <div className="relative z-10 w-full flex flex-col items-center gap-6">
+        <div className="w-full flex justify-between items-center glass-card p-5 rounded-3xl border-slate-500/20 shadow-xl border-2 backdrop-blur-xl bg-white/5">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-black text-slate-500 uppercase">Timer</span>
+            <span className="text-2xl font-black text-indigo-500 tabular-nums">{time}s</span>
+          </div>
+          <div className="px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">
+            <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{difficulty} Mode</span>
+          </div>
+          <div className="text-right flex flex-col">
+            <span className="text-[10px] font-black text-slate-500 uppercase">Target</span>
+            <span className="text-2xl font-black text-slate-400 italic">Nexus Clear</span>
+          </div>
+        </div>
+
+        <div className="relative w-full aspect-square bg-slate-900/40 backdrop-blur-xl rounded-[2rem] border-4 border-slate-800 p-1 shadow-2xl overflow-hidden transition-all duration-500">
+          <div className="grid grid-cols-9 h-full w-full">
+            {grid.map((row, r) => row.map((cell, c) => {
+              const isSel = selectedCell?.[0] === r && selectedCell?.[1] === c;
+              const inNeighborhood = isNeighborhood(r, c);
+              const hasConflict = isConflict(r, c);
+              const isBlockEndR = (r + 1) % 3 === 0 && r !== 8;
+              const isBlockEndC = (c + 1) % 3 === 0 && c !== 8;
+              
+              return (
+                <button 
+                  key={`${r}-${c}`} 
+                  onClick={() => !initial[r][c] && setSelectedCell([r, c])} 
+                  className={`
+                    relative flex items-center justify-center text-lg md:text-xl font-black transition-all border-[0.5px] border-white/5
+                    ${initial[r][c] ? 'text-slate-500 bg-white/5' : 'text-indigo-400 hover:bg-indigo-500/10'}
+                    ${inNeighborhood && !isSel ? 'bg-indigo-500/5' : ''}
+                    ${isSel ? 'bg-indigo-500/30 ring-2 ring-indigo-500 z-10' : ''}
+                    ${hasConflict ? 'text-rose-500 bg-rose-500/10 animate-pulse' : ''}
+                    ${isBlockEndR ? 'border-b-2 border-b-white/20' : ''} 
+                    ${isBlockEndC ? 'border-r-2 border-r-white/20' : ''}
+                  `}
+                >
+                  {cell !== 0 ? cell : ''}
+                </button>
+              );
+            }))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-9 gap-2 w-full">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => {
+            const isComplete = (numberCounts[num] || 0) >= 9;
             return (
               <button 
-                key={`${r}-${c}`} 
-                onClick={() => !initial[r][c] && setSelectedCell([r, c])} 
+                key={num} 
+                onClick={() => setNumber(num)} 
                 className={`
-                  relative flex items-center justify-center text-lg md:text-xl font-black transition-all border-[0.5px] border-white/5
-                  ${initial[r][c] ? 'text-slate-500 bg-white/5' : 'text-indigo-400 hover:bg-indigo-500/10'}
-                  ${inNeighborhood && !isSel ? 'bg-indigo-500/5' : ''}
-                  ${isSel ? 'bg-indigo-500/30 ring-2 ring-indigo-500 z-10' : ''}
-                  ${hasConflict ? 'text-rose-500 bg-rose-500/10 animate-pulse' : ''}
-                  ${isBlockEndR ? 'border-b-2 border-b-white/20' : ''} 
-                  ${isBlockEndC ? 'border-r-2 border-r-white/20' : ''}
+                  aspect-square glass-card rounded-xl flex flex-col items-center justify-center transition-all shadow-lg border-2 backdrop-blur-md
+                  ${isComplete 
+                    ? 'opacity-30 border-slate-500 grayscale bg-white/5' 
+                    : 'hover:scale-110 active:scale-95 border-indigo-500/20 text-slate-800 dark:text-white bg-white/10'
+                  }
                 `}
               >
-                {cell !== 0 ? cell : ''}
+                <span className="text-lg md:text-xl font-black leading-none">{num}</span>
+                <span className="text-[8px] font-black opacity-40 mt-0.5">{numberCounts[num] || 0}/9</span>
               </button>
             );
-          }))}
+          })}
         </div>
-      </div>
 
-      <div className="grid grid-cols-9 gap-2 w-full">
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => {
-          const isComplete = (numberCounts[num] || 0) >= 9;
-          return (
-            <button 
-              key={num} 
-              onClick={() => setNumber(num)} 
-              className={`
-                aspect-square glass-card rounded-xl flex flex-col items-center justify-center transition-all shadow-lg border-2
-                ${isComplete 
-                  ? 'opacity-30 border-slate-500 grayscale' 
-                  : 'hover:scale-110 active:scale-95 border-indigo-500/20 text-slate-800 dark:text-white'
-                }
-              `}
-            >
-              <span className="text-lg md:text-xl font-black leading-none">{num}</span>
-              <span className="text-[8px] font-black opacity-40 mt-0.5">{numberCounts[num] || 0}/9</span>
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="flex items-center gap-3 text-slate-500 dark:text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] bg-slate-100 dark:bg-white/5 px-6 py-2 rounded-full border border-slate-200 dark:border-white/5 transition-colors">
-         <i className="fas fa-lightbulb text-indigo-500"></i>
-         <span>{difficulty === 'Easy' ? 'Conflicts & Neighborhoods Visible' : difficulty === 'Medium' ? 'Neighborhoods Visible' : 'Pure Logic Mode'}</span>
+        <div className="flex items-center gap-3 text-slate-500 dark:text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] bg-slate-100 dark:bg-white/5 px-6 py-2 rounded-full border border-slate-200 dark:border-white/5 backdrop-blur-md">
+           <i className="fas fa-lightbulb text-indigo-500"></i>
+           <span>{difficulty === 'Easy' ? 'Conflicts & Neighborhoods Visible' : difficulty === 'Medium' ? 'Neighborhoods Visible' : 'Pure Logic Mode'}</span>
+        </div>
       </div>
     </div>
   );

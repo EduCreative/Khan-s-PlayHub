@@ -51,38 +51,62 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
   const particlesRef = useRef<Particle[]>([]);
   const blocksRef = useRef<Block[]>([]);
   
-  const themes = ['indigo', 'pink', 'emerald', 'cyan', 'amber'];
+  const themes = ['indigo', 'pink', 'emerald', 'cyan', 'amber', 'pixel'];
+
+  const getThemeColors = (index: number) => {
+    const theme = themes[index];
+    switch (theme) {
+      case 'indigo': return { primary: '#6366f1', secondary: '#818cf8' };
+      case 'pink': return { primary: '#ec4899', secondary: '#f472b6' };
+      case 'emerald': return { primary: '#10b981', secondary: '#34d399' };
+      case 'cyan': return { primary: '#06b6d4', secondary: '#22d3ee' };
+      case 'amber': return { primary: '#f59e0b', secondary: '#fbbf24' };
+      case 'pixel': return { primary: '#ef4444', secondary: '#f97316' };
+      default: return { primary: '#6366f1', secondary: '#818cf8' };
+    }
+  };
 
   const generatePool = useCallback(() => {
     const vowels = 'AEIOU';
     const consonants = 'BCDFGHJKLMNPQRSTVWXYZ';
-    const newPool = [];
+    const newPool: string[] = [];
     
-    // Check if we should inject bounty letters
     const shouldInject = Math.random() > 0.4;
     const bountyChars = bounty.word.split('');
     
-    for (let i = 0; i < 4; i++) {
-      if (shouldInject && bountyChars.length > i) newPool.push(bountyChars[i]);
-      else newPool.push(vowels[Math.floor(Math.random() * vowels.length)]);
+    const vowelCount = 4;
+    const consonantCount = 6;
+
+    for (let i = 0; i < vowelCount; i++) {
+      if (shouldInject && bountyChars.some(c => vowels.includes(c))) {
+        const bountyVowels = bountyChars.filter(c => vowels.includes(c));
+        newPool.push(bountyVowels[Math.floor(Math.random() * bountyVowels.length)]);
+      } else {
+        newPool.push(vowels[Math.floor(Math.random() * vowels.length)]);
+      }
     }
-    for (let i = 0; i < 6; i++) {
-      const bIdx = i + 4;
-      if (shouldInject && bountyChars.length > bIdx) newPool.push(bountyChars[bIdx]);
-      else newPool.push(consonants[Math.floor(Math.random() * consonants.length)]);
+    
+    for (let i = 0; i < consonantCount; i++) {
+      if (shouldInject && bountyChars.some(c => consonants.includes(c))) {
+        const bountyConsonants = bountyChars.filter(c => consonants.includes(c));
+        newPool.push(bountyConsonants[Math.floor(Math.random() * bountyConsonants.length)]);
+      } else {
+        newPool.push(consonants[Math.floor(Math.random() * consonants.length)]);
+      }
     }
+    
     setPool(newPool.sort(() => Math.random() - 0.5));
   }, [bounty]);
 
   const spawnParticles = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const color = themes[themeIndex] === 'indigo' ? '#6366f1' : themes[themeIndex] === 'pink' ? '#ec4899' : '#10b981';
+    const { primary } = getThemeColors(themeIndex);
     for (let i = 0; i < 20; i++) {
       particlesRef.current.push({
         x: canvas.width / 2, y: canvas.height - 100,
         vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8 - 8,
-        life: 1, color
+        life: 1, color: primary
       });
     }
   };
@@ -90,12 +114,19 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
   const spawnBlock = (length: number, isMega: boolean = false) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const color = isMega ? '#fbbf24' : themes[(themeIndex + 1) % themes.length];
-    const hexColor = color === 'indigo' ? '#6366f1' : color === 'pink' ? '#ec4899' : color === 'emerald' ? '#10b981' : color;
+    
+    let blockColor: string;
+    if (isMega) {
+      blockColor = '#fbbf24'; // Always gold for bounty
+    } else {
+      const nextThemeColors = getThemeColors((themeIndex + 1) % themes.length);
+      blockColor = nextThemeColors.primary;
+    }
+
     blocksRef.current.push({
       y: -50,
       targetY: canvas.height - (blocksRef.current.length * 40) - 40,
-      color: hexColor,
+      color: blockColor,
       w: (isMega ? 200 : 120) + (length * 10),
       shake: isMega ? 30 : 10
     });
@@ -109,6 +140,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
       setTargetHeight(8);
       setStreak(0);
       setTime(90);
+      setThemeIndex(0);
       blocksRef.current = [];
       particlesRef.current = [];
       setBounty(BOUNTIES[Math.floor(Math.random() * BOUNTIES.length)]);
@@ -147,7 +179,11 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
         ctx.shadowBlur = 15;
         ctx.shadowColor = b.color;
         ctx.beginPath();
-        ctx.roundRect(-b.w / 2, 0, b.w, 35, 12);
+        if (ctx.roundRect) {
+            ctx.roundRect(-b.w / 2, 0, b.w, 35, 12);
+        } else {
+            ctx.rect(-b.w / 2, 0, b.w, 35);
+        }
         ctx.fill();
         ctx.fillStyle = 'white';
         ctx.beginPath();
@@ -170,14 +206,14 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
   }, [themeIndex]);
 
   const submitWord = () => {
-    const word = currentWord.map(i => i.char).join('');
+    const word = currentWord.map(i => i.char).join('').toUpperCase();
     if (word.length < 3) {
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 500);
       return;
     }
 
-    const isBounty = word === bounty.word;
+    const isBounty = word === bounty.word.toUpperCase();
     const isValid = isBounty || COMMON_WORDS.has(word);
 
     if (isValid) {
@@ -208,6 +244,8 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
     }
   };
 
+  const activeColors = getThemeColors(themeIndex);
+
   return (
     <div className="flex flex-col items-center justify-between w-full max-w-lg h-full px-4 py-8 select-none relative">
       {/* Bounty Overlay */}
@@ -226,11 +264,11 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
       <div className="w-full flex justify-between items-center z-20">
         <div className="flex flex-col">
           <span className="text-[10px] uppercase font-black text-slate-500 tracking-widest">Global Score</span>
-          <span className="text-3xl font-black italic text-indigo-500">{score.toLocaleString()}</span>
+          <span className="text-3xl font-black italic transition-colors" style={{ color: activeColors.primary }}>{score.toLocaleString()}</span>
         </div>
         <div className="text-center">
-          <div className="text-indigo-400 font-black text-xl tracking-tighter uppercase italic">Lvl {level}</div>
-          {streak > 2 && <div className="text-[10px] font-black bg-indigo-600 px-2 py-0.5 rounded-full uppercase italic animate-pulse">Streak x{streak}</div>}
+          <div className="font-black text-xl tracking-tighter uppercase italic opacity-80" style={{ color: activeColors.secondary }}>Lvl {level}</div>
+          {streak > 2 && <div className="text-[10px] font-black bg-white/10 px-2 py-0.5 rounded-full uppercase italic animate-pulse" style={{ color: activeColors.primary }}>Streak x{streak}</div>}
         </div>
         <div className="text-right">
           <span className="text-[10px] uppercase font-black text-slate-500 tracking-widest">Time</span>
@@ -244,16 +282,16 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
         <canvas ref={canvasRef} className="w-full h-full max-h-[50vh]" />
         
         <div className="absolute top-4 left-4 z-10">
-           <div className="flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase transition-colors bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+           <div className="flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase transition-colors bg-white/5 border border-white/10" style={{ color: activeColors.primary }}>
               <i className="fas fa-check-circle"></i>
               Nexus Lexicon Active
            </div>
         </div>
 
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 glass-card px-6 py-2 border-indigo-500/30 flex items-center gap-4 z-10">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 glass-card px-6 py-2 border-white/5 flex items-center gap-4 z-10">
           <div className="flex flex-col items-center">
             <span className="text-[10px] uppercase font-black text-slate-500">Tower Goal</span>
-            <span className="font-black text-xl text-indigo-500">{towerHeight}/{targetHeight}</span>
+            <span className="font-black text-xl" style={{ color: activeColors.primary }}>{towerHeight}/{targetHeight}</span>
           </div>
         </div>
       </div>
@@ -262,7 +300,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
         <div className={`glass-card h-20 flex items-center justify-center gap-2 p-2 border-2 transition-transform duration-75 relative ${isShaking ? 'animate-bounce border-rose-500/50' : 'border-white/5'}`}>
           <div className="flex items-center gap-2 min-h-[48px]">
             {currentWord.map((item, idx) => (
-              <div key={idx} className="w-10 h-10 flex items-center justify-center font-black text-xl bg-indigo-600 rounded-xl shadow-lg animate-in zoom-in duration-200">
+              <div key={idx} className="w-10 h-10 flex items-center justify-center font-black text-xl rounded-xl shadow-lg animate-in zoom-in duration-200 text-white" style={{ backgroundColor: activeColors.primary }}>
                 {item.char}
               </div>
             ))}
@@ -282,7 +320,8 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
                 key={idx}
                 disabled={isSelected}
                 onClick={() => setCurrentWord([...currentWord, { char: letter, index: idx }])}
-                className={`aspect-square glass-card rounded-2xl flex items-center justify-center text-2xl font-black uppercase transition-all ${isSelected ? 'opacity-20 scale-90' : 'hover:scale-105 active:scale-95 hover:border-indigo-500/50'}`}
+                className={`aspect-square glass-card rounded-2xl flex items-center justify-center text-2xl font-black uppercase transition-all ${isSelected ? 'opacity-20 scale-90' : 'hover:scale-105 active:scale-95'}`}
+                style={{ borderColor: !isSelected ? `${activeColors.primary}22` : undefined }}
               >
                 {letter}
               </button>
@@ -299,7 +338,8 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
           </button>
           <button 
             onClick={submitWord} 
-            className="col-span-2 glass-card h-14 bg-indigo-600 border-indigo-400 text-white font-black italic text-lg shadow-xl shadow-indigo-500/30 active:scale-95 transition-all uppercase flex items-center justify-center gap-2"
+            className="col-span-2 glass-card h-14 text-white font-black italic text-lg shadow-xl active:scale-95 transition-all uppercase flex items-center justify-center gap-2"
+            style={{ backgroundColor: activeColors.primary, boxShadow: `0 10px 20px -5px ${activeColors.primary}55` }}
           >
             CONSTRUCT <i className="fas fa-arrow-up"></i>
           </button>

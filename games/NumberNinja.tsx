@@ -85,57 +85,70 @@ const NumberNinja: React.FC<NumberNinjaProps> = ({ onGameOver, isPlaying }) => {
   };
 
   return (
-    <div className="flex flex-col items-center gap-8 w-full max-w-lg px-4 select-none">
-      <div className="flex justify-between w-full glass-card p-6 rounded-3xl border-indigo-500/20 transition-colors">
-        <div className="text-center">
-          <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Power</p>
-          <p className="text-2xl font-black text-cyan-500 dark:text-cyan-400 italic">x{Math.floor(score/1000) + 1}</p>
-        </div>
-        <div className="text-center">
-          <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Juice</p>
-          <p className="text-4xl font-black text-indigo-600 dark:text-indigo-400 italic drop-shadow-sm transition-colors">{score.toLocaleString()}</p>
-        </div>
-        <div className="text-center">
-          <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Limit</p>
-          <p className={`text-2xl font-black tabular-nums transition-colors ${timeLeft < 5 ? 'text-rose-500 animate-pulse' : 'text-slate-400 dark:text-slate-500'}`}>
-            {timeLeft}s
-          </p>
-        </div>
-      </div>
+    <div className="relative flex flex-col items-center gap-8 w-full max-w-lg px-4 py-12 select-none overflow-hidden rounded-[3rem]">
+      {/* Background Layer */}
+      <div 
+        className="absolute inset-0 z-0 opacity-20 dark:opacity-40"
+        style={{
+          backgroundImage: 'url(https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=80&w=800)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-50/80 dark:via-[#0f172a]/80 to-slate-50 dark:to-[#0f172a] z-[1]" />
 
-      <div className={`text-center py-16 transition-transform duration-75 ${isShaking ? 'animate-bounce translate-x-2' : ''}`}>
-        <h2 className={`text-8xl md:text-9xl font-black neon-text italic game-font transition-all duration-300 ${isShaking ? 'text-rose-500 scale-95' : 'dark:text-white text-slate-900'}`}>
-          {equation}
-        </h2>
-      </div>
+      <div className="relative z-10 w-full flex flex-col gap-8 items-center">
+        <div className="flex justify-between w-full glass-card p-6 rounded-3xl border-indigo-500/20 transition-colors backdrop-blur-xl bg-white/5 shadow-2xl">
+          <div className="text-center">
+            <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Power</p>
+            <p className="text-2xl font-black text-cyan-500 dark:text-cyan-400 italic">x{Math.floor(score/1000) + 1}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Juice</p>
+            <p className="text-4xl font-black text-indigo-600 dark:text-indigo-400 italic drop-shadow-sm transition-colors">{score.toLocaleString()}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Limit</p>
+            <p className={`text-2xl font-black tabular-nums transition-colors ${timeLeft < 5 ? 'text-rose-500 animate-pulse' : 'text-slate-400 dark:text-slate-500'}`}>
+              {timeLeft}s
+            </p>
+          </div>
+        </div>
 
-      <div className="grid grid-cols-3 gap-4 w-full">
-        {options.map((opt, i) => {
-          const isCorrect = feedback?.index === i && feedback.type === 'correct';
-          const isWrong = feedback?.index === i && feedback.type === 'wrong';
-          
-          return (
-            <button
-              key={i}
-              onClick={() => handleChoice(opt, i)}
-              className={`
-                group relative h-32 glass-card rounded-[2rem] flex items-center justify-center text-5xl font-black transition-all overflow-hidden border-2
-                ${isCorrect ? 'bg-emerald-500 border-emerald-400 scale-110 z-20 shadow-[0_0_40px_rgba(52,211,153,0.5)]' : ''}
-                ${isWrong ? 'bg-rose-500 border-rose-400 scale-95 shadow-[0_0_40px_rgba(244,63,94,0.5)]' : 'border-slate-200 dark:border-indigo-500/10 hover:border-indigo-500/40'}
-                ${!feedback ? 'hover:scale-105 active:scale-95' : ''}
-              `}
-              disabled={!!feedback}
-            >
-               <div className={`absolute inset-0 transition-colors ${!feedback ? 'bg-slate-100/50 dark:bg-white/5 group-hover:bg-indigo-500/10' : ''}`} />
-               <span className={`relative z-10 transition-colors ${isCorrect || isWrong ? 'text-white' : 'dark:text-white text-slate-900'}`}>{opt}</span>
-            </button>
-          );
-        })}
-      </div>
+        <div className={`text-center py-8 transition-transform duration-75 ${isShaking ? 'animate-bounce translate-x-2' : ''}`}>
+          <h2 className={`text-8xl md:text-9xl font-black neon-text italic game-font transition-all duration-300 ${isShaking ? 'text-rose-500 scale-95' : 'dark:text-white text-slate-900'}`}>
+            {equation}
+          </h2>
+        </div>
 
-      <div className="flex items-center gap-3 text-slate-500 dark:text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] bg-slate-100 dark:bg-white/5 px-6 py-2 rounded-full border border-slate-200 dark:border-white/5">
-        <i className="fas fa-bolt text-cyan-500 dark:text-cyan-400"></i>
-        <span className="dark:text-slate-400 text-slate-500">Correct Slices build Multipliers</span>
+        <div className="grid grid-cols-3 gap-4 w-full">
+          {options.map((opt, i) => {
+            const isCorrect = feedback?.index === i && feedback.type === 'correct';
+            const isWrong = feedback?.index === i && feedback.type === 'wrong';
+            
+            return (
+              <button
+                key={i}
+                onClick={() => handleChoice(opt, i)}
+                className={`
+                  group relative h-32 glass-card rounded-[2rem] flex items-center justify-center text-5xl font-black transition-all overflow-hidden border-2 backdrop-blur-md
+                  ${isCorrect ? 'bg-emerald-500 border-emerald-400 scale-110 z-20 shadow-[0_0_40px_rgba(52,211,153,0.5)]' : ''}
+                  ${isWrong ? 'bg-rose-500 border-rose-400 scale-95 shadow-[0_0_40px_rgba(244,63,94,0.5)]' : 'border-slate-200 dark:border-indigo-500/10 hover:border-indigo-500/40 bg-white/5'}
+                  ${!feedback ? 'hover:scale-105 active:scale-95' : ''}
+                `}
+                disabled={!!feedback}
+              >
+                <div className={`absolute inset-0 transition-colors ${!feedback ? 'bg-slate-100/50 dark:bg-white/5 group-hover:bg-indigo-500/10' : ''}`} />
+                <span className={`relative z-10 transition-colors ${isCorrect || isWrong ? 'text-white' : 'dark:text-white text-slate-900'}`}>{opt}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-3 text-slate-500 dark:text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] bg-slate-100 dark:bg-white/5 px-6 py-2 rounded-full border border-slate-200 dark:border-white/5 backdrop-blur-md">
+          <i className="fas fa-bolt text-cyan-500 dark:text-cyan-400"></i>
+          <span className="dark:text-slate-400 text-slate-500">Correct Slices build Multipliers</span>
+        </div>
       </div>
     </div>
   );

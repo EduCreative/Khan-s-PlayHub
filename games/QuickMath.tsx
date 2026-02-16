@@ -66,7 +66,6 @@ const QuickMath: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean 
     }
   }, [isPlaying]);
 
-  // Handle first generation when difficulty is selected
   useEffect(() => {
     if (difficulty && equation === '') {
       generateProblem();
@@ -138,39 +137,52 @@ const QuickMath: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean 
   }
 
   return (
-    <div className="flex flex-col items-center gap-10 w-full max-w-md px-6 select-none animate-in fade-in zoom-in duration-500">
-      <div className="w-full flex justify-between items-center glass-card p-6 rounded-3xl border-indigo-500/20 shadow-xl border-2">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Time Left</span>
-          <span className={`text-3xl font-black tabular-nums ${time < 10 ? 'text-rose-500 animate-pulse' : 'text-indigo-500'}`}>{time}s</span>
-        </div>
-        <div className="text-right flex flex-col">
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{difficulty} Mode</span>
-          <span className="text-3xl font-black text-indigo-400 italic tabular-nums">{score.toLocaleString()}</span>
-        </div>
-      </div>
+    <div className="relative flex flex-col items-center gap-10 w-full max-w-md px-6 py-12 select-none overflow-hidden rounded-[3rem]">
+      {/* Background Layer */}
+      <div 
+        className="absolute inset-0 z-0 opacity-20 dark:opacity-40"
+        style={{
+          backgroundImage: 'url(https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?auto=format&fit=crop&q=80&w=800)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      />
+      <div className="absolute inset-0 bg-slate-50/70 dark:bg-[#0f172a]/70 backdrop-blur-sm z-[1]" />
 
-      <div className={`text-center py-12 transition-all duration-300 ${feedback === 'wrong' ? 'animate-shake' : ''}`}>
-        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-4">Solve the Nexus Logic</p>
-        <h2 className={`text-7xl font-black italic game-font transition-colors ${feedback === 'correct' ? 'text-emerald-500 scale-110' : feedback === 'wrong' ? 'text-rose-500' : 'dark:text-white text-slate-900'}`}>
-          {equation || '...'}
-        </h2>
-      </div>
+      <div className="relative z-10 w-full flex flex-col items-center gap-10">
+        <div className="w-full flex justify-between items-center glass-card p-6 rounded-3xl border-indigo-500/20 shadow-xl border-2 backdrop-blur-xl bg-white/5">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Time Left</span>
+            <span className={`text-3xl font-black tabular-nums ${time < 10 ? 'text-rose-500 animate-pulse' : 'text-indigo-500'}`}>{time}s</span>
+          </div>
+          <div className="text-right flex flex-col">
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{difficulty} Mode</span>
+            <span className="text-3xl font-black text-indigo-400 italic tabular-nums">{score.toLocaleString()}</span>
+          </div>
+        </div>
 
-      <div className="grid grid-cols-2 gap-4 w-full">
-        {options.map((opt, i) => (
-          <button
-            key={i}
-            onClick={() => handleChoice(opt)}
-            className={`
-              h-24 glass-card rounded-2xl flex items-center justify-center text-3xl font-black transition-all border-2
-              ${feedback === 'correct' && opt === answer ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_30px_rgba(16,185,129,0.4)]' : ''}
-              ${feedback === 'wrong' && opt !== answer ? 'opacity-50' : 'hover:scale-105 active:scale-95 border-indigo-500/10'}
-            `}
-          >
-            {opt}
-          </button>
-        ))}
+        <div className={`text-center py-12 transition-all duration-300 ${feedback === 'wrong' ? 'animate-shake' : ''}`}>
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-4">Solve the Nexus Logic</p>
+          <h2 className={`text-7xl font-black italic game-font transition-colors ${feedback === 'correct' ? 'text-emerald-500 scale-110' : feedback === 'wrong' ? 'text-rose-500' : 'dark:text-white text-slate-900'}`}>
+            {equation || '...'}
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 w-full">
+          {options.map((opt, i) => (
+            <button
+              key={i}
+              onClick={() => handleChoice(opt)}
+              className={`
+                h-24 glass-card rounded-2xl flex items-center justify-center text-3xl font-black transition-all border-2 backdrop-blur-md
+                ${feedback === 'correct' && opt === answer ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_30px_rgba(16,185,129,0.4)]' : 'bg-white/5'}
+                ${feedback === 'wrong' && opt !== answer ? 'opacity-50' : 'hover:scale-105 active:scale-95 border-indigo-500/10'}
+              `}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
