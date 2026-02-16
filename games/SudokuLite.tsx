@@ -1,18 +1,15 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import VictoryEffect from '../components/VictoryEffect';
 
 type Difficulty = 'Easy' | 'Medium' | 'Hard';
 
-const SudokuLite: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
+const SudokuLite: React.FC<{ onGameOver: (s: number, v: boolean) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
   const [grid, setGrid] = useState<number[][]>([]);
   const [solution, setSolution] = useState<number[][]>([]);
   const [initial, setInitial] = useState<boolean[][]>([]);
-  const [score, setScore] = useState(0);
   const [time, setTime] = useState(0);
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
-  const [showVictory, setShowVictory] = useState(false);
   const [numberCounts, setNumberCounts] = useState<Record<number, number>>({});
 
   const getDifficultySettings = (diff: Difficulty) => {
@@ -39,7 +36,6 @@ const SudokuLite: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
     const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
     let shuffled = base.map(row => row.map(cell => nums[cell - 1]));
     
-    // Shuffle rows within blocks
     for (let i = 0; i < 9; i += 3) {
       const blockRows = [i, i + 1, i + 2].sort(() => Math.random() - 0.5);
       const temp = [...shuffled];
@@ -66,13 +62,10 @@ const SudokuLite: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
     setGrid(playable);
     setInitial(initMask);
     setTime(0);
-    setScore(0);
     setDifficulty(diff);
     setSelectedCell(null);
-    setShowVictory(false);
   }, []);
 
-  // Calculate number counts whenever the grid changes
   useEffect(() => {
     const counts: Record<number, number> = {};
     for (let i = 1; i <= 9; i++) counts[i] = 0;
@@ -89,34 +82,30 @@ const SudokuLite: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
       setInitial([]);
       setSolution([]);
       setTime(0);
-      setShowVictory(false);
     }
   }, [isPlaying]);
 
   useEffect(() => {
-    if (!isPlaying || !difficulty || showVictory) return;
+    if (!isPlaying || !difficulty) return;
     const timer = setInterval(() => setTime(t => t + 1), 1000);
     return () => clearInterval(timer);
-  }, [isPlaying, difficulty, showVictory]);
+  }, [isPlaying, difficulty]);
 
   const setNumber = (num: number) => {
-    if (!selectedCell || !grid.length || showVictory) return;
+    if (!selectedCell || !grid.length) return;
     const [r, c] = selectedCell;
     const newGrid = grid.map(row => [...row]);
     
-    // Toggle number if same is clicked
     newGrid[r][c] = newGrid[r][c] === num ? 0 : num;
     setGrid(newGrid);
 
-    // Check win condition (all filled and matches solution)
     const isComplete = newGrid.every((row, ri) => 
       row.every((cell, ci) => cell === solution[ri][ci])
     );
 
     if (isComplete) {
-      setShowVictory(true);
       const bonus = Math.max(0, 10000 - time * 5);
-      setTimeout(() => onGameOver(bonus + 2000), 4000);
+      onGameOver(bonus + 2000, true);
     }
   };
 
@@ -124,14 +113,10 @@ const SudokuLite: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
     if (difficulty !== 'Easy') return false;
     const val = grid[r][c];
     if (val === 0) return false;
-
-    // Check Row & Column
     for (let i = 0; i < 9; i++) {
       if (i !== c && grid[r][i] === val) return true;
       if (i !== r && grid[i][c] === val) return true;
     }
-
-    // Check 3x3 Block
     const startR = Math.floor(r / 3) * 3;
     const startC = Math.floor(c / 3) * 3;
     for (let i = startR; i < startR + 3; i++) {
@@ -178,7 +163,6 @@ const SudokuLite: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
 
   return (
     <div className="flex flex-col items-center gap-6 w-full max-w-lg px-4 select-none animate-in fade-in zoom-in duration-500">
-      {showVictory && <VictoryEffect onComplete={() => onGameOver(score + 5000)} />}
       <div className="w-full flex justify-between items-center glass-card p-5 rounded-3xl border-slate-500/20 shadow-xl border-2 transition-colors">
         <div className="flex flex-col">
           <span className="text-[10px] font-black text-slate-500 uppercase">Timer</span>

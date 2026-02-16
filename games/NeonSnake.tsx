@@ -4,18 +4,22 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 const GRID_SIZE = 20;
 const INITIAL_SPEED = 150;
 
+interface Point {
+  x: number;
+  y: number;
+}
+
 const NeonSnake: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
-  const [snake, setSnake] = useState([{ x: 10, y: 10 }]);
-  const [food, setFood] = useState({ x: 5, y: 5 });
-  const [dir, setDir] = useState({ x: 0, y: -1 });
+  const [snake, setSnake] = useState<Point[]>([{ x: 10, y: 10 }]);
+  const [food, setFood] = useState<Point>({ x: 5, y: 5 });
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const gameLoopRef = useRef<number | null>(null);
   const lastUpdateRef = useRef<number>(0);
-  const dirRef = useRef({ x: 0, y: -1 });
+  const dirRef = useRef<Point>({ x: 0, y: -1 });
 
-  const generateFood = useCallback((currentSnake: { x: number; y: number }[]) => {
-    let newFood;
+  const generateFood = useCallback((currentSnake: Point[]): Point => {
+    let newFood: Point;
     while (true) {
       newFood = {
         x: Math.floor(Math.random() * GRID_SIZE),
@@ -28,16 +32,22 @@ const NeonSnake: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean 
   }, []);
 
   const resetGame = useCallback(() => {
-    setSnake([{ x: 10, y: 10 }]);
-    setDir({ x: 0, y: -1 });
+    const initialSnake = [{ x: 10, y: 10 }];
+    setSnake(initialSnake);
     dirRef.current = { x: 0, y: -1 };
     setScore(0);
     setGameOver(false);
-    setFood(generateFood([{ x: 10, y: 10 }]));
+    setFood(generateFood(initialSnake));
+    lastUpdateRef.current = performance.now();
   }, [generateFood]);
 
   useEffect(() => {
-    if (isPlaying) resetGame();
+    if (isPlaying) {
+      resetGame();
+    }
+    return () => {
+      if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
+    };
   }, [isPlaying, resetGame]);
 
   const moveSnake = useCallback(() => {
@@ -63,7 +73,8 @@ const NeonSnake: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean 
 
       // Food collision
       if (newHead.x === food.x && newHead.y === food.y) {
-        setScore(s => s + 100);
+        const newScore = score + 100;
+        setScore(newScore);
         setFood(generateFood(newSnake));
       } else {
         newSnake.pop();
@@ -75,10 +86,11 @@ const NeonSnake: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean 
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowUp' && dirRef.current.y === 0) dirRef.current = { x: 0, y: -1 };
-      if (e.key === 'ArrowDown' && dirRef.current.y === 0) dirRef.current = { x: 0, y: 1 };
-      if (e.key === 'ArrowLeft' && dirRef.current.x === 0) dirRef.current = { x: -1, y: 0 };
-      if (e.key === 'ArrowRight' && dirRef.current.x === 0) dirRef.current = { x: 1, y: 0 };
+      const key = e.key;
+      if (key === 'ArrowUp' && dirRef.current.y === 0) dirRef.current = { x: 0, y: -1 };
+      else if (key === 'ArrowDown' && dirRef.current.y === 0) dirRef.current = { x: 0, y: 1 };
+      else if (key === 'ArrowLeft' && dirRef.current.x === 0) dirRef.current = { x: -1, y: 0 };
+      else if (key === 'ArrowRight' && dirRef.current.x === 0) dirRef.current = { x: 1, y: 0 };
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
@@ -102,18 +114,18 @@ const NeonSnake: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean 
 
   return (
     <div className="flex flex-col items-center gap-6 w-full max-w-md animate-in fade-in zoom-in duration-500 select-none">
-      <div className="w-full flex justify-between items-center glass-card p-4 rounded-3xl border-emerald-500/20 border-2">
+      <div className="w-full flex justify-between items-center glass-card p-4 rounded-3xl border-emerald-500/20 border-2 shadow-lg">
         <div className="flex flex-col">
-          <span className="text-[10px] font-black text-slate-500 uppercase">Growth</span>
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Growth</span>
           <span className="text-2xl font-black text-emerald-500 italic">x{snake.length}</span>
         </div>
         <div className="text-right flex flex-col">
-          <span className="text-[10px] font-black text-slate-500 uppercase">Energy</span>
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Energy</span>
           <span className="text-3xl font-black text-indigo-400 italic tabular-nums">{score.toLocaleString()}</span>
         </div>
       </div>
 
-      <div className="relative aspect-square w-full bg-slate-900 rounded-[2rem] border-4 border-slate-800 shadow-2xl overflow-hidden p-1">
+      <div className="relative aspect-square w-full bg-slate-900 rounded-[2.5rem] border-4 border-slate-800 shadow-2xl overflow-hidden p-1">
         <div className="absolute inset-0 bg-grid-white/[0.03]" />
         <div className="grid grid-cols-20 grid-rows-20 w-full h-full">
           {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, i) => {
@@ -138,13 +150,19 @@ const NeonSnake: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean 
         </div>
       </div>
 
+      {/* On-screen Controls for Mobile */}
       <div className="grid grid-cols-3 gap-2 md:hidden">
         <div />
-        <button className="w-14 h-14 glass-card rounded-2xl flex items-center justify-center text-emerald-500 text-xl border-2 border-emerald-500/20" onClick={() => dirRef.current.y === 0 && (dirRef.current = { x: 0, y: -1 })}><i className="fas fa-chevron-up"></i></button>
+        <button className="w-14 h-14 glass-card rounded-2xl flex items-center justify-center text-emerald-500 text-xl border-2 border-emerald-500/20 active:bg-emerald-500/10 active:scale-95 transition-all" onPointerDown={(e) => { e.preventDefault(); if (dirRef.current.y === 0) dirRef.current = { x: 0, y: -1 }; }}><i className="fas fa-chevron-up"></i></button>
         <div />
-        <button className="w-14 h-14 glass-card rounded-2xl flex items-center justify-center text-emerald-500 text-xl border-2 border-emerald-500/20" onClick={() => dirRef.current.x === 0 && (dirRef.current = { x: -1, y: 0 })}><i className="fas fa-chevron-left"></i></button>
-        <button className="w-14 h-14 glass-card rounded-2xl flex items-center justify-center text-emerald-500 text-xl border-2 border-emerald-500/20" onClick={() => dirRef.current.y === 0 && (dirRef.current = { x: 0, y: 1 })}><i className="fas fa-chevron-down"></i></button>
-        <button className="w-14 h-14 glass-card rounded-2xl flex items-center justify-center text-emerald-500 text-xl border-2 border-emerald-500/20" onClick={() => dirRef.current.x === 0 && (dirRef.current = { x: 1, y: 0 })}><i className="fas fa-chevron-right"></i></button>
+        <button className="w-14 h-14 glass-card rounded-2xl flex items-center justify-center text-emerald-500 text-xl border-2 border-emerald-500/20 active:bg-emerald-500/10 active:scale-95 transition-all" onPointerDown={(e) => { e.preventDefault(); if (dirRef.current.x === 0) dirRef.current = { x: -1, y: 0 }; }}><i className="fas fa-chevron-left"></i></button>
+        <button className="w-14 h-14 glass-card rounded-2xl flex items-center justify-center text-emerald-500 text-xl border-2 border-emerald-500/20 active:bg-emerald-500/10 active:scale-95 transition-all" onPointerDown={(e) => { e.preventDefault(); if (dirRef.current.y === 0) dirRef.current = { x: 0, y: 1 }; }}><i className="fas fa-chevron-down"></i></button>
+        <button className="w-14 h-14 glass-card rounded-2xl flex items-center justify-center text-emerald-500 text-xl border-2 border-emerald-500/20 active:bg-emerald-500/10 active:scale-95 transition-all" onPointerDown={(e) => { e.preventDefault(); if (dirRef.current.x === 0) dirRef.current = { x: 1, y: 0 }; }}><i className="fas fa-chevron-right"></i></button>
+      </div>
+      
+      <div className="flex items-center gap-3 text-slate-500 dark:text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] bg-slate-100 dark:bg-white/5 px-6 py-2 rounded-full border border-slate-200 dark:border-white/5">
+        <i className="fas fa-worm text-emerald-500"></i>
+        <span>Collect cores to expand the link</span>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'khans-playhub-v1.1.2';
+const CACHE_NAME = 'khans-playhub-v1.1.3';
 
 // Core local assets - using absolute paths relative to origin for clarity
 const STATIC_ASSETS = [
@@ -9,6 +9,7 @@ const STATIC_ASSETS = [
   '/App.tsx',
   '/types.ts',
   '/constants.tsx',
+  '/dictionary.ts',
   '/manifest.json',
   '/components/Hub.tsx',
   '/components/GameCard.tsx',
@@ -24,15 +25,17 @@ const STATIC_ASSETS = [
   '/games/MemoryMatrix.tsx',
   '/games/Labyrinth.tsx',
   '/games/ColorClash.tsx',
-  '/games/WordBuilder.tsx'
+  '/games/WordBuilder.tsx',
+  '/games/PulseWave.tsx',
+  '/games/BinaryDash.tsx',
+  '/games/CyberDefense.tsx'
 ];
 
 // External assets to pre-cache
 const EXTERNAL_ASSETS = [
   'https://cdn.tailwindcss.com',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-  'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Bungee&display=swap',
-  'https://raw.githubusercontent.com/first20hours/google-10000-english/master/google-10000-english-no-swears.txt'
+  'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Bungee&display=swap'
 ];
 
 self.addEventListener('install', (event) => {

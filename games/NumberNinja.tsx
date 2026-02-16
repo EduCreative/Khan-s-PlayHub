@@ -12,7 +12,6 @@ const NumberNinja: React.FC<NumberNinjaProps> = ({ onGameOver, isPlaying }) => {
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(30);
   const [feedback, setFeedback] = useState<{ index: number; type: 'correct' | 'wrong' } | null>(null);
-  const [isTimeUp, setIsTimeUp] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
   
   const scoreRef = useRef(0);
@@ -39,27 +38,26 @@ const NumberNinja: React.FC<NumberNinjaProps> = ({ onGameOver, isPlaying }) => {
       setScore(0);
       scoreRef.current = 0;
       setTimeLeft(30);
-      setIsTimeUp(false);
       setFeedback(null);
     }
   }, [isPlaying, generateEquation]);
 
   useEffect(() => {
-    if (!isPlaying || timeLeft <= 0 || isTimeUp) return;
+    if (!isPlaying || timeLeft <= 0) return;
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          setIsTimeUp(true);
+          onGameOver(scoreRef.current);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [isPlaying, timeLeft, isTimeUp]);
+  }, [isPlaying, timeLeft, onGameOver]);
 
   const handleChoice = (val: number, index: number) => {
-    if (feedback || isTimeUp) return;
+    if (feedback) return;
 
     const [a, b] = equation.split(' + ').map(Number);
     const correct = a + b;
@@ -85,39 +83,6 @@ const NumberNinja: React.FC<NumberNinjaProps> = ({ onGameOver, isPlaying }) => {
       }, 400);
     }
   };
-
-  if (isTimeUp) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full w-full max-w-md px-6 text-center animate-in fade-in zoom-in duration-500">
-        <div className="w-full glass-card p-10 rounded-[3rem] border-indigo-500/30 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-transparent via-rose-500 to-transparent" />
-          
-          <div className="w-20 h-20 bg-rose-500/10 rounded-3xl flex items-center justify-center text-4xl text-rose-500 mx-auto mb-6 shadow-inner">
-            <i className="fas fa-hourglass-end animate-bounce"></i>
-          </div>
-
-          <h2 className="text-5xl font-black italic tracking-tighter uppercase dark:text-white text-slate-900 mb-2 transition-colors">
-            Time <span className="text-rose-500">Over</span>
-          </h2>
-          <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs mb-8">Session Completed</p>
-
-          <div className="bg-slate-100 dark:bg-white/5 rounded-3xl p-8 border border-slate-200 dark:border-white/5 mb-8">
-            <p className="text-[10px] uppercase font-black text-slate-500 tracking-[0.3em] mb-2">Final Ninja Score</p>
-            <p className="text-6xl font-black text-indigo-500 tabular-nums drop-shadow-sm italic">
-              {score.toLocaleString()}
-            </p>
-          </div>
-
-          <button 
-            onClick={() => onGameOver(score)}
-            className="w-full py-5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-xl transition-all shadow-xl shadow-indigo-500/30 uppercase italic tracking-tighter active:scale-95"
-          >
-            CONTINUE TO HUB
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-lg px-4 select-none">

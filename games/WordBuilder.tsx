@@ -1,15 +1,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GoogleGenAI } from "@google/genai";
-
-// Essential fallback dictionary
-const ESSENTIAL_DICT = ['CAT', 'DOG', 'HAT', 'BAT', 'SUN', 'MOON', 'RUN', 'WIN', 'TOP', 'BOX', 'JOY', 'WAR', 'YES', 'NO', 'AND', 'THE', 'FOR', 'PLAY', 'GAME', 'LIFE', 'TIME', 'LOVE', 'FAST'];
-
-const SEED_DICTIONARY = new Set([
-  ...ESSENTIAL_DICT,
-  'AND','BAD','CAT','DOG','END','FUN','GET','HAT','ITS','JOY','KEY','LOG','MAP','NOT','OUT','PUT','RUN','SAY','TOP','USE','VAN','WAR','YES','ZOO',
-  'BACK','CITY','DARK','EACH','FAST','GAME','HAND','IDEA','JUST','KEEP','LIFE','MAKE','NEXT','OPEN','PART','QUIT','REAL','STAY','TIME','UNIT','VERY','WANT','YEAR','ZONE'
-]);
+import { COMMON_WORDS } from '../dictionary';
 
 // Bounty riddles for Word Builder
 const BOUNTIES = [
@@ -55,29 +47,14 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
   const [themeIndex, setThemeIndex] = useState(0);
   const [isShaking, setIsShaking] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
-  const [dictLoaded, setDictLoaded] = useState(false);
   const [bounty, setBounty] = useState(BOUNTIES[0]);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const blocksRef = useRef<Block[]>([]);
-  const dictionaryRef = useRef<Set<string>>(new Set(SEED_DICTIONARY));
+  // Use a local ref for dynamic dictionary expansion
+  const expandedDictionaryRef = useRef<Set<string>>(new Set());
   const themes = ['indigo', 'pink', 'emerald', 'cyan', 'amber'];
-
-  useEffect(() => {
-    const loadDictionary = async () => {
-      try {
-        const response = await fetch('https://raw.githubusercontent.com/first20hours/google-10000-english/master/google-10000-english-no-swears.txt');
-        if (response.ok) {
-          const text = await response.text();
-          const words = text.split('\n').map(w => w.trim().toUpperCase()).filter(w => w.length >= 3);
-          words.forEach(w => dictionaryRef.current.add(w));
-          setDictLoaded(true);
-        }
-      } catch (err) {}
-    };
-    loadDictionary();
-  }, []);
 
   const generatePool = useCallback(() => {
     const vowels = 'AEIOU';
@@ -85,7 +62,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
     const newPool = [];
     
     // Check if we should inject bounty letters
-    const shouldInject = Math.random() > 0.5;
+    const shouldInject = Math.random() > 0.4;
     const bountyChars = bounty.word.split('');
     
     for (let i = 0; i < 4; i++) {
@@ -203,11 +180,20 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `Is "${word}" a valid, real English word? Reply with only TRUE or FALSE.`,
-        config: { temperature: 0 }
+        contents: `Task: Verify if "${word}" is a real, correctly spelled English word. 
+        Rules: 
+        - Respond with ONLY the word "TRUE" if it is a valid word.
+        - Respond with ONLY the word "FALSE" if it is NOT a valid word.
+        - No other text.`,
       });
-      return (response.text || "").trim().toUpperCase().includes("TRUE");
-    } catch (err) { return false; } finally { setIsValidating(false); }
+      const resultText = response.text || "";
+      return resultText.trim().toUpperCase() === "TRUE";
+    } catch (err) { 
+      console.error("AI Validation Error:", err);
+      return false; 
+    } finally { 
+      setIsValidating(false); 
+    }
   };
 
   const submitWord = async () => {
@@ -220,11 +206,13 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
     }
 
     const isBounty = word === bounty.word;
-    let isValid = isBounty || dictionaryRef.current.has(word);
+    // Check local dictionary and expanded cache first
+    let isValid = isBounty || COMMON_WORDS.has(word) || expandedDictionaryRef.current.has(word);
     
-    if (!isValid && word.length >= 3) {
+    // If not found locally, ask the Supreme Judge (Gemini)
+    if (!isValid) {
       isValid = await validateWithAI(word);
-      if (isValid) dictionaryRef.current.add(word);
+      if (isValid) expandedDictionaryRef.current.add(word);
     }
 
     if (isValid) {
@@ -235,7 +223,9 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
       spawnParticles();
       spawnBlock(word.length, isBounty);
       
-      if (isBounty) setBounty(BOUNTIES[Math.floor(Math.random() * BOUNTIES.length)]);
+      if (isBounty) {
+        setBounty(BOUNTIES[Math.floor(Math.random() * BOUNTIES.length)]);
+      }
       
       if (towerHeight + blocks >= targetHeight) {
         setLevel(l => l + 1);
@@ -287,12 +277,14 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
 
       <div className="flex-1 w-full relative flex flex-col items-center justify-end overflow-hidden">
         <canvas ref={canvasRef} className="w-full h-full max-h-[50vh]" />
+        
         <div className="absolute top-4 left-4 z-10">
-           <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase transition-colors ${dictLoaded ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
-              <i className={`fas ${dictLoaded ? 'fa-check-circle' : 'fa-sync-alt fa-spin'}`}></i>
-              {dictLoaded ? '10K Dict Loaded' : 'Syncing Lexicon...'}
+           <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase transition-colors ${isValidating ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}`}>
+              <i className={`fas ${isValidating ? 'fa-brain animate-pulse' : 'fa-check-circle'}`}></i>
+              {isValidating ? 'Verifying with AI...' : 'Nexus Lexicon Active'}
            </div>
         </div>
+
         <div className="absolute top-4 left-1/2 -translate-x-1/2 glass-card px-6 py-2 border-indigo-500/30 flex items-center gap-4 z-10">
           <div className="flex flex-col items-center">
             <span className="text-[10px] uppercase font-black text-slate-500">Tower Goal</span>
@@ -346,7 +338,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
             className={`col-span-2 glass-card h-14 bg-indigo-600 border-indigo-400 text-white font-black italic text-lg shadow-xl shadow-indigo-500/30 active:scale-95 transition-all uppercase flex items-center justify-center gap-2 ${isValidating ? 'opacity-80' : ''}`}
           >
             {isValidating ? (
-              <><i className="fas fa-brain animate-pulse"></i><span className="text-sm">NEURAL LINK...</span></>
+              <><i className="fas fa-brain animate-pulse"></i><span className="text-sm">NEURAL JUDGE...</span></>
             ) : (
               <>CONSTRUCT <i className="fas fa-arrow-up"></i></>
             )}

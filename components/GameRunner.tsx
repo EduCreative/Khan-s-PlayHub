@@ -22,6 +22,7 @@ import PulseWave from '../games/PulseWave';
 import BinaryDash from '../games/BinaryDash';
 import CyberDefense from '../games/CyberDefense';
 import Logo from './Logo';
+import VictoryEffect from './VictoryEffect';
 
 interface GameRunnerProps {
   game: Game;
@@ -33,6 +34,8 @@ interface GameRunnerProps {
 
 const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, highScore, isDarkMode }) => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showGameOver, setShowGameOver] = useState(false);
+  const [isVictory, setIsVictory] = useState(false);
   const [currentScore, setCurrentScore] = useState(0);
   const [isClosing, setIsClosing] = useState(false);
 
@@ -54,10 +57,19 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
     setTimeout(onClose, 400); // Wait for exit animation
   };
 
-  const handleGameOver = (finalScore: number) => {
+  const handleGameOver = (finalScore: number, victory: boolean = false) => {
     setCurrentScore(finalScore);
     onSaveScore(finalScore);
+    setIsVictory(victory);
     setIsPlaying(false);
+    setShowGameOver(true);
+  };
+
+  const handleRetry = () => {
+    setCurrentScore(0);
+    setShowGameOver(false);
+    setIsVictory(false);
+    setIsPlaying(true);
   };
 
   const handleShareScore = async () => {
@@ -75,7 +87,6 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
         console.log('Share cancelled or failed', err);
       }
     } else {
-      // Fallback to Twitter
       const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
       window.open(twitterUrl, '_blank');
     }
@@ -86,17 +97,17 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
       case 'fruit-vortex': return <FruitVortex onGameOver={handleGameOver} isPlaying={isPlaying} />;
       case 'number-ninja': return <NumberNinja onGameOver={handleGameOver} isPlaying={isPlaying} />;
       case 'sum-surge': return <SumSurge onGameOver={handleGameOver} isPlaying={isPlaying} />;
-      case 'riddle-rift': return <RiddleRift onGameOver={handleGameOver} />;
+      case 'riddle-rift': return <RiddleRift onGameOver={(s) => handleGameOver(s, true)} />;
       case 'blitz-runner': return <BlitzRunner onGameOver={handleGameOver} isPlaying={isPlaying} />;
-      case 'bubble-fury': return <BubbleFury onGameOver={handleGameOver} isPlaying={isPlaying} />;
-      case 'memory-matrix': return <MemoryMatrix onGameOver={handleGameOver} isPlaying={isPlaying} />;
-      case 'labyrinth': return <Labyrinth onGameOver={handleGameOver} isPlaying={isPlaying} />;
+      case 'bubble-fury': return <BubbleFury onGameOver={(s) => handleGameOver(s, true)} isPlaying={isPlaying} />;
+      case 'memory-matrix': return <MemoryMatrix onGameOver={(s) => handleGameOver(s, true)} isPlaying={isPlaying} />;
+      case 'labyrinth': return <Labyrinth onGameOver={(s) => handleGameOver(s, true)} isPlaying={isPlaying} />;
       case 'color-clash': return <ColorClash onGameOver={handleGameOver} isPlaying={isPlaying} />;
       case 'word-builder': return <WordBuilder onGameOver={handleGameOver} isPlaying={isPlaying} isDarkMode={isDarkMode} />;
       case 'quick-math': return <QuickMath onGameOver={handleGameOver} isPlaying={isPlaying} />;
       case 'pattern-finder': return <PatternFinder onGameOver={handleGameOver} isPlaying={isPlaying} />;
       case 'grammar-guardian': return <GrammarGuardian onGameOver={handleGameOver} isPlaying={isPlaying} />;
-      case 'sudoku-lite': return <SudokuLite onGameOver={handleGameOver} isPlaying={isPlaying} />;
+      case 'sudoku-lite': return <SudokuLite onGameOver={(s) => handleGameOver(s, true)} isPlaying={isPlaying} />;
       case 'neon-snake': return <NeonSnake onGameOver={handleGameOver} isPlaying={isPlaying} />;
       case 'bit-master': return <BitMaster onGameOver={handleGameOver} isPlaying={isPlaying} />;
       case 'reflex-node': return <ReflexNode onGameOver={handleGameOver} isPlaying={isPlaying} />;
@@ -132,28 +143,13 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
             </div>
           </div>
         </div>
-        
-        <div className="flex items-center gap-2 pointer-events-auto">
-          <button 
-            onClick={() => {
-              if (navigator.share) {
-                navigator.share({ title: game.name, url: window.location.origin });
-              } else {
-                navigator.clipboard.writeText(window.location.origin);
-                alert("Link copied!");
-              }
-            }} 
-            className="w-12 h-12 rounded-2xl bg-white/10 dark:bg-white/5 hover:bg-white/20 dark:hover:bg-white/10 flex items-center justify-center border border-white/10 transition-all dark:text-white text-slate-900 shadow-lg"
-          >
-            <i className="fas fa-share-alt"></i>
-          </button>
-        </div>
       </div>
 
       {/* Game Viewport */}
       <div className="flex-1 flex flex-col items-center justify-center relative bg-grid-white/[0.02] overflow-y-auto pt-24 pb-12 transition-all duration-700">
-        {!isPlaying && game.id !== 'riddle-rift' ? (
-          <div className="text-center p-8 glass-card rounded-[3rem] max-w-xl w-full border-indigo-500/30 shadow-2xl transition-all animate-in fade-in zoom-in-95 duration-700 border-2 my-auto">
+        {!isPlaying && !showGameOver ? (
+          /* Start Screen */
+          <div className="text-center p-8 glass-card rounded-[3rem] max-w-xl w-full border-indigo-500/30 shadow-2xl transition-all animate-in fade-in zoom-in-95 duration-700 border-2 my-auto mx-4">
             <div className={`w-24 h-24 mx-auto rounded-[2.2rem] bg-gradient-to-br ${game.color} flex items-center justify-center text-5xl mb-6 shadow-2xl shadow-indigo-500/40 transform -rotate-3 hover:rotate-0 transition-transform duration-500`}>
               <i className={`fas ${game.icon} text-white`}></i>
             </div>
@@ -161,7 +157,6 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
             <h1 className="text-4xl font-black mb-3 tracking-tighter italic uppercase dark:text-white text-slate-900 transition-colors">{game.name}</h1>
             <p className="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed font-medium transition-colors px-4">{game.description}</p>
             
-            {/* How to Play Section */}
             <div className="mb-8 text-left bg-indigo-500/5 dark:bg-white/5 rounded-2xl p-6 border border-indigo-500/10 dark:border-white/10 mx-4 shadow-inner">
               <h3 className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-3 flex items-center gap-2">
                 <i className="fas fa-info-circle"></i> How to Play
@@ -176,34 +171,66 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
               </ul>
             </div>
 
-            <div className="flex flex-col gap-3 px-4">
-              <button 
-                onClick={() => { setIsPlaying(true); setCurrentScore(0); }}
-                className="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-[2rem] font-black text-2xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-500/40 uppercase italic tracking-tighter group overflow-hidden relative"
-              >
-                <span className="relative z-10">START SESSION</span>
-                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-              </button>
-
-              {currentScore > 0 && (
-                <div className="p-5 bg-indigo-500/5 dark:bg-white/5 rounded-3xl border border-indigo-500/10 dark:border-white/10 shadow-inner flex flex-col items-center gap-3 animate-in slide-in-from-bottom-2">
-                  <div className="text-center">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Last Run Score</p>
-                    <p className="text-4xl font-black text-indigo-500 drop-shadow-sm">{currentScore.toLocaleString()}</p>
-                  </div>
-                  
-                  <button 
-                    onClick={handleShareScore}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-indigo-200 dark:hover:bg-indigo-800/50 transition-all active:scale-95 border border-indigo-500/20 shadow-sm"
-                  >
-                    <i className="fas fa-share-nodes text-xs"></i>
-                    Share Your Victory
-                  </button>
+            <button 
+              onClick={() => { setIsPlaying(true); setCurrentScore(0); }}
+              className="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-[2rem] font-black text-2xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-500/40 uppercase italic tracking-tighter group overflow-hidden relative"
+            >
+              <span className="relative z-10">START SESSION</span>
+              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+            </button>
+          </div>
+        ) : showGameOver ? (
+          /* Unified Game Over Screen */
+          <div className="text-center p-8 glass-card rounded-[3rem] max-w-xl w-full border-rose-500/30 shadow-2xl transition-all animate-in fade-in zoom-in-95 duration-700 border-2 my-auto mx-4 overflow-hidden relative">
+            {isVictory && <div className="absolute inset-0 pointer-events-none"><VictoryEffect onComplete={() => {}} /></div>}
+            
+            <div className={`w-20 h-20 mx-auto rounded-[1.8rem] bg-gradient-to-br ${isVictory ? 'from-emerald-400 to-teal-600' : 'from-rose-500 to-rose-700'} flex items-center justify-center text-4xl mb-6 shadow-2xl animate-bounce`}>
+              <i className={`fas ${isVictory ? 'fa-trophy' : 'fa-skull'} text-white`}></i>
+            </div>
+            
+            <h1 className={`text-5xl font-black mb-2 tracking-tighter italic uppercase ${isVictory ? 'text-emerald-500' : 'text-rose-500'}`}>
+              {isVictory ? 'SUCCESS!' : 'GAME OVER'}
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px] mb-8">Session Log Finalized</p>
+            
+            <div className="bg-slate-100 dark:bg-white/5 rounded-3xl p-8 border border-slate-200 dark:border-white/5 mb-8 shadow-inner">
+              <p className="text-[10px] uppercase font-black text-slate-500 tracking-[0.3em] mb-2">Total Score Gained</p>
+              <p className={`text-6xl font-black tabular-nums drop-shadow-sm italic ${isVictory ? 'text-emerald-500' : 'text-indigo-500'}`}>
+                {currentScore.toLocaleString()}
+              </p>
+              {currentScore > highScore && (
+                <div className="mt-4 inline-flex items-center gap-2 px-4 py-1.5 bg-amber-500/10 text-amber-500 rounded-full border border-amber-500/20 text-[10px] font-black uppercase tracking-widest animate-pulse">
+                  <i className="fas fa-star"></i> New Personal Best <i className="fas fa-star"></i>
                 </div>
               )}
             </div>
+
+            <div className="flex flex-col gap-3">
+              <button 
+                onClick={handleRetry}
+                className="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-black text-xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-500/30 uppercase italic tracking-tighter"
+              >
+                RETRY SESSION
+              </button>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <button 
+                  onClick={handleShareScore}
+                  className="py-4 bg-white/5 border border-white/10 text-slate-500 dark:text-slate-400 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white/10 transition-all active:scale-95"
+                >
+                  <i className="fas fa-share-nodes mr-2"></i> Share
+                </button>
+                <button 
+                  onClick={handleClose}
+                  className="py-4 bg-white/5 border border-white/10 text-slate-500 dark:text-slate-400 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-rose-500/10 hover:text-rose-400 transition-all active:scale-95"
+                >
+                  <i className="fas fa-home mr-2"></i> Hub
+                </button>
+              </div>
+            </div>
           </div>
         ) : (
+          /* Active Game Viewport */
           <div className="w-full h-full flex items-center justify-center animate-in fade-in zoom-in-95 duration-700">
             {renderGame()}
           </div>
