@@ -363,7 +363,21 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
         </div>
       </div>
 
-      <div ref={containerRef} className="relative bg-slate-900 rounded-[2.5rem] border-4 border-slate-800 shadow-2xl overflow-hidden touch-none" style={{ width: WIDTH, height: HEIGHT }} onPointerMove={handlePointer} onPointerDown={handlePointer} onPointerUp={handlePointer}>
+      <div 
+        ref={containerRef} 
+        className="relative bg-slate-900 rounded-[2.5rem] border-4 border-slate-800 shadow-2xl overflow-hidden touch-none" 
+        style={{ 
+          width: WIDTH, 
+          height: HEIGHT,
+          backgroundImage: 'url(https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }} 
+        onPointerMove={handlePointer} 
+        onPointerDown={handlePointer} 
+        onPointerUp={handlePointer}
+      >
+        <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[1px]" />
         <div className="absolute inset-0 bg-grid-white/[0.02]" />
         <div className="absolute left-0 right-0 border-t-2 border-dashed border-rose-500/30 flex items-center justify-center" style={{ top: DEAD_LINE_Y }}>
           <span className="text-[8px] font-black text-rose-500 uppercase tracking-[0.5em] -translate-y-3 opacity-50">Logic Breach Line</span>

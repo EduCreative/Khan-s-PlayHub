@@ -146,7 +146,7 @@ export const GAMES: Game[] = [
       'Don\'t let the bubbles reach the bottom of the screen.',
       'Choose Easy, Medium, or Hard to set the pace!'
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1516559828984-fb3b92374751?auto=format&fit=crop&q=80&w=400'
+    imageUrl: 'https://images.unsplash.com/photo-1635241161466-541f065683ba?auto=format&fit=crop&q=80&w=400'
   },
   {
     id: 'word-builder',
@@ -227,5 +227,101 @@ export const GAMES: Game[] = [
       'Be quick! The timer accelerates with every correct answer.'
     ],
     imageUrl: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=400'
+  },
+  {
+    id: 'neon-snake',
+    name: 'Neon Snake',
+    tagline: 'Classic arcade evolution.',
+    category: Category.Arcade,
+    icon: 'fa-worm',
+    color: 'from-green-500 to-emerald-700',
+    description: 'Guide the glowing snake through the grid. Collect energy cores to grow, but avoid the walls and your own tail!',
+    instructions: [
+      'Use Arrow Keys or Swipe to change direction.',
+      'Collect green energy cores to increase your length and score.',
+      'Hitting the boundaries or your own body terminates the session.',
+      'The speed increases as you grow longer!'
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=400'
+  },
+  {
+    id: 'bit-master',
+    name: 'Bit Master',
+    tagline: 'Binary decryption speedrun.',
+    category: Category.Math,
+    icon: 'fa-microchip',
+    color: 'from-blue-600 to-cyan-500',
+    description: 'Decrypt binary sequences into decimal values. Test your speed and digital literacy in this high-frequency challenge.',
+    instructions: [
+      'A 4-bit binary sequence will appear (e.g., 1010).',
+      'Select the correct decimal equivalent from the options.',
+      'Correct answers add time and points.',
+      'Speed is critical—the timer is always ticking down!'
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1518133910546-b6c2fb7d79e3?auto=format&fit=crop&q=80&w=400'
+  },
+  {
+    id: 'reflex-node',
+    name: 'Reflex Node',
+    tagline: 'Neural network tap training.',
+    category: Category.Arcade,
+    icon: 'fa-circle-dot',
+    color: 'from-yellow-400 to-orange-600',
+    description: 'Hyper-reflex training. Intercept incoming neural nodes before they destabilize and terminate the link.',
+    instructions: [
+      'Neon nodes will pulse onto the screen at random locations.',
+      'Tap each node before its outer ring reaches the center.',
+      'Missing a node or letting it fade ends the game.',
+      'The frequency of node appearances increases over time.'
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=400'
+  },
+  {
+    id: 'pulse-wave',
+    name: 'Pulse Wave',
+    tagline: 'Catch the rhythm of the nexus.',
+    category: Category.Arcade,
+    icon: 'fa-wave-square',
+    color: 'from-pink-600 to-purple-600',
+    description: 'A high-energy rhythm challenge. Tap the markers as they align with the pulse wave to keep the data flowing.',
+    instructions: [
+      'A wave moves across the screen repeatedly.',
+      'Tap the nodes exactly when the wave passes over them.',
+      'Perfect timing yields max points and multiplier.',
+      'Too many misses will cause a network desync!'
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&q=80&w=400'
+  },
+  {
+    id: 'binary-dash',
+    name: 'Binary Dash',
+    tagline: 'Filter the stream in real-time.',
+    category: Category.Math,
+    icon: 'fa-code-branch',
+    color: 'from-cyan-600 to-blue-700',
+    description: 'Sort incoming bits into their correct registers. A true test of binary logic and extreme reflexes.',
+    instructions: [
+      'Numbers fly toward the center of the screen.',
+      'Sort them left or right based on whether they are EVEN or ODD.',
+      'Correct sorting increases your streak and speed.',
+      'Incorrect sorting depletes your system integrity.'
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=400'
+  },
+  {
+    id: 'cyber-defense',
+    name: 'Cyber Defense',
+    tagline: 'Protect the core at all costs.',
+    category: Category.Arcade,
+    icon: 'fa-shield-halved',
+    color: 'from-indigo-600 to-violet-800',
+    description: 'An orbital defense simulator. Rotate your shield to intercept incoming virus nodes and protect the central core.',
+    instructions: [
+      'Rotate your shield around the central core using your finger or mouse.',
+      'Intercept the incoming red virus nodes to destroy them.',
+      'Collect green data nodes for core upgrades and repairs.',
+      'The core can only take a few hits before complete failure!'
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=400'
   }
 ];

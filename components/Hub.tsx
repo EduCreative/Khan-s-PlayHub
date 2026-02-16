@@ -34,6 +34,21 @@ const Hub: React.FC<HubProps> = ({
 
   const categories = ['All', ...Object.values(Category)];
 
+  const contactLinks = [
+    {
+      label: 'Email Support',
+      icon: 'fa-envelope',
+      href: 'mailto:kmasroor50@gmail.com',
+      color: 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20'
+    },
+    {
+      label: 'WhatsApp Chat',
+      icon: 'fa-whatsapp',
+      href: 'https://wa.me/923331306603',
+      color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+    }
+  ];
+
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-12 flex flex-col gap-6 md:gap-12 animate-in fade-in duration-700">
       {/* Responsive Header Section */}
@@ -104,6 +119,36 @@ const Hub: React.FC<HubProps> = ({
              </button>
           </div>
         )}
+      </div>
+
+      {/* Contact & Suggestions Section */}
+      <div className="w-full bg-white/30 dark:bg-slate-900/30 backdrop-blur-md p-8 md:p-12 rounded-[2.5rem] border-2 border-slate-200 dark:border-indigo-500/10 flex flex-col items-center text-center gap-6">
+        <div className="flex flex-col items-center">
+          <div className="w-16 h-16 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-500 text-2xl mb-4 border border-indigo-500/20">
+            <i className="fas fa-comment-dots animate-pulse"></i>
+          </div>
+          <h2 className="text-2xl md:text-3xl font-black italic tracking-tighter uppercase dark:text-white text-slate-900 leading-none mb-2">
+            Mission Feedback
+          </h2>
+          <p className="text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400 max-w-lg">
+            Have a suggestion or found a logic rift? Contact the developer to help calibrate the nexus for all players.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-4">
+          {contactLinks.map((link) => (
+            <a
+              key={link.label}
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex items-center gap-3 px-6 py-3 rounded-2xl border-2 font-black uppercase text-[10px] tracking-widest transition-all hover:scale-105 active:scale-95 shadow-lg ${link.color}`}
+            >
+              <i className={`fas ${link.icon} text-lg`}></i>
+              {link.label}
+            </a>
+          ))}
+        </div>
       </div>
 
       {/* Footer Branding Section */}

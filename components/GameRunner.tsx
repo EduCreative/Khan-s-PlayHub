@@ -15,6 +15,12 @@ import QuickMath from '../games/QuickMath';
 import PatternFinder from '../games/PatternFinder';
 import GrammarGuardian from '../games/GrammarGuardian';
 import SudokuLite from '../games/SudokuLite';
+import NeonSnake from '../games/NeonSnake';
+import BitMaster from '../games/BitMaster';
+import ReflexNode from '../games/ReflexNode';
+import PulseWave from '../games/PulseWave';
+import BinaryDash from '../games/BinaryDash';
+import CyberDefense from '../games/CyberDefense';
 import Logo from './Logo';
 
 interface GameRunnerProps {
@@ -91,6 +97,12 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
       case 'pattern-finder': return <PatternFinder onGameOver={handleGameOver} isPlaying={isPlaying} />;
       case 'grammar-guardian': return <GrammarGuardian onGameOver={handleGameOver} isPlaying={isPlaying} />;
       case 'sudoku-lite': return <SudokuLite onGameOver={handleGameOver} isPlaying={isPlaying} />;
+      case 'neon-snake': return <NeonSnake onGameOver={handleGameOver} isPlaying={isPlaying} />;
+      case 'bit-master': return <BitMaster onGameOver={handleGameOver} isPlaying={isPlaying} />;
+      case 'reflex-node': return <ReflexNode onGameOver={handleGameOver} isPlaying={isPlaying} />;
+      case 'pulse-wave': return <PulseWave onGameOver={handleGameOver} isPlaying={isPlaying} />;
+      case 'binary-dash': return <BinaryDash onGameOver={handleGameOver} isPlaying={isPlaying} />;
+      case 'cyber-defense': return <CyberDefense onGameOver={handleGameOver} isPlaying={isPlaying} />;
       default:
         return (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
