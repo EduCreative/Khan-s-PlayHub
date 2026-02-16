@@ -1,6 +1,4 @@
-
-import React, { useState, useEffect, useCallback } from 'react';
-import { GoogleGenAI, Type } from "@google/genai";
+import React, { useState, useEffect } from 'react';
 import Logo from '../components/Logo';
 
 interface Riddle {
@@ -59,59 +57,27 @@ const RiddleRift: React.FC<{ onGameOver: (s: number) => void }> = ({ onGameOver 
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [hintUsed, setHintUsed] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [showHint, setShowHint] = useState(false);
 
-  const fetchAIRiddle = async () => {
-    const apiKey = process.env.API_KEY;
-    if (!apiKey || apiKey === "undefined") return LOCAL_RIDDLES[Math.floor(Math.random() * LOCAL_RIDDLES.length)];
-
-    try {
-      setIsLoading(true);
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: "Generate a clever one-word-answer riddle for a cyberpunk game. Return JSON with 'question', 'answer' (uppercase), and 'hint'.",
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              question: { type: Type.STRING },
-              answer: { type: Type.STRING },
-              hint: { type: Type.STRING }
-            },
-            required: ["question", "answer", "hint"]
-          }
-        }
-      });
-      return JSON.parse(response.text || '{}');
-    } catch (e) {
-      return LOCAL_RIDDLES[Math.floor(Math.random() * LOCAL_RIDDLES.length)];
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const nextRiddle = async () => {
+  const nextRiddle = () => {
     setUserInput("");
     setFeedback(null);
     setShowHint(false);
     setHintUsed(false);
     
-    // Mix local and AI
-    if (Math.random() > 0.4) {
-      const air = await fetchAIRiddle();
-      setCurrentRiddle(air);
-    } else {
-      setCurrentRiddle(LOCAL_RIDDLES[Math.floor(Math.random() * LOCAL_RIDDLES.length)]);
-    }
+    // Pick a new riddle that isn't the current one to ensure freshness
+    let next;
+    do {
+      next = LOCAL_RIDDLES[Math.floor(Math.random() * LOCAL_RIDDLES.length)];
+    } while (next.question === currentRiddle.question);
+    
+    setCurrentRiddle(next);
   };
 
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!userInput.trim() || isLoading) return;
+    if (!userInput.trim()) return;
 
     const isCorrect = userInput.trim().toUpperCase() === currentRiddle.answer.toUpperCase();
     
@@ -153,46 +119,37 @@ const RiddleRift: React.FC<{ onGameOver: (s: number) => void }> = ({ onGameOver 
           <i className="fas fa-brain text-8xl dark:text-white text-slate-900"></i>
         </div>
 
-        {isLoading ? (
-          <div className="py-20 flex flex-col items-center gap-4">
-            <i className="fas fa-sync-alt fa-spin text-4xl text-indigo-500"></i>
-            <p className="text-indigo-400 font-black uppercase tracking-widest text-xs">Opening Rift...</p>
+        <h3 className="text-2xl md:text-3xl font-bold dark:text-white text-slate-800 mb-8 leading-relaxed text-center italic transition-colors">
+          "{currentRiddle.question}"
+        </h3>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <input 
+            type="text"
+            value={userInput}
+            onChange={(e) => setUserInput(e.target.value)}
+            placeholder="TYPE YOUR ANSWER..."
+            autoFocus
+            className="w-full bg-slate-100 dark:bg-black/40 border-2 border-slate-200 dark:border-white/10 rounded-2xl py-4 px-6 text-center text-2xl font-black uppercase tracking-widest focus:border-indigo-500 focus:outline-none transition-all dark:placeholder:text-slate-700 placeholder:text-slate-400 dark:text-indigo-400 text-indigo-700"
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <button 
+              type="button"
+              onClick={() => { setShowHint(true); setHintUsed(true); }}
+              disabled={showHint}
+              className="py-4 glass-card border-indigo-500/20 text-slate-500 dark:text-slate-400 font-black uppercase text-xs tracking-[0.2em] hover:text-indigo-400 transition-all active:scale-95"
+            >
+              <i className="fas fa-lightbulb mr-2"></i> {showHint ? currentRiddle.hint : "Need a Hint?"}
+            </button>
+            <button 
+              type="submit"
+              className="py-4 bg-indigo-600 rounded-2xl text-white font-black italic uppercase tracking-tighter hover:bg-indigo-500 transition-all active:scale-95 shadow-xl shadow-indigo-600/20"
+            >
+              ANALYZE <i className="fas fa-chevron-right ml-2"></i>
+            </button>
           </div>
-        ) : (
-          <>
-            <h3 className="text-2xl md:text-3xl font-bold dark:text-white text-slate-800 mb-8 leading-relaxed text-center italic transition-colors">
-              "{currentRiddle.question}"
-            </h3>
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <input 
-                type="text"
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                placeholder="TYPE YOUR ANSWER..."
-                autoFocus
-                className="w-full bg-slate-100 dark:bg-black/40 border-2 border-slate-200 dark:border-white/10 rounded-2xl py-4 px-6 text-center text-2xl font-black uppercase tracking-widest focus:border-indigo-500 focus:outline-none transition-all dark:placeholder:text-slate-700 placeholder:text-slate-400 dark:text-indigo-400 text-indigo-700"
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <button 
-                  type="button"
-                  onClick={() => { setShowHint(true); setHintUsed(true); }}
-                  disabled={showHint}
-                  className="py-4 glass-card border-indigo-500/20 text-slate-500 dark:text-slate-400 font-black uppercase text-xs tracking-[0.2em] hover:text-indigo-400 transition-all active:scale-95"
-                >
-                  <i className="fas fa-lightbulb mr-2"></i> {showHint ? currentRiddle.hint : "Need a Hint?"}
-                </button>
-                <button 
-                  type="submit"
-                  className="py-4 bg-indigo-600 rounded-2xl text-white font-black italic uppercase tracking-tighter hover:bg-indigo-500 transition-all active:scale-95 shadow-xl shadow-indigo-600/20"
-                >
-                  ANALYZE <i className="fas fa-chevron-right ml-2"></i>
-                </button>
-              </div>
-            </form>
-          </>
-        )}
+        </form>
       </div>
 
       <button 

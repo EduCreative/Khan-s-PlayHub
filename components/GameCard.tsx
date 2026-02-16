@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Game } from '../types';
+import { Game, Category } from '../types';
 
 interface GameCardProps {
   game: Game;
@@ -8,6 +8,75 @@ interface GameCardProps {
   onPlay: () => void;
   highScore: number;
 }
+
+const GameHero: React.FC<{ game: Game }> = ({ game }) => {
+  // Select pattern based on category
+  const renderPattern = () => {
+    switch (game.category) {
+      case Category.Puzzle:
+        return (
+          <pattern id={`pattern-${game.id}`} x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+            <rect width="40" height="40" fill="none" />
+            <path d="M0 20 L40 20 M20 0 L20 40" stroke="white" strokeWidth="0.5" opacity="0.1" />
+            <circle cx="20" cy="20" r="2" fill="white" opacity="0.1" />
+          </pattern>
+        );
+      case Category.Math:
+        return (
+          <pattern id={`pattern-${game.id}`} x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+            <rect width="20" height="20" fill="none" />
+            <circle cx="2" cy="2" r="1" fill="white" opacity="0.1" />
+          </pattern>
+        );
+      case Category.Arcade:
+        return (
+          <pattern id={`pattern-${game.id}`} x="0" y="0" width="100" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <line x1="0" y1="5" x2="100" y2="5" stroke="white" strokeWidth="1" opacity="0.05" />
+          </pattern>
+        );
+      default:
+        return (
+          <pattern id={`pattern-${game.id}`} x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+            <path d="M0 0 L30 30 M30 0 L0 30" stroke="white" strokeWidth="0.5" opacity="0.05" />
+          </pattern>
+        );
+    }
+  };
+
+  return (
+    <div className={`w-full h-full bg-gradient-to-br ${game.color} relative overflow-hidden flex items-center justify-center`}>
+      <svg className="absolute inset-0 w-full h-full pointer-events-none">
+        <defs>{renderPattern()}</defs>
+        <rect width="100%" height="100%" fill={`url(#pattern-${game.id})`} />
+        
+        {/* Dynamic elements based on game type */}
+        {game.id === 'binary-dash' && (
+          <g opacity="0.2" className="animate-pulse">
+            <text x="10%" y="30%" fill="white" className="font-mono text-xs">10110</text>
+            <text x="70%" y="60%" fill="white" className="font-mono text-xs">00101</text>
+            <text x="20%" y="80%" fill="white" className="font-mono text-xs">11010</text>
+          </g>
+        )}
+        {game.id === 'cyber-defense' && (
+          <g opacity="0.2" className="animate-spin-slow origin-center" style={{ transformOrigin: '50% 50%' }}>
+            <circle cx="50%" cy="50%" r="35%" fill="none" stroke="white" strokeWidth="1" strokeDasharray="10 20" />
+            <circle cx="50%" cy="50%" r="45%" fill="none" stroke="white" strokeWidth="0.5" strokeDasharray="5 5" />
+          </g>
+        )}
+      </svg>
+
+      {/* Large Glowing Center Icon */}
+      <div className="relative z-10 flex flex-col items-center">
+        <div className="w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-4xl text-white shadow-[0_0_30px_rgba(255,255,255,0.2)] group-hover:scale-110 group-hover:rotate-6 transition-all duration-700">
+          <i className={`fas ${game.icon} drop-shadow-2xl`}></i>
+        </div>
+      </div>
+
+      {/* Decorative Light Rays */}
+      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1)_0%,transparent_70%)]" />
+    </div>
+  );
+};
 
 const GameCard: React.FC<GameCardProps> = ({ game, onPlay, highScore }) => {
   return (
@@ -20,17 +89,11 @@ const GameCard: React.FC<GameCardProps> = ({ game, onPlay, highScore }) => {
         <div className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-shine transition-opacity" />
       </div>
 
-      {/* Game Image Preview */}
+      {/* Custom SVG Game Hero */}
       <div className="h-44 md:h-52 overflow-hidden relative">
-        <img 
-          src={game.imageUrl || `https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=400`} 
-          alt={game.name}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 group-hover:rotate-2"
-        />
+        <GameHero game={game} />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent opacity-40 group-hover:opacity-60 transition-opacity" />
-        <div className={`absolute top-4 left-4 w-12 h-12 rounded-2xl bg-gradient-to-br ${game.color} flex items-center justify-center text-xl text-white shadow-xl transform transition-transform group-hover:rotate-12 group-hover:scale-110 z-20`}>
-          <i className={`fas ${game.icon}`}></i>
-        </div>
+        
         <div className="absolute bottom-4 left-4 right-4 translate-y-2 group-hover:translate-y-0 transition-all opacity-80 group-hover:opacity-100 z-20">
            <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase text-white tracking-widest border border-white/30 shadow-sm">
              {game.category}
@@ -60,11 +123,6 @@ const GameCard: React.FC<GameCardProps> = ({ game, onPlay, highScore }) => {
 
       {/* Background Subtle Gradient Accent */}
       <div className={`absolute -bottom-16 -left-16 w-48 h-48 bg-gradient-to-br ${game.color} opacity-10 blur-3xl group-hover:opacity-20 transition-opacity pointer-events-none`} />
-      
-      {/* Decorative Sparkles on Hover */}
-      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-        <i className="fas fa-sparkles text-indigo-400 animate-spin-slow"></i>
-      </div>
     </div>
   );
 };

@@ -15,8 +15,7 @@ export const GAMES: Game[] = [
       'Match 4 or more to create explosive Special Fruits.',
       'Special fruits can clear entire rows, columns, or groups.',
       'Keep matching to extend your time and build huge combos!'
-    ],
-    imageUrl: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&q=80&w=400'
+    ]
   },
   {
     id: 'quick-math',
@@ -31,8 +30,7 @@ export const GAMES: Game[] = [
       'Type or select the correct answer as fast as possible.',
       'Correct answers add time and points.',
       'Wrong answers subtract time. Keep your streak alive!'
-    ],
-    imageUrl: 'https://images.unsplash.com/photo-1518133910546-b6c2fb7d79e3?auto=format&fit=crop&q=80&w=400'
+    ]
   },
   {
     id: 'pattern-finder',
@@ -47,8 +45,7 @@ export const GAMES: Game[] = [
       'Identify the underlying pattern (addition, rotation, color shift).',
       'Select the correct missing piece from the options.',
       'Higher levels introduce multi-layered patterns.'
-    ],
-    imageUrl: 'https://images.unsplash.com/photo-1516245834210-c4c142787335?auto=format&fit=crop&q=80&w=400'
+    ]
   },
   {
     id: 'grammar-guardian',
@@ -59,12 +56,11 @@ export const GAMES: Game[] = [
     color: 'from-emerald-500 to-teal-600',
     description: 'Identify and fix common grammatical errors in this fast-paced language challenge.',
     instructions: [
-      'A sentence with a missing or wrong word will appear.',
+      'A sentence with a missing or word will appear.',
       'Choose the grammatically correct option.',
       'Focus on subject-verb agreement and punctuation.',
       'Level up to unlock more complex linguistic puzzles.'
-    ],
-    imageUrl: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=400'
+    ]
   },
   {
     id: 'sudoku-lite',
@@ -79,8 +75,7 @@ export const GAMES: Game[] = [
       'Select a difficulty to begin: Easy, Medium, or Hard.',
       'Click a cell and choose a number to fill the grid.',
       'Solve it correctly to win!'
-    ],
-    imageUrl: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=80&w=400'
+    ]
   },
   {
     id: 'number-ninja',
@@ -95,8 +90,7 @@ export const GAMES: Game[] = [
       'Three numbers will appear in the grid below.',
       'Click/Tap the correct answer to gain points and time.',
       'Incorrect answers will penalize your remaining time!'
-    ],
-    imageUrl: 'https://images.unsplash.com/photo-1605870445919-838d190e8e1b?auto=format&fit=crop&q=80&w=400'
+    ]
   },
   {
     id: 'riddle-rift',
@@ -105,14 +99,13 @@ export const GAMES: Game[] = [
     category: Category.BrainTeaser,
     icon: 'fa-brain',
     color: 'from-purple-500 to-indigo-600',
-    description: 'A logic challenge using a mix of classic riddles and AI-generated enigmas.',
+    description: 'A logic challenge using an expansive library of classic and cryptic riddles.',
     instructions: [
       'Read the riddle presented in the rift.',
       'Type your answer and analyze it.',
       'Use hints if the enigma is too complex.',
       'Build a streak to prove your neural dominance.'
-    ],
-    imageUrl: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&q=80&w=400'
+    ]
   },
   {
     id: 'blitz-runner',
@@ -127,8 +120,7 @@ export const GAMES: Game[] = [
       'Dodge the red incoming walls to stay in the race.',
       'The longer you survive, the higher your score multiplier grows.',
       'One hit and the run is over—stay focused!'
-    ],
-    imageUrl: 'https://images.unsplash.com/photo-1519750157634-b6d493a0f77c?auto=format&fit=crop&q=80&w=400'
+    ]
   },
   {
     id: 'bubble-fury',
@@ -145,8 +137,7 @@ export const GAMES: Game[] = [
       'Detached bubbles will fall for bonus points!',
       'Don\'t let the bubbles reach the bottom of the screen.',
       'Choose Easy, Medium, or Hard to set the pace!'
-    ],
-    imageUrl: 'https://images.unsplash.com/photo-1635241161466-541f065683ba?auto=format&fit=crop&q=80&w=400'
+    ]
   },
   {
     id: 'word-builder',
@@ -161,8 +152,7 @@ export const GAMES: Game[] = [
       'Words must be at least 3 letters long.',
       'Solve the "Mega Riddle Bounty" for massive bonus height.',
       'Complete the height target to level up and change the theme.'
-    ],
-    imageUrl: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=400'
+    ]
   },
   {
     id: 'sum-surge',
@@ -177,8 +167,7 @@ export const GAMES: Game[] = [
       'When two tiles with the same number touch, they merge into one.',
       'New tiles appear with every move.',
       'Try to reach the highest possible value before the grid fills up!'
-    ],
-    imageUrl: 'https://images.unsplash.com/photo-1518133910546-b6c2fb7d79e3?auto=format&fit=crop&q=80&w=400'
+    ]
   },
   {
     id: 'memory-matrix',
@@ -193,8 +182,7 @@ export const GAMES: Game[] = [
       'Flip two cards to try and find a matching pair.',
       'If they match, they stay revealed. If not, they flip back.',
       'Find all pairs in as few moves as possible for the max score.'
-    ],
-    imageUrl: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=400'
+    ]
   },
   {
     id: 'labyrinth',
@@ -209,8 +197,7 @@ export const GAMES: Game[] = [
       'Navigate through the walls to find the exit.',
       'The Green Portal marks the end of the current maze.',
       'Each level presents a new, procedurally generated challenge!'
-    ],
-    imageUrl: 'https://images.unsplash.com/photo-1533236897111-3e94666b2edf?auto=format&fit=crop&q=80&w=400'
+    ]
   },
   {
     id: 'color-clash',
@@ -225,8 +212,7 @@ export const GAMES: Game[] = [
       'Ignore the text color—focus only on what the word SAYS.',
       'Click the matching colored button at the bottom.',
       'Be quick! The timer accelerates with every correct answer.'
-    ],
-    imageUrl: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=400'
+    ]
   },
   {
     id: 'neon-snake',
@@ -241,8 +227,7 @@ export const GAMES: Game[] = [
       'Collect green energy cores to increase your length and score.',
       'Hitting the boundaries or your own body terminates the session.',
       'The speed increases as you grow longer!'
-    ],
-    imageUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=400'
+    ]
   },
   {
     id: 'bit-master',
@@ -257,8 +242,7 @@ export const GAMES: Game[] = [
       'Select the correct decimal equivalent from the options.',
       'Correct answers add time and points.',
       'Speed is critical—the timer is always ticking down!'
-    ],
-    imageUrl: 'https://images.unsplash.com/photo-1518133910546-b6c2fb7d79e3?auto=format&fit=crop&q=80&w=400'
+    ]
   },
   {
     id: 'reflex-node',
@@ -273,8 +257,7 @@ export const GAMES: Game[] = [
       'Tap each node before its outer ring reaches the center.',
       'Missing a node or letting it fade ends the game.',
       'The frequency of node appearances increases over time.'
-    ],
-    imageUrl: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=400'
+    ]
   },
   {
     id: 'pulse-wave',
@@ -289,8 +272,7 @@ export const GAMES: Game[] = [
       'Tap the nodes exactly when the wave passes over them.',
       'Perfect timing yields max points and multiplier.',
       'Too many misses will cause a network desync!'
-    ],
-    imageUrl: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&q=80&w=400'
+    ]
   },
   {
     id: 'binary-dash',
@@ -298,15 +280,14 @@ export const GAMES: Game[] = [
     tagline: 'Filter the stream in real-time.',
     category: Category.Math,
     icon: 'fa-code-branch',
-    color: 'from-cyan-600 to-blue-700',
+    color: 'from-teal-600 to-sky-700',
     description: 'Sort incoming bits into their correct registers. A true test of binary logic and extreme reflexes.',
     instructions: [
       'Numbers fly toward the center of the screen.',
       'Sort them left or right based on whether they are EVEN or ODD.',
       'Correct sorting increases your streak and speed.',
       'Incorrect sorting depletes your system integrity.'
-    ],
-    imageUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=400'
+    ]
   },
   {
     id: 'cyber-defense',
@@ -314,14 +295,13 @@ export const GAMES: Game[] = [
     tagline: 'Protect the core at all costs.',
     category: Category.Arcade,
     icon: 'fa-shield-halved',
-    color: 'from-indigo-600 to-violet-800',
+    color: 'from-violet-600 to-indigo-800',
     description: 'An orbital defense simulator. Rotate your shield to intercept incoming virus nodes and protect the central core.',
     instructions: [
       'Rotate your shield around the central core using your finger or mouse.',
       'Intercept the incoming red virus nodes to destroy them.',
       'Collect green data nodes for core upgrades and repairs.',
       'The core can only take a few hits before complete failure!'
-    ],
-    imageUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=400'
+    ]
   }
 ];

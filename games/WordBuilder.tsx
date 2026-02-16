@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { GoogleGenAI } from "@google/genai";
 import { COMMON_WORDS } from '../dictionary';
 
 // Bounty riddles for Word Builder
@@ -46,14 +45,12 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
   const [pool, setPool] = useState<string[]>([]);
   const [themeIndex, setThemeIndex] = useState(0);
   const [isShaking, setIsShaking] = useState(false);
-  const [isValidating, setIsValidating] = useState(false);
   const [bounty, setBounty] = useState(BOUNTIES[0]);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const blocksRef = useRef<Block[]>([]);
-  // Use a local ref for dynamic dictionary expansion
-  const expandedDictionaryRef = useRef<Set<string>>(new Set());
+  
   const themes = ['indigo', 'pink', 'emerald', 'cyan', 'amber'];
 
   const generatePool = useCallback(() => {
@@ -172,32 +169,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
     return () => cancelAnimationFrame(animFrame);
   }, [themeIndex]);
 
-  const validateWithAI = async (word: string): Promise<boolean> => {
-    const apiKey = process.env.API_KEY;
-    if (!apiKey || apiKey === "undefined") return false;
-    try {
-      setIsValidating(true);
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Task: Verify if "${word}" is a real, correctly spelled English word. 
-        Rules: 
-        - Respond with ONLY the word "TRUE" if it is a valid word.
-        - Respond with ONLY the word "FALSE" if it is NOT a valid word.
-        - No other text.`,
-      });
-      const resultText = response.text || "";
-      return resultText.trim().toUpperCase() === "TRUE";
-    } catch (err) { 
-      console.error("AI Validation Error:", err);
-      return false; 
-    } finally { 
-      setIsValidating(false); 
-    }
-  };
-
-  const submitWord = async () => {
-    if (isValidating) return;
+  const submitWord = () => {
     const word = currentWord.map(i => i.char).join('');
     if (word.length < 3) {
       setIsShaking(true);
@@ -206,14 +178,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
     }
 
     const isBounty = word === bounty.word;
-    // Check local dictionary and expanded cache first
-    let isValid = isBounty || COMMON_WORDS.has(word) || expandedDictionaryRef.current.has(word);
-    
-    // If not found locally, ask the Supreme Judge (Gemini)
-    if (!isValid) {
-      isValid = await validateWithAI(word);
-      if (isValid) expandedDictionaryRef.current.add(word);
-    }
+    const isValid = isBounty || COMMON_WORDS.has(word);
 
     if (isValid) {
       const blocks = isBounty ? 10 : Math.floor(word.length / 2);
@@ -279,9 +244,9 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
         <canvas ref={canvasRef} className="w-full h-full max-h-[50vh]" />
         
         <div className="absolute top-4 left-4 z-10">
-           <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase transition-colors ${isValidating ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}`}>
-              <i className={`fas ${isValidating ? 'fa-brain animate-pulse' : 'fa-check-circle'}`}></i>
-              {isValidating ? 'Verifying with AI...' : 'Nexus Lexicon Active'}
+           <div className="flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase transition-colors bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <i className="fas fa-check-circle"></i>
+              Nexus Lexicon Active
            </div>
         </div>
 
@@ -334,14 +299,9 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
           </button>
           <button 
             onClick={submitWord} 
-            disabled={isValidating}
-            className={`col-span-2 glass-card h-14 bg-indigo-600 border-indigo-400 text-white font-black italic text-lg shadow-xl shadow-indigo-500/30 active:scale-95 transition-all uppercase flex items-center justify-center gap-2 ${isValidating ? 'opacity-80' : ''}`}
+            className="col-span-2 glass-card h-14 bg-indigo-600 border-indigo-400 text-white font-black italic text-lg shadow-xl shadow-indigo-500/30 active:scale-95 transition-all uppercase flex items-center justify-center gap-2"
           >
-            {isValidating ? (
-              <><i className="fas fa-brain animate-pulse"></i><span className="text-sm">NEURAL JUDGE...</span></>
-            ) : (
-              <>CONSTRUCT <i className="fas fa-arrow-up"></i></>
-            )}
+            CONSTRUCT <i className="fas fa-arrow-up"></i>
           </button>
         </div>
       </div>

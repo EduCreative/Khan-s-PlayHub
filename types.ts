@@ -16,7 +16,6 @@ export interface Game {
   color: string;
   description: string;
   instructions: string[];
-  imageUrl?: string;
 }
 
 export interface Score {

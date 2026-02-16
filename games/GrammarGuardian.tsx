@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 const QUESTIONS = [
@@ -76,7 +75,22 @@ const QUESTIONS = [
   { sentence: "Ten miles ____ a long way to walk.", options: ["is", "are", "be", "am"], answer: "is" },
   { sentence: "Physics ____ my favorite subject.", options: ["is", "are", "be", "am"], answer: "is" },
   { sentence: "The scissors ____ very sharp.", options: ["are", "is", "be", "am"], answer: "are" },
-  { sentence: "Politics ____ a complex business.", options: ["is", "are", "be", "am"], answer: "is" }
+  { sentence: "Politics ____ a complex business.", options: ["is", "are", "be", "am"], answer: "is" },
+  { sentence: "She is the one ____ won the race.", options: ["who", "whom", "whose", "which"], answer: "who" },
+  { sentence: "The book is ____ than the movie.", options: ["better", "best", "well", "good"], answer: "better" },
+  { sentence: "I ____ already seen that movie.", options: ["have", "had", "has", "am"], answer: "have" },
+  { sentence: "The weather is ____ today than yesterday.", options: ["colder", "coldest", "coldly", "cold"], answer: "colder" },
+  { sentence: "He ____ to the gym every morning.", options: ["goes", "go", "going", "gone"], answer: "goes" },
+  { sentence: "The children ____ playing in the park.", options: ["are", "is", "am", "be"], answer: "are" },
+  { sentence: "I ____ a new car next week.", options: ["will buy", "buy", "buying", "bought"], answer: "will buy" },
+  { sentence: "The flowers ____ beautiful in the garden.", options: ["look", "looks", "looking", "looked"], answer: "look" },
+  { sentence: "She ____ her homework before dinner.", options: ["finished", "finish", "finishing", "finishes"], answer: "finished" },
+  { sentence: "The sun ____ in the east.", options: ["rises", "rise", "rising", "rose"], answer: "rises" },
+  { sentence: "I ____ my keys on the table.", options: ["put", "puts", "putting", "place"], answer: "put" },
+  { sentence: "The coffee is ____ hot to drink.", options: ["too", "to", "two", "toe"], answer: "too" },
+  { sentence: "He ____ a letter to his parents.", options: ["wrote", "write", "writing", "writes"], answer: "wrote" },
+  { sentence: "The movie ____ at 7 PM.", options: ["starts", "start", "starting", "started"], answer: "starts" },
+  { sentence: "I ____ to the store to buy milk.", options: ["went", "go", "going", "goes"], answer: "went" }
 ];
 
 const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
