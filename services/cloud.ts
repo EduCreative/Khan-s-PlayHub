@@ -7,7 +7,8 @@ import { Game, UserProfile } from '../types';
  */
 
 // IMPORTANT: Replace this URL with your actual Cloudflare Worker URL
-const CLOUDFLARE_WORKER_URL = 'https://YOUR_WORKER_URL_HERE.workers.dev';
+// const CLOUDFLARE_WORKER_URL = 'https://YOUR_WORKER_URL_HERE.workers.dev';
+const CLOUDFLARE_WORKER_URL = 'https://kmasroor50.cloudflareaccess.com/cdn-cgi/access/certs'
 
 class CloudService {
   private deviceId: string;
