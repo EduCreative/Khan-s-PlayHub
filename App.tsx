@@ -7,6 +7,7 @@ import GameRunner from './components/GameRunner';
 import ParticleBackground from './components/ParticleBackground';
 import TutorialOverlay from './components/TutorialOverlay';
 import ProfileModal from './components/ProfileModal';
+import AdminPanel from './components/AdminPanel';
 import { cloud } from './services/cloud';
 
 const DEFAULT_PROFILE: UserProfile = {
@@ -26,6 +27,7 @@ const App: React.FC = () => {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [showProfileSetup, setShowProfileSetup] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'synced' | 'pending' | 'offline'>('synced');
 
   useEffect(() => {
@@ -51,6 +53,9 @@ const App: React.FC = () => {
       if (activeGame) {
         setActiveGame(null);
         window.history.pushState({ page: 'hub' }, '');
+      } else if (showAdmin) {
+        setShowAdmin(false);
+        window.history.pushState({ page: 'hub' }, '');
       } else {
         setShowExitConfirm(true);
         window.history.pushState({ page: 'hub' }, '');
@@ -58,7 +63,7 @@ const App: React.FC = () => {
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [activeGame]);
+  }, [activeGame, showAdmin]);
 
   useEffect(() => {
     if (isDarkMode) document.documentElement.classList.add('dark');
@@ -114,7 +119,9 @@ const App: React.FC = () => {
       <ParticleBackground isDarkMode={isDarkMode} />
       
       <main className="relative z-10 w-full min-h-screen">
-        {activeGame ? (
+        {showAdmin ? (
+          <AdminPanel onClose={() => setShowAdmin(false)} />
+        ) : activeGame ? (
           <GameRunner 
             game={activeGame} 
             onClose={() => setActiveGame(null)} 
@@ -135,6 +142,7 @@ const App: React.FC = () => {
             onToggleTheme={() => setIsDarkMode(!isDarkMode)}
             onOpenProfile={() => setShowProfileSetup(true)}
             onToggleFavorite={toggleFavorite}
+            onOpenAdmin={() => setShowAdmin(true)}
           />
         )}
       </main>
@@ -148,7 +156,7 @@ const App: React.FC = () => {
         />
       )}
 
-      {showTutorial && !activeGame && (
+      {showTutorial && !activeGame && !showAdmin && (
         <TutorialOverlay onComplete={() => {
           setShowTutorial(false);
           localStorage.setItem('khans-playhub-tutorial-complete', 'true');
@@ -160,7 +168,7 @@ const App: React.FC = () => {
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl" onClick={() => setShowExitConfirm(false)} />
           <div className="relative glass-card w-full max-w-sm p-8 text-center border-indigo-500/30 shadow-2xl scale-up-center">
             <div className="w-16 h-16 bg-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-2xl mb-6 text-white"><i className="fas fa-power-off"></i></div>
-            <h2 className="text-3xl font-black mb-2 italic tracking-tighter uppercase">Exit Nexus?</h2>
+            <h2 className="text-3xl font-black mb-2 italic tracking-tighter uppercase text-white">Exit Nexus?</h2>
             <div className="flex flex-col gap-3">
               <button onClick={() => setShowExitConfirm(false)} className="w-full py-4 bg-indigo-600 text-white rounded-xl font-black uppercase text-xs tracking-widest">Stay</button>
               <button onClick={() => window.location.href = "about:blank"} className="w-full py-4 bg-white/5 border border-white/10 text-slate-400 rounded-xl font-black uppercase text-xs tracking-widest hover:text-rose-400 transition-all">Terminate</button>

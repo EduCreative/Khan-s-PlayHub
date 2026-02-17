@@ -199,37 +199,37 @@ const Tetris: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> 
   }, [handleMove, drop, handleRotate]);
 
   return (
-    <div className={`flex flex-col md:flex-row items-center justify-center gap-4 md:gap-12 w-full max-w-6xl px-4 select-none animate-in fade-in duration-700 h-full transition-transform ${impactShake ? 'animate-glitch' : ''}`}>
+    <div className={`flex flex-col md:flex-row items-center justify-start md:justify-center gap-2 md:gap-12 w-full max-w-6xl px-2 md:px-4 select-none animate-in fade-in duration-700 h-full transition-transform ${impactShake ? 'animate-glitch' : ''}`}>
       
-      {/* Left Panel: Holographic Stats */}
-      <div className="flex flex-col gap-4 w-full md:w-48 stagger-item">
-        <div className="glass-card p-5 rounded-[2rem] border-cyan-500/30 shadow-xl backdrop-blur-xl bg-slate-900/20 text-left border-l-4">
-          <p className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.2em] mb-1">Synapse Link</p>
-          <span className="text-3xl font-black text-white tabular-nums italic">{score.toLocaleString()}</span>
+      {/* Top Panel (Mobile: Horizontal) / Left Panel (Desktop: Vertical) */}
+      <div className="flex flex-row md:flex-col gap-2 md:gap-4 w-full md:w-48 stagger-item">
+        <div className="flex-1 glass-card p-3 md:p-5 rounded-2xl md:rounded-[2rem] border-cyan-500/30 shadow-xl backdrop-blur-xl bg-slate-900/20 text-left border-l-4">
+          <p className="text-[8px] md:text-[10px] font-black text-cyan-400 uppercase tracking-widest md:tracking-[0.2em] mb-0.5 md:mb-1">Synapse</p>
+          <span className="text-xl md:text-3xl font-black text-white tabular-nums italic leading-none">{score.toLocaleString()}</span>
         </div>
-        <div className="glass-card p-5 rounded-[2rem] border-indigo-500/30 shadow-xl backdrop-blur-xl bg-slate-900/20 text-left border-l-4">
-          <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-1">Current Tier</p>
-          <span className="text-3xl font-black text-white italic">{level}</span>
+        <div className="flex-1 glass-card p-3 md:p-5 rounded-2xl md:rounded-[2rem] border-indigo-500/30 shadow-xl backdrop-blur-xl bg-slate-900/20 text-left border-l-4">
+          <p className="text-[8px] md:text-[10px] font-black text-indigo-400 uppercase tracking-widest md:tracking-[0.2em] mb-0.5 md:mb-1">Tier</p>
+          <span className="text-xl md:text-3xl font-black text-white italic leading-none">{level}</span>
         </div>
-        <div className="glass-card p-5 rounded-[2rem] border-purple-500/30 shadow-xl backdrop-blur-xl bg-slate-900/20 text-left border-l-4">
+        <div className="hidden md:block glass-card p-5 rounded-[2rem] border-purple-500/30 shadow-xl backdrop-blur-xl bg-slate-900/20 text-left border-l-4">
           <p className="text-[10px] font-black text-purple-400 uppercase tracking-[0.2em] mb-1">Lines Voided</p>
           <span className="text-3xl font-black text-white tabular-nums italic">{lines}</span>
         </div>
       </div>
 
       {/* Center: The Large Arena */}
-      <div className="relative flex items-center justify-center h-[75vh] md:h-[80vh] aspect-[1/2] group">
+      <div className="relative flex items-center justify-center h-[50vh] sm:h-[60vh] md:h-[80vh] aspect-[1/2] group transition-all">
         <div className="absolute -inset-4 bg-cyan-500/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
         
         <div 
-          className="relative h-full w-full bg-slate-950/40 backdrop-blur-2xl rounded-[2.5rem] border-[4px] border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5),inset_0_0_30px_rgba(255,255,255,0.02)] overflow-hidden p-2 transition-all"
+          className="relative h-full w-full bg-slate-950/40 backdrop-blur-2xl rounded-2xl md:rounded-[2.5rem] border-[3px] md:border-[4px] border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5),inset_0_0_30px_rgba(255,255,255,0.02)] overflow-hidden p-1 md:p-2 transition-all"
         >
           {/* Cyber Background Overlay */}
           <div className="absolute inset-0 bg-grid-white/[0.03] pointer-events-none" />
           <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/5 via-transparent to-cyan-500/5 pointer-events-none" />
-          <div className="absolute top-0 left-0 w-full h-1 bg-cyan-500/20 animate-pulse" />
+          <div className="absolute top-0 left-0 w-full h-0.5 bg-cyan-500/20 animate-pulse" />
           
-          <div className="grid grid-cols-10 grid-rows-20 h-full w-full gap-0.5">
+          <div className="grid grid-cols-10 grid-rows-20 h-full w-full gap-[1px]">
             {grid.map((row, y) => row.map((cell, x) => {
               const isFlashed = clearFlash.includes(y);
               let color = cell;
@@ -247,7 +247,7 @@ const Tetris: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> 
               return (
                 <div 
                   key={`${x}-${y}`} 
-                  className={`w-full h-full border-[0.5px] border-white/5 transition-all duration-150 rounded-[4px] ${isFlashed ? 'bg-white shadow-[0_0_20px_white] z-10' : ''}`}
+                  className={`w-full h-full border-[0.5px] border-white/5 transition-all duration-150 rounded-[2px] md:rounded-[4px] ${isFlashed ? 'bg-white shadow-[0_0_20px_white] z-10' : ''}`}
                   style={{ 
                     backgroundColor: isFlashed ? '#fff' : (color !== 0 ? color as string : 'transparent'),
                     boxShadow: color !== 0 && !isFlashed ? `inset 0 0 10px rgba(255,255,255,0.4), 0 0 15px ${color}88` : undefined,
@@ -258,19 +258,19 @@ const Tetris: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> 
           </div>
 
           {isGameOver && (
-            <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-xl flex flex-col items-center justify-center z-50 rounded-[2rem] animate-in zoom-in duration-500">
-               <div className="w-16 h-16 bg-rose-500/20 rounded-full flex items-center justify-center mb-4 border border-rose-500/40">
-                  <i className="fas fa-microchip text-rose-500 text-3xl animate-pulse"></i>
+            <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-xl flex flex-col items-center justify-center z-50 rounded-2xl md:rounded-[2rem] animate-in zoom-in duration-500 p-4 text-center">
+               <div className="w-12 h-12 md:w-16 md:h-16 bg-rose-500/20 rounded-full flex items-center justify-center mb-4 border border-rose-500/40">
+                  <i className="fas fa-microchip text-rose-500 text-2xl md:text-3xl animate-pulse"></i>
                </div>
-               <h3 className="text-4xl font-black italic text-white uppercase tracking-tighter text-center">CORE<br/>OVERFLOW</h3>
+               <h3 className="text-2xl md:text-4xl font-black italic text-white uppercase tracking-tighter">CORE<br/>OVERFLOW</h3>
             </div>
           )}
         </div>
       </div>
 
-      {/* Right Panel: Next Piece and Mobile Controls */}
-      <div className="flex flex-col gap-6 w-full md:w-48 stagger-item">
-        <div className="glass-card p-6 rounded-[2rem] border-amber-500/30 shadow-xl backdrop-blur-xl bg-slate-900/20 text-center flex flex-col items-center border-r-4">
+      {/* Bottom Panel (Mobile) / Right Panel (Desktop) */}
+      <div className="flex flex-row md:flex-col items-center md:items-stretch gap-3 md:gap-6 w-full md:w-48 stagger-item mb-2 md:mb-0">
+        <div className="hidden md:flex glass-card p-6 rounded-[2rem] border-amber-500/30 shadow-xl backdrop-blur-xl bg-slate-900/20 text-center flex-col items-center border-r-4">
           <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-3">Incoming</p>
           <div className="w-20 h-20 bg-black/40 rounded-2xl flex items-center justify-center border border-white/10 p-2">
              <div className="grid grid-cols-4 grid-rows-4 gap-1">
@@ -282,13 +282,13 @@ const Tetris: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> 
         </div>
 
         {/* Mobile Control Pad */}
-        <div className="grid grid-cols-3 gap-3 md:hidden">
+        <div className="grid grid-cols-3 gap-2 flex-1 md:hidden">
           <div />
-          <button onPointerDown={(e) => { e.preventDefault(); handleRotate(); }} className="h-14 glass-card rounded-2xl flex items-center justify-center text-cyan-400 border-2 border-cyan-400/20 bg-cyan-400/5"><i className="fas fa-rotate"></i></button>
+          <button onPointerDown={(e) => { e.preventDefault(); handleRotate(); }} className="h-12 glass-card rounded-xl flex items-center justify-center text-cyan-400 border border-cyan-400/20 bg-cyan-400/5 active:scale-90 transition-transform"><i className="fas fa-rotate"></i></button>
           <div />
-          <button onPointerDown={(e) => { e.preventDefault(); handleMove(-1); }} className="h-14 glass-card rounded-2xl flex items-center justify-center text-cyan-400 border-2 border-cyan-400/20 bg-cyan-400/5"><i className="fas fa-arrow-left"></i></button>
-          <button onPointerDown={(e) => { e.preventDefault(); drop(); }} className="h-14 glass-card rounded-2xl flex items-center justify-center text-cyan-400 border-2 border-cyan-400/20 bg-cyan-400/5"><i className="fas fa-arrow-down"></i></button>
-          <button onPointerDown={(e) => { e.preventDefault(); handleMove(1); }} className="h-14 glass-card rounded-2xl flex items-center justify-center text-cyan-400 border-2 border-cyan-400/20 bg-cyan-400/5"><i className="fas fa-arrow-right"></i></button>
+          <button onPointerDown={(e) => { e.preventDefault(); handleMove(-1); }} className="h-12 glass-card rounded-xl flex items-center justify-center text-cyan-400 border border-cyan-400/20 bg-cyan-400/5 active:scale-90 transition-transform"><i className="fas fa-arrow-left"></i></button>
+          <button onPointerDown={(e) => { e.preventDefault(); drop(); }} className="h-12 glass-card rounded-xl flex items-center justify-center text-cyan-400 border border-cyan-400/20 bg-cyan-400/5 active:scale-90 transition-transform"><i className="fas fa-arrow-down"></i></button>
+          <button onPointerDown={(e) => { e.preventDefault(); handleMove(1); }} className="h-12 glass-card rounded-xl flex items-center justify-center text-cyan-400 border border-cyan-400/20 bg-cyan-400/5 active:scale-90 transition-transform"><i className="fas fa-arrow-right"></i></button>
         </div>
 
         <div className="hidden md:flex flex-col gap-2 p-4 rounded-3xl bg-white/5 border border-white/10 opacity-40">

@@ -17,12 +17,14 @@ interface HubProps {
   onToggleTheme: () => void;
   onOpenProfile: () => void;
   onToggleFavorite: (id: string) => void;
+  onOpenAdmin: () => void;
 }
 
 const Hub: React.FC<HubProps> = ({ 
-  games, onSelectGame, filter, setFilter, highScores, userProfile, isDarkMode, syncStatus, onToggleTheme, onOpenProfile, onToggleFavorite 
+  games, onSelectGame, filter, setFilter, highScores, userProfile, isDarkMode, syncStatus, onToggleTheme, onOpenProfile, onToggleFavorite, onOpenAdmin
 }) => {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [vClickCount, setVClickCount] = useState(0);
 
   const filteredGames = filter === 'All' 
     ? games 
@@ -31,6 +33,16 @@ const Hub: React.FC<HubProps> = ({
     : games.filter(g => g.category === filter);
 
   const categories = ['All', 'Favorites', ...Object.values(Category)];
+
+  const handleVersionClick = () => {
+    const nextCount = vClickCount + 1;
+    if (nextCount >= 5) {
+      onOpenAdmin();
+      setVClickCount(0);
+    } else {
+      setVClickCount(nextCount);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-12 flex flex-col gap-6 md:gap-12 animate-in fade-in duration-700">
@@ -42,14 +54,13 @@ const Hub: React.FC<HubProps> = ({
               <h1 className="text-3xl md:text-5xl font-black italic tracking-tighter uppercase dark:text-white text-slate-900 leading-none">
                 Khan's <span className="text-indigo-600 dark:text-indigo-400">PlayHub</span>
               </h1>
-              {/* Sync Status Badge */}
               <div className={`mt-1 flex items-center justify-center w-3 h-3 rounded-full shadow-[0_0_10px_currentColor] animate-pulse ${
                 syncStatus === 'synced' ? 'text-emerald-500 bg-emerald-500' : 
                 syncStatus === 'pending' ? 'text-amber-500 bg-amber-500' : 
                 'text-rose-500 bg-rose-500'
               }`} title={`Nexus Cloud Status: ${syncStatus.toUpperCase()}`} />
             </div>
-            <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-1">Micro-Gaming Nexus v2.4.5</p>
+            <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-1">Micro-Gaming Nexus v2.5.0</p>
           </div>
         </div>
 
@@ -92,10 +103,18 @@ const Hub: React.FC<HubProps> = ({
       {showLeaderboard && <Leaderboard onClose={() => setShowLeaderboard(false)} userScore={Object.values(highScores).reduce((a, b) => a + b, 0)} />}
 
       <footer className="flex flex-col items-center gap-4 mt-8 pb-12">
-        <span className="px-6 py-2 glass-card border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3">
-          <span className={`w-1.5 h-1.5 rounded-full animate-ping ${syncStatus === 'synced' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-          Nexus Cloud Protocol Enabled v2.4.5
-        </span>
+        <div className="flex flex-col items-center gap-2">
+          <span 
+            onClick={handleVersionClick}
+            className="px-6 py-2 glass-card border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 cursor-pointer hover:bg-indigo-500/5 transition-all select-none"
+          >
+            <span className={`w-1.5 h-1.5 rounded-full animate-ping ${syncStatus === 'synced' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+            Nexus Cloud Protocol Enabled v2.5.0
+          </span>
+          <button onClick={onOpenAdmin} className="text-[9px] font-bold text-slate-500/30 hover:text-indigo-500/40 transition-colors uppercase tracking-widest mt-2">
+             <i className="fas fa-terminal mr-2"></i> Access Admin Console
+          </button>
+        </div>
       </footer>
     </div>
   );

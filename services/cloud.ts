@@ -2,13 +2,9 @@ import { Game, UserProfile } from '../types';
 
 /**
  * Khan's PlayHub - Cloudflare Persistence Service
- * This service handles syncing local data with a Cloudflare Worker + D1 Backend.
- * It uses an 'Offline-First' approach, falling back to LocalStorage.
  */
 
-// IMPORTANT: Replace this URL with your actual Cloudflare Worker URL
-// const CLOUDFLARE_WORKER_URL = 'https://YOUR_WORKER_URL_HERE.workers.dev';
-const CLOUDFLARE_WORKER_URL = 'https://kmasroor50.cloudflareaccess.com/cdn-cgi/access/certs'
+const CLOUDFLARE_WORKER_URL = 'https://kmasroor50.cloudflareaccess.com/cdn-cgi/access/certs';
 
 class CloudService {
   private deviceId: string;
@@ -27,71 +23,60 @@ class CloudService {
   }
 
   async syncScore(gameId: string, score: number): Promise<boolean> {
-    if (!this.isSetup()) {
-      console.info('Cloud Sync: CLOUDFLARE_WORKER_URL not configured. Scores are saved locally only.');
-      return false;
-    }
-
+    if (!this.isSetup()) return false;
     try {
       if (!navigator.onLine) return false;
-      
       const response = await fetch(`${CLOUDFLARE_WORKER_URL}/scores`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          deviceId: this.deviceId,
-          gameId,
-          score,
-          timestamp: Date.now()
-        })
+        body: JSON.stringify({ deviceId: this.deviceId, gameId, score, timestamp: Date.now() })
       });
       return response.ok;
-    } catch (e) {
-      console.warn('Cloud Sync Failed (Check Worker CORS or URL)', e);
-      return false;
-    }
+    } catch (e) { return false; }
   }
 
   async getGlobalHighScores(gameId: string): Promise<any[]> {
     if (!this.isSetup()) return [];
     try {
-      if (!navigator.onLine) return [];
       const res = await fetch(`${CLOUDFLARE_WORKER_URL}/leaderboard/${gameId}`);
       if (res.ok) return await res.json();
       return [];
-    } catch (e) {
-      return [];
-    }
+    } catch (e) { return []; }
   }
 
   async syncProfile(profile: UserProfile): Promise<boolean> {
     if (!this.isSetup()) return false;
     try {
-      if (!navigator.onLine) return false;
       const res = await fetch(`${CLOUDFLARE_WORKER_URL}/profile`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          deviceId: this.deviceId,
-          ...profile
-        })
+        body: JSON.stringify({ deviceId: this.deviceId, ...profile })
       });
       return res.ok;
-    } catch (e) {
-      return false;
-    }
+    } catch (e) { return false; }
   }
 
-  async fetchCloudQuestions(category: string): Promise<any[]> {
-    if (!this.isSetup()) return [];
+  // --- Admin Methods ---
+
+  async getAdminSummary(): Promise<any> {
     try {
-      if (!navigator.onLine) return [];
-      const res = await fetch(`${CLOUDFLARE_WORKER_URL}/content/${category}`);
-      if (res.ok) return await res.json();
-      return [];
-    } catch (e) {
-      return [];
-    }
+      const res = await fetch(`${CLOUDFLARE_WORKER_URL}/admin/summary`);
+      return res.ok ? await res.json() : null;
+    } catch (e) { return null; }
+  }
+
+  async getAdminUsers(): Promise<any[]> {
+    try {
+      const res = await fetch(`${CLOUDFLARE_WORKER_URL}/admin/users`);
+      return res.ok ? await res.json() : [];
+    } catch (e) { return []; }
+  }
+
+  async deleteUser(deviceId: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${CLOUDFLARE_WORKER_URL}/admin/user/${deviceId}`, { method: 'DELETE' });
+      return res.ok;
+    } catch (e) { return false; }
   }
 }
 
