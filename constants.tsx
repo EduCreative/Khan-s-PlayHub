@@ -18,6 +18,21 @@ export const GAMES: Game[] = [
     ]
   },
   {
+    id: 'tetris',
+    name: 'Tetris',
+    tagline: 'Classic block-dropping puzzle action',
+    category: Category.Arcade,
+    icon: 'fa-cubes',
+    color: 'from-blue-500 to-cyan-600',
+    description: 'A neon-infused version of the timeless block-stacking puzzle. Fit the geometric shapes perfectly to clear lines.',
+    instructions: [
+      'Move and Rotate blocks to fit them into gaps.',
+      'Complete full horizontal rows to clear them.',
+      'Use Up Arrow or Rotate button to change orientation.',
+      'Don\'t let the stack reach the ceiling!'
+    ]
+  },
+  {
     id: 'quick-math',
     name: 'Quick Math',
     tagline: 'Hyper-speed mental arithmetic.',

@@ -25,11 +25,30 @@
             'spin-slow': 'spin 8s linear infinite',
             'pulse-gentle': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
             'shine': 'shine 2s linear infinite',
+            'float': 'float 3s ease-in-out infinite',
+            'glitch': 'glitch 0.4s cubic-bezier(.25,.46,.45,.94) both infinite',
+            'stagger-in': 'stagger-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both',
           },
           keyframes: {
             shine: {
               '0%': { transform: 'translateX(-100%) skewX(-15deg)' },
               '100%': { transform: 'translateX(200%) skewX(-15deg)' }
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-10px)' }
+            },
+            glitch: {
+              '0%': { transform: 'translate(0)' },
+              '20%': { transform: 'translate(-2px, 2px)' },
+              '40%': { transform: 'translate(-2px, -2px)' },
+              '60%': { transform: 'translate(2px, 2px)' },
+              '80%': { transform: 'translate(2px, -2px)' },
+              '100%': { transform: 'translate(0)' },
+            },
+            'stagger-in': {
+              '0%': { opacity: '0', transform: 'translateY(20px) scale(0.95)' },
+              '100%': { opacity: '1', transform: 'translateY(0) scale(1)' }
             }
           },
           transitionTimingFunction: {
@@ -104,7 +123,6 @@
       -webkit-backface-visibility: hidden;
     }
 
-    /* Custom Gradient Text */
     .text-gradient {
       background: linear-gradient(135deg, #4f46e5 0%, #c026d3 100%);
       -webkit-background-clip: text;
@@ -117,7 +135,6 @@
       -webkit-text-fill-color: transparent;
     }
 
-    /* Portal Transition */
     .portal-enter {
       animation: portalEnter 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
@@ -134,6 +151,10 @@
     @keyframes portalExit {
       from { transform: scale(1); opacity: 1; filter: blur(0) brightness(1); }
       to { transform: scale(1.15); opacity: 0; filter: blur(30px) brightness(1.5); }
+    }
+
+    .stagger-item {
+      animation: stagger-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
   </style>
 <script type="importmap">

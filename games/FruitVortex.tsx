@@ -14,6 +14,17 @@ interface Fruit {
   shapeIndex: number;
 }
 
+interface BGParticle {
+  x: number;
+  y: number;
+  size: number;
+  speedY: number;
+  speedX: number;
+  color: string;
+  opacity: number;
+  pulse: number;
+}
+
 // Audio Synthesis Utility
 class SoundEngine {
   ctx: AudioContext | null = null;
@@ -145,6 +156,75 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
   const [isExploding, setIsExploding] = useState(false);
   const [shakeIntensity, setShakeIntensity] = useState(0);
   const comboRef = useRef(0);
+  
+  const bgCanvasRef = useRef<HTMLCanvasElement>(null);
+  const bgParticlesRef = useRef<BGParticle[]>([]);
+
+  // Background Particles Logic
+  useEffect(() => {
+    const canvas = bgCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animationId: number;
+
+    const createParticles = () => {
+      bgParticlesRef.current = Array.from({ length: 25 }).map(() => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 40 + 20,
+        speedY: (Math.random() - 0.5) * 0.4,
+        speedX: (Math.random() - 0.5) * 0.4,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        opacity: Math.random() * 0.08 + 0.02,
+        pulse: Math.random() * Math.PI * 2
+      }));
+    };
+
+    const resize = () => {
+      canvas.width = canvas.parentElement?.clientWidth || window.innerWidth;
+      canvas.height = canvas.parentElement?.clientHeight || window.innerHeight;
+      createParticles();
+    };
+
+    const render = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      bgParticlesRef.current.forEach(p => {
+        p.pulse += 0.01;
+        p.x += p.speedX;
+        p.y += p.speedY;
+
+        if (p.x < -p.size) p.x = canvas.width + p.size;
+        if (p.x > canvas.width + p.size) p.x = -p.size;
+        if (p.y < -p.size) p.y = canvas.height + p.size;
+        if (p.y > canvas.height + p.size) p.y = -p.size;
+
+        const currentOpacity = p.opacity * (0.8 + Math.sin(p.pulse) * 0.2);
+        
+        ctx.save();
+        ctx.globalAlpha = currentOpacity;
+        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+        gradient.addColorStop(0, p.color);
+        gradient.addColorStop(1, 'transparent');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+      animationId = requestAnimationFrame(render);
+    };
+
+    resize();
+    window.addEventListener('resize', resize);
+    render();
+
+    return () => {
+      window.removeEventListener('resize', resize);
+      cancelAnimationFrame(animationId);
+    };
+  }, []);
 
   const getRandomFruit = useCallback((): Fruit => {
     const colorIndex = Math.floor(Math.random() * COLORS.length);
@@ -335,13 +415,14 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
 
   if (!difficulty) {
     return (
-      <div className="flex flex-col items-center justify-center gap-8 w-full max-w-md p-8 animate-in fade-in zoom-in duration-500">
-        <div className="text-center">
+      <div className="relative flex flex-col items-center justify-center gap-8 w-full max-w-md p-8 animate-in fade-in zoom-in duration-500 min-h-[400px]">
+        <canvas ref={bgCanvasRef} className="absolute inset-0 pointer-events-none rounded-[3rem]" />
+        <div className="relative z-10 text-center">
           <i className="fas fa-apple-whole text-5xl text-orange-500 mb-4"></i>
           <h2 className="text-3xl font-black italic tracking-tighter uppercase text-slate-900 dark:text-white">Fruit Phase</h2>
           <p className="text-slate-500 dark:text-slate-400 font-medium">Calibrate the session frequency.</p>
         </div>
-        <div className="grid grid-cols-1 gap-4 w-full">
+        <div className="relative z-10 grid grid-cols-1 gap-4 w-full">
           {(['Easy', 'Medium', 'Hard'] as Difficulty[]).map(level => (
             <button
               key={level}
@@ -369,7 +450,9 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
   const timerColor = timeLeft < 15 ? 'from-red-500 to-rose-600' : 'from-orange-500 to-red-600';
 
   return (
-    <div className="flex flex-col items-center gap-6 w-full max-w-md px-4 select-none animate-in fade-in zoom-in duration-500">
+    <div className="relative flex flex-col items-center gap-6 w-full max-w-md px-4 select-none animate-in fade-in zoom-in duration-500">
+      <canvas ref={bgCanvasRef} className="absolute inset-x-0 -top-20 bottom-0 pointer-events-none rounded-[3rem] -z-10" />
+      
       <div className="w-full flex flex-col gap-4">
         <div className="flex justify-between items-end">
           <div className="flex flex-col">

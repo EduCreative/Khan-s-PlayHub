@@ -7,6 +7,20 @@ export enum Category {
   BrainTeaser = 'Brain Teasers'
 }
 
+export interface UserProfile {
+  username: string;
+  avatar: string;
+  bio: string;
+  favorites: string[];
+  joinedAt: number;
+}
+
+export interface AppSettings {
+  sfxVolume: number;
+  haptics: boolean;
+  reducedMotion: boolean;
+}
+
 export interface Game {
   id: string;
   name: string;

@@ -203,7 +203,7 @@ const SudokuLite: React.FC<{ onGameOver: (s: number, v: boolean) => void; isPlay
                   key={`${r}-${c}`} 
                   onClick={() => !initial[r][c] && setSelectedCell([r, c])} 
                   className={`
-                    relative flex items-center justify-center text-lg md:text-xl font-black transition-all border-[0.5px] border-white/5
+                    relative flex items-center justify-center text-lg md:text-xl font-blue transition-all border-[0.5px] border-white/5
                     ${initial[r][c] ? 'text-slate-500 bg-white/5' : 'text-indigo-400 hover:bg-indigo-500/10'}
                     ${inNeighborhood && !isSel ? 'bg-indigo-500/5' : ''}
                     ${isSel ? 'bg-indigo-500/30 ring-2 ring-indigo-500 z-10' : ''}

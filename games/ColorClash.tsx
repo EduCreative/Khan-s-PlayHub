@@ -16,6 +16,7 @@ const ColorClash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
   const [textColor, setTextColor] = useState(1);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(1.0);
+  const [isWrong, setIsWrong] = useState(false);
   
   const difficultyRef = useRef(1.0);
   const scoreRef = useRef(0);
@@ -34,6 +35,7 @@ const ColorClash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
       scoreRef.current = 0;
       difficultyRef.current = 1.0;
       isGameOverTriggered.current = false;
+      setIsWrong(false);
     }
   }, [isPlaying]);
 
@@ -71,8 +73,9 @@ const ColorClash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
       difficultyRef.current = Math.min(5.0, difficultyRef.current + rampSpeed);
       nextRound();
     } else {
+      setIsWrong(true);
       isGameOverTriggered.current = true;
-      onGameOver(scoreRef.current);
+      setTimeout(() => onGameOver(scoreRef.current), 400);
     }
   };
 
@@ -80,7 +83,7 @@ const ColorClash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
     return (
       <div className="flex flex-col items-center justify-center gap-8 w-full max-w-md p-8 animate-in fade-in zoom-in duration-500">
         <div className="text-center">
-          <i className="fas fa-palette text-5xl text-rose-500 mb-4"></i>
+          <i className="fas fa-palette text-5xl text-rose-500 mb-4 animate-float"></i>
           <h2 className="text-3xl font-black italic tracking-tighter uppercase text-slate-900 dark:text-white">Color Synapse</h2>
           <p className="text-slate-500 dark:text-slate-400 font-medium">Calibrate your response latency.</p>
         </div>
@@ -89,7 +92,7 @@ const ColorClash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
             <button
               key={level}
               onClick={() => { setDifficulty(level); nextRound(); }}
-              className="group relative overflow-hidden glass-card p-6 rounded-3xl border-2 border-rose-500/10 hover:border-rose-500 transition-all active:scale-95"
+              className="group relative overflow-hidden glass-card p-6 rounded-3xl border-2 border-rose-500/10 hover:border-rose-500 transition-all active:scale-95 stagger-item"
             >
               <div className="flex items-center justify-between relative z-10">
                 <div className="text-left">
@@ -109,7 +112,7 @@ const ColorClash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
   }
 
   return (
-    <div className="flex flex-col items-center gap-12 w-full max-w-sm px-4 select-none animate-in fade-in zoom-in duration-500">
+    <div className={`flex flex-col items-center gap-12 w-full max-w-sm px-4 select-none animate-in fade-in zoom-in duration-500 transition-transform ${isWrong ? 'animate-glitch' : ''}`}>
       <div className="w-full h-5 bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden border-2 border-slate-300 dark:border-white/10 p-1 shadow-inner relative transition-colors">
         <div 
           className={`h-full rounded-full transition-all duration-75 ease-linear shadow-[0_0_20px_rgba(236,72,153,0.5)] ${timeLeft < 0.3 ? 'bg-red-500 animate-pulse' : 'bg-gradient-to-r from-pink-500 to-indigo-500'}`}
@@ -119,13 +122,14 @@ const ColorClash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
       </div>
 
       <div className="text-center relative py-4">
-        <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em] mb-4">Read the Word, Ignore the Color</p>
+        <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em] mb-4">Read Word • Ignore Color</p>
         <div className="relative group">
            <h2 
-            className="text-8xl font-black italic game-font transition-all duration-300 transform group-hover:scale-105"
+            className={`text-8xl font-black italic game-font transition-all duration-300 transform drop-shadow-2xl ${timeLeft < 0.4 ? 'scale-110' : 'scale-100'}`}
             style={{ 
               color: COLORS[textColor].hex, 
-              textShadow: `0 0 30px ${COLORS[textColor].hex}88, 0 4px 0 rgba(0,0,0,0.5)` 
+              textShadow: `0 0 30px ${COLORS[textColor].hex}88, 0 4px 0 rgba(0,0,0,0.5)`,
+              animation: timeLeft < 0.4 ? 'pulse 0.2s infinite' : 'pulse 1.5s infinite'
             }}
           >
             {COLORS[target].name}
@@ -141,15 +145,15 @@ const ColorClash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
             className={`
               h-24 rounded-[2.5rem] border-4 border-slate-200 dark:border-white/10 transition-all 
               hover:scale-105 active:scale-90 shadow-2xl hover:brightness-110
-              ${color.bg} flex items-center justify-center
+              ${color.bg} flex items-center justify-center group overflow-hidden
             `}
           >
-            <div className="w-full h-full rounded-[2rem] border-t-2 border-white/20" />
+            <div className="w-full h-full rounded-[2rem] border-t-2 border-white/30 group-active:scale-95 transition-transform" />
           </button>
         ))}
       </div>
 
-      <div className="text-center bg-slate-100 dark:bg-white/5 px-8 py-4 rounded-3xl border border-slate-200 dark:border-white/10 shadow-xl w-full transition-colors">
+      <div className="text-center bg-slate-100 dark:bg-white/5 px-8 py-4 rounded-3xl border border-slate-200 dark:border-white/10 shadow-xl w-full transition-colors stagger-item">
         <p className="text-slate-500 text-[10px] font-black uppercase mb-1 tracking-widest">{difficulty} Multiplier x{difficultyRef.current.toFixed(1)}</p>
         <p className="text-5xl font-black dark:text-white text-slate-900 italic tabular-nums drop-shadow-md tracking-tighter transition-colors">
           {score.toLocaleString()}

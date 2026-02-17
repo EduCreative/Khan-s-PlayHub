@@ -21,6 +21,7 @@ import ReflexNode from '../games/ReflexNode';
 import PulseWave from '../games/PulseWave';
 import BinaryDash from '../games/BinaryDash';
 import CyberDefense from '../games/CyberDefense';
+import Tetris from '../games/Tetris';
 import Logo from './Logo';
 import VictoryEffect from './VictoryEffect';
 
@@ -95,6 +96,7 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
   const renderGame = () => {
     switch (game.id) {
       case 'fruit-vortex': return <FruitVortex onGameOver={handleGameOver} isPlaying={isPlaying} />;
+      case 'tetris': return <Tetris onGameOver={handleGameOver} isPlaying={isPlaying} />;
       case 'number-ninja': return <NumberNinja onGameOver={handleGameOver} isPlaying={isPlaying} />;
       case 'sum-surge': return <SumSurge onGameOver={handleGameOver} isPlaying={isPlaying} />;
       case 'riddle-rift': return <RiddleRift onGameOver={(s) => handleGameOver(s, true)} />;

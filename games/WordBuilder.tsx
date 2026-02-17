@@ -24,6 +24,7 @@ interface Particle {
   vy: number;
   life: number;
   color: string;
+  size: number;
 }
 
 interface Block {
@@ -32,6 +33,8 @@ interface Block {
   color: string;
   w: number;
   shake: number;
+  scaleY: number;
+  hasLanded: boolean;
 }
 
 const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDarkMode }) => {
@@ -50,6 +53,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const blocksRef = useRef<Block[]>([]);
+  const towerSwayRef = useRef(0);
   
   const themes = ['indigo', 'pink', 'emerald', 'cyan', 'amber', 'pixel'];
 
@@ -98,15 +102,16 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
     setPool(newPool.sort(() => Math.random() - 0.5));
   }, [bounty]);
 
-  const spawnParticles = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const { primary } = getThemeColors(themeIndex);
-    for (let i = 0; i < 20; i++) {
+  const spawnParticles = (x: number, y: number, color: string, count: number = 20) => {
+    for (let i = 0; i < count; i++) {
       particlesRef.current.push({
-        x: canvas.width / 2, y: canvas.height - 100,
-        vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8 - 8,
-        life: 1, color: primary
+        x,
+        y,
+        vx: (Math.random() - 0.5) * 12,
+        vy: (Math.random() - 0.8) * 12,
+        life: 1,
+        color,
+        size: 2 + Math.random() * 4
       });
     }
   };
@@ -117,18 +122,20 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
     
     let blockColor: string;
     if (isMega) {
-      blockColor = '#fbbf24'; // Always gold for bounty
+      blockColor = '#fbbf24'; // Gold for bounty
     } else {
-      const nextThemeColors = getThemeColors((themeIndex + 1) % themes.length);
-      blockColor = nextThemeColors.primary;
+      const activeColors = getThemeColors(themeIndex);
+      blockColor = activeColors.primary;
     }
 
     blocksRef.current.push({
-      y: -50,
+      y: -100,
       targetY: canvas.height - (blocksRef.current.length * 40) - 40,
       color: blockColor,
       w: (isMega ? 200 : 120) + (length * 10),
-      shake: isMega ? 30 : 10
+      shake: 0,
+      scaleY: 1,
+      hasLanded: false
     });
   };
 
@@ -165,19 +172,51 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     let animFrame: number;
+    
     const render = () => {
       canvas.width = canvas.clientWidth;
       canvas.height = canvas.clientHeight;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      blocksRef.current.forEach((b) => {
-        if (b.y < b.targetY) b.y += (b.targetY - b.y) * 0.1;
-        if (b.shake > 0) b.shake -= 0.5;
-        const sx = Math.sin(Date.now() * 0.05) * b.shake;
+      
+      // Global swaying of the tower
+      towerSwayRef.current += 0.02;
+      const swayMax = Math.min(20, blocksRef.current.length * 2);
+      const currentSway = Math.sin(towerSwayRef.current) * swayMax;
+
+      blocksRef.current.forEach((b, idx) => {
+        // Smooth drop
+        if (b.y < b.targetY) {
+          b.y += (b.targetY - b.y) * 0.15;
+          if (b.targetY - b.y < 1 && !b.hasLanded) {
+            b.y = b.targetY;
+            b.hasLanded = true;
+            b.scaleY = 0.6; // Squash on impact
+            b.shake = 15;
+            spawnParticles(canvas.width / 2, b.y + 35, b.color, 15);
+          }
+        }
+
+        // Recovery from squash/stretch
+        if (b.scaleY < 1) {
+          b.scaleY += (1 - b.scaleY) * 0.1;
+        }
+
+        if (b.shake > 0) b.shake -= 0.8;
+        
+        // Sway increases as we go up the tower
+        const swayOffset = currentSway * (idx / Math.max(1, blocksRef.current.length));
+        const sx = (Math.sin(Date.now() * 0.05) * b.shake) + swayOffset;
+
         ctx.save();
-        ctx.translate(canvas.width / 2 + sx, b.y);
+        // Translate to block position
+        ctx.translate(canvas.width / 2 + sx, b.y + 17.5);
+        ctx.scale(1 / b.scaleY, b.scaleY); // Stretch X to preserve volume
+        ctx.translate(0, -17.5);
+
         ctx.fillStyle = b.color;
-        ctx.shadowBlur = 15;
+        ctx.shadowBlur = 20;
         ctx.shadowColor = b.color;
+        
         ctx.beginPath();
         if (ctx.roundRect) {
             ctx.roundRect(-b.w / 2, 0, b.w, 35, 12);
@@ -185,25 +224,56 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
             ctx.rect(-b.w / 2, 0, b.w, 35);
         }
         ctx.fill();
-        ctx.fillStyle = 'white';
+
+        // Decorative shine on block
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
         ctx.beginPath();
-        ctx.arc(-20, 15, 3, 0, Math.PI * 2);
-        ctx.arc(20, 15, 3, 0, Math.PI * 2);
+        if (ctx.roundRect) {
+          ctx.roundRect(-b.w / 2, 2, b.w, 10, 10);
+        }
+        ctx.fill();
+
+        // Animated eyes
+        const blink = Math.sin(Date.now() * 0.005) > 0.98;
+        ctx.fillStyle = isDarkMode ? 'white' : '#1e293b';
+        ctx.beginPath();
+        if (blink) {
+          ctx.fillRect(-24, 15, 8, 2);
+          ctx.fillRect(16, 15, 8, 2);
+        } else {
+          ctx.arc(-20, 15, 3.5, 0, Math.PI * 2);
+          ctx.arc(20, 15, 3.5, 0, Math.PI * 2);
+        }
+        ctx.fill();
+        
+        ctx.restore();
+      });
+
+      // Particles Physics
+      particlesRef.current = particlesRef.current.filter(p => p.life > 0);
+      particlesRef.current.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.45; // Gravity
+        p.vx *= 0.98; // Friction
+        p.life -= 0.015;
+        
+        ctx.save();
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
       });
-      particlesRef.current = particlesRef.current.filter(p => p.life > 0);
-      particlesRef.current.forEach(p => {
-        p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.life -= 0.02;
-        ctx.fillStyle = p.color; ctx.globalAlpha = p.life;
-        ctx.fillRect(p.x, p.y, 4, 4);
-      });
-      ctx.globalAlpha = 1;
+      
       animFrame = requestAnimationFrame(render);
     };
     render();
     return () => cancelAnimationFrame(animFrame);
-  }, [themeIndex]);
+  }, [isDarkMode]);
 
   const submitWord = () => {
     const word = currentWord.map(i => i.char).join('').toUpperCase();
@@ -217,18 +287,20 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
     const isValid = isBounty || COMMON_WORDS.has(word);
 
     if (isValid) {
-      const blocks = isBounty ? 10 : Math.floor(word.length / 2);
-      setTowerHeight(h => h + blocks);
+      const blocksCount = isBounty ? 10 : Math.floor(word.length / 2);
+      setTowerHeight(h => h + blocksCount);
       setStreak(s => s + 1);
       setScore(s => s + (isBounty ? 5000 : word.length * 150) + (streak > 2 ? streak * 50 : 0));
-      spawnParticles();
+      
+      const { primary } = getThemeColors(themeIndex);
+      spawnParticles(window.innerWidth / 2, 0, primary, 30);
       spawnBlock(word.length, isBounty);
       
       if (isBounty) {
         setBounty(BOUNTIES[Math.floor(Math.random() * BOUNTIES.length)]);
       }
       
-      if (towerHeight + blocks >= targetHeight) {
+      if (towerHeight + blocksCount >= targetHeight) {
         setLevel(l => l + 1);
         setTargetHeight(th => th + 5);
         setTime(t => t + 20);

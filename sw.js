@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'khans-playhub-v1.1.3';
+const CACHE_NAME = 'khans-playhub-v1.1.4';
 
 // Core local assets - using absolute paths relative to origin for clarity
 const STATIC_ASSETS = [
@@ -28,7 +28,8 @@ const STATIC_ASSETS = [
   '/games/WordBuilder.tsx',
   '/games/PulseWave.tsx',
   '/games/BinaryDash.tsx',
-  '/games/CyberDefense.tsx'
+  '/games/CyberDefense.tsx',
+  '/games/Tetris.tsx'
 ];
 
 // External assets to pre-cache

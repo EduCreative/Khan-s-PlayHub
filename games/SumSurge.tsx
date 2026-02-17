@@ -21,7 +21,7 @@ const SumSurge: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }
     const newGrid = currentGrid.map(row => [...row]);
     newGrid[r][c] = Math.random() > 0.9 ? 4 : 2;
     setIsSpawning([r, c]);
-    setTimeout(() => setIsSpawning(null), 800);
+    setTimeout(() => setIsSpawning(null), 300);
     return newGrid;
   }, []);
 
@@ -101,11 +101,11 @@ const SumSurge: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }
             setScore(newScore);
             if (checkGameOver(finalGrid)) {
               setIsGameOver(true);
-              setTimeout(() => onGameOver(newScore), 2000);
+              setTimeout(() => onGameOver(newScore), 1500);
             }
             return finalGrid;
           });
-        }, 200);
+        }, 100);
         return currentGrid;
       }
       return prevGrid;
@@ -160,7 +160,6 @@ const SumSurge: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }
 
   return (
     <div className="relative flex flex-col items-center gap-8 w-full max-w-md select-none px-4 py-12 overflow-hidden rounded-[3rem]">
-      {/* Background Layer */}
       <div 
         className="absolute inset-0 z-0 opacity-20 dark:opacity-40"
         style={{
@@ -172,7 +171,7 @@ const SumSurge: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }
       <div className="absolute inset-0 bg-slate-50/70 dark:bg-[#0f172a]/70 backdrop-blur-md z-[1]" />
 
       <div className="relative z-10 w-full flex flex-col items-center gap-8">
-        <div className="w-full flex justify-between items-center p-6 glass-card rounded-3xl border-indigo-500/20 shadow-xl border-2 backdrop-blur-xl bg-white/5">
+        <div className="w-full flex justify-between items-center p-6 glass-card rounded-3xl border-indigo-500/20 shadow-xl border-2 backdrop-blur-xl bg-white/5 stagger-item">
           <h2 className="text-3xl font-black italic tracking-tighter uppercase leading-none dark:text-white text-slate-900 transition-colors">SUM <br/><span className="text-indigo-600 dark:text-indigo-400">SURGE</span></h2>
           <div className="text-right">
             <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Merge Score</p>
@@ -181,40 +180,42 @@ const SumSurge: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }
         </div>
 
         <div 
-          className="grid grid-cols-4 gap-3 p-4 bg-slate-900/40 backdrop-blur-2xl rounded-[2.5rem] border-4 border-slate-800/50 w-full aspect-square shadow-2xl relative overflow-hidden"
+          className="grid grid-cols-4 gap-3 p-4 bg-slate-900/40 backdrop-blur-2xl rounded-[2.5rem] border-4 border-slate-800/50 w-full aspect-square shadow-2xl relative overflow-hidden stagger-item"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
           <div className="absolute inset-0 bg-grid-white/[0.02] pointer-events-none" />
           {grid.map((row, r) => row.map((val, c) => (
             <div 
-              key={`${r}-${c}-${val}`}
+              key={`${r}-${c}`}
               className={`
-                w-full h-full rounded-2xl border-2 flex items-center justify-center text-2xl font-black transition-all duration-[600ms] backdrop-blur-md
+                w-full h-full rounded-2xl border-2 flex items-center justify-center text-2xl font-black transition-all duration-[200ms] backdrop-blur-md
                 ${val === 0 ? 'bg-white/5 border-transparent' : getTileColor(val)}
-                ${val !== 0 ? 'animate-in zoom-in-50 duration-[800ms]' : ''}
-                ${isSpawning?.[0] === r && isSpawning?.[1] === c ? 'scale-125 brightness-150' : ''}
+                ${isSpawning?.[0] === r && isSpawning?.[1] === c ? 'scale-125 brightness-150' : 'scale-100'}
               `}
+              style={{
+                transform: val === 0 ? 'scale(0.8)' : undefined
+              }}
             >
               {val !== 0 && val}
             </div>
           )))}
 
           {isGameOver && (
-            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl flex flex-col items-center justify-center z-50 rounded-[2rem] animate-in fade-in duration-[1000ms]">
-              <h3 className="text-5xl font-black text-white italic tracking-tighter mb-4">BOARD FULL</h3>
-              <p className="text-indigo-400 font-bold uppercase tracking-widest text-sm">Game Over</p>
+            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl flex flex-col items-center justify-center z-50 rounded-[2rem] animate-in fade-in duration-[600ms]">
+              <h3 className="text-5xl font-black text-white italic tracking-tighter mb-4 animate-bounce">BOARD FULL</h3>
+              <p className="text-indigo-400 font-bold uppercase tracking-widest text-sm">System Overload</p>
             </div>
           )}
         </div>
 
-        <div className="flex flex-col items-center gap-4 w-full">
+        <div className="flex flex-col items-center gap-4 w-full stagger-item">
           <div className="flex gap-6">
             <div className="text-slate-500 dark:text-slate-500 text-[10px] font-black uppercase flex items-center gap-2 tracking-widest transition-colors bg-white/5 px-4 py-2 rounded-full border border-white/5 backdrop-blur-md">
-              <i className="fas fa-arrows-alt text-indigo-500"></i> Swipe or Arrows
+              <i className="fas fa-arrows-alt text-indigo-500 animate-pulse"></i> Swipe or Arrows
             </div>
             <div className="text-slate-500 dark:text-slate-500 text-[10px] font-black uppercase flex items-center gap-2 tracking-widest transition-colors bg-white/5 px-4 py-2 rounded-full border border-white/5 backdrop-blur-md">
-              <i className="fas fa-layer-group text-cyan-500"></i> Merge Identical
+              <i className="fas fa-layer-group text-cyan-500 animate-pulse"></i> Merge Same
             </div>
           </div>
         </div>
