@@ -4,7 +4,17 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 const COLS = 10;
 const ROWS = 20;
 
-const TETROMINOS = {
+interface Tetromino {
+  shape: number[][];
+  color: string;
+  type: string;
+}
+
+interface ActivePiece extends Tetromino {
+  pos: { x: number; y: number };
+}
+
+const TETROMINOS: Record<string, { shape: number[][]; color: string }> = {
   I: { shape: [[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]], color: '#22d3ee' },
   J: { shape: [[1, 0, 0], [1, 1, 1], [0, 0, 0]], color: '#6366f1' },
   L: { shape: [[0, 0, 1], [1, 1, 1], [0, 0, 0]], color: '#f97316' },
@@ -14,8 +24,8 @@ const TETROMINOS = {
   Z: { shape: [[1, 1, 0], [0, 1, 1], [0, 0, 0]], color: '#f43f5e' }
 };
 
-const RANDOM_TETROMINO = () => {
-  const keys = Object.keys(TETROMINOS) as (keyof typeof TETROMINOS)[];
+const RANDOM_TETROMINO = (): Tetromino => {
+  const keys = Object.keys(TETROMINOS);
   const type = keys[Math.floor(Math.random() * keys.length)];
   return { ...TETROMINOS[type], type };
 };
@@ -23,9 +33,9 @@ const RANDOM_TETROMINO = () => {
 const createEmptyGrid = () => Array.from({ length: ROWS }, () => Array(COLS).fill(0));
 
 const Tetris: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
-  const [grid, setGrid] = useState<any[][]>(createEmptyGrid());
-  const [activePiece, setActivePiece] = useState<any>(null);
-  const [nextPiece, setNextPiece] = useState<any>(RANDOM_TETROMINO());
+  const [grid, setGrid] = useState<(string | number)[][]>(createEmptyGrid());
+  const [activePiece, setActivePiece] = useState<ActivePiece | null>(null);
+  const [nextPiece, setNextPiece] = useState<Tetromino>(RANDOM_TETROMINO());
   const [score, setScore] = useState(0);
   const [lines, setLines] = useState(0);
   const [level, setLevel] = useState(1);
@@ -57,7 +67,7 @@ const Tetris: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> 
     }
   }, [isPlaying, resetGame]);
 
-  const checkCollision = (piece: any, newGrid: any[][], moveX: number, moveY: number, customShape?: any[][]) => {
+  const checkCollision = (piece: ActivePiece, newGrid: (string | number)[][], moveX: number, moveY: number, customShape?: number[][]) => {
     const shape = customShape || piece.shape;
     for (let y = 0; y < shape.length; y++) {
       for (let x = 0; x < shape[y].length; x++) {
@@ -78,7 +88,7 @@ const Tetris: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> 
     return false;
   };
 
-  const rotate = (matrix: any[][]) => {
+  const rotate = (matrix: number[][]) => {
     const rotated = matrix[0].map((_, index) => matrix.map(col => col[index]).reverse());
     return rotated;
   };
@@ -101,7 +111,10 @@ const Tetris: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> 
   const drop = useCallback(() => {
     if (!activePiece || isGameOver) return;
     if (!checkCollision(activePiece, grid, 0, 1)) {
-      setActivePiece(prev => ({ ...prev, pos: { ...prev.pos, y: prev.pos.y + 1 } }));
+      setActivePiece((prev: ActivePiece | null) => {
+        if (!prev) return null;
+        return { ...prev, pos: { ...prev.pos, y: prev.pos.y + 1 } };
+      });
     } else {
       setImpactShake(true);
       setTimeout(() => setImpactShake(false), 100);
@@ -113,12 +126,11 @@ const Tetris: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> 
       }
 
       const newGrid = grid.map(row => [...row]);
-      activePiece.shape.forEach((row: any[], y: number) => {
+      activePiece.shape.forEach((row: number[], y: number) => {
         row.forEach((value: number, x: number) => {
           if (value !== 0) {
             const gridY = activePiece.pos.y + y;
             const gridX = activePiece.pos.x + x;
-            // FIX: Added explicit bounds checking to prevent "Cannot set properties of undefined (setting '6')"
             if (gridY >= 0 && gridY < ROWS && newGrid[gridY]) {
               newGrid[gridY][gridX] = activePiece.color;
             }
@@ -237,7 +249,7 @@ const Tetris: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> 
                   key={`${x}-${y}`} 
                   className={`w-full h-full border-[0.5px] border-white/5 transition-all duration-150 rounded-[4px] ${isFlashed ? 'bg-white shadow-[0_0_20px_white] z-10' : ''}`}
                   style={{ 
-                    backgroundColor: isFlashed ? '#fff' : (color !== 0 ? color : 'transparent'),
+                    backgroundColor: isFlashed ? '#fff' : (color !== 0 ? color as string : 'transparent'),
                     boxShadow: color !== 0 && !isFlashed ? `inset 0 0 10px rgba(255,255,255,0.4), 0 0 15px ${color}88` : undefined,
                   }}
                 />
@@ -262,7 +274,7 @@ const Tetris: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> 
           <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-3">Incoming</p>
           <div className="w-20 h-20 bg-black/40 rounded-2xl flex items-center justify-center border border-white/10 p-2">
              <div className="grid grid-cols-4 grid-rows-4 gap-1">
-               {nextPiece.shape.map((row: any, y: number) => row.map((cell: number, x: number) => (
+               {nextPiece.shape.map((row: number[], y: number) => row.map((cell: number, x: number) => (
                  <div key={`${x}-${y}`} className={`w-3 h-3 rounded-sm transition-all duration-500 ${cell ? 'scale-100 opacity-100 shadow-[0_0_10px_white]' : 'scale-0 opacity-0'}`} style={{ backgroundColor: nextPiece.color }} />
                )))}
              </div>

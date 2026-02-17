@@ -73,8 +73,17 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
     setIsPlaying(true);
   };
 
+  const getShareText = () => `I just scored ${currentScore.toLocaleString()} in ${game.name} on Khan's PlayHub! 🕹️🔥 Can you beat my score?`;
+
+  const handleWhatsAppShare = () => {
+    const text = getShareText();
+    const url = window.location.origin;
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(text + " " + url)}`;
+    window.open(waUrl, '_blank');
+  };
+
   const handleShareScore = async () => {
-    const text = `I just scored ${currentScore.toLocaleString()} in ${game.name} on Khan's PlayHub! 🕹️🔥 Can you beat my score?`;
+    const text = getShareText();
     const url = window.location.origin;
 
     if (navigator.share) {
@@ -215,7 +224,14 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
                 RETRY SESSION
               </button>
               
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
+                <button 
+                  onClick={handleWhatsAppShare}
+                  className="py-4 bg-[#25D366]/10 border border-[#25D366]/30 text-[#25D366] rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-[#25D366]/20 transition-all active:scale-95 shadow-[0_0_15px_rgba(37,211,102,0.1)]"
+                  title="Share on WhatsApp"
+                >
+                  <i className="fab fa-whatsapp text-lg"></i>
+                </button>
                 <button 
                   onClick={handleShareScore}
                   className="py-4 bg-white/5 border border-white/10 text-slate-500 dark:text-slate-400 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white/10 transition-all active:scale-95"
@@ -226,7 +242,7 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
                   onClick={handleClose}
                   className="py-4 bg-white/5 border border-white/10 text-slate-500 dark:text-slate-400 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-rose-500/10 hover:text-rose-400 transition-all active:scale-95"
                 >
-                  <i className="fas fa-home mr-2"></i> Hub
+                  <i className="fas fa-home"></i>
                 </button>
               </div>
             </div>

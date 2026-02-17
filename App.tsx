@@ -7,6 +7,7 @@ import GameRunner from './components/GameRunner';
 import ParticleBackground from './components/ParticleBackground';
 import TutorialOverlay from './components/TutorialOverlay';
 import ProfileModal from './components/ProfileModal';
+import { cloud } from './services/cloud';
 
 const DEFAULT_PROFILE: UserProfile = {
   username: 'Operative',
@@ -25,6 +26,7 @@ const App: React.FC = () => {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [showProfileSetup, setShowProfileSetup] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'synced' | 'pending' | 'offline'>('synced');
 
   useEffect(() => {
     // Initial load from storage
@@ -64,9 +66,26 @@ const App: React.FC = () => {
     localStorage.setItem('khans-playhub-theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
-  const saveProfile = (updated: UserProfile) => {
+  // Network listener for sync status
+  useEffect(() => {
+    const updateOnlineStatus = () => {
+      setSyncStatus(navigator.onLine ? 'synced' : 'offline');
+    };
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+    return () => {
+      window.removeEventListener('online', updateOnlineStatus);
+      window.removeEventListener('offline', updateOnlineStatus);
+    };
+  }, []);
+
+  const saveProfile = async (updated: UserProfile) => {
     setUserProfile(updated);
     localStorage.setItem('khans-playhub-profile', JSON.stringify(updated));
+    setSyncStatus('pending');
+    const success = await cloud.syncProfile(updated);
+    if (success) setSyncStatus('synced');
   };
 
   const toggleFavorite = (gameId: string) => {
@@ -76,16 +95,17 @@ const App: React.FC = () => {
     saveProfile({ ...userProfile, favorites: newFavorites });
   };
 
-  const saveScore = (gameId: string, score: number) => {
-    setScores(prev => {
-      const currentHigh = prev[gameId] || 0;
-      if (score > currentHigh) {
-        const next = { ...prev, [gameId]: score };
-        localStorage.setItem('khans-playhub-scores', JSON.stringify(next));
-        return next;
-      }
-      return prev;
-    });
+  const saveScore = async (gameId: string, score: number) => {
+    const currentHigh = scores[gameId] || 0;
+    if (score > currentHigh) {
+      const next = { ...scores, [gameId]: score };
+      setScores(next);
+      localStorage.setItem('khans-playhub-scores', JSON.stringify(next));
+      
+      setSyncStatus('pending');
+      const success = await cloud.syncScore(gameId, score);
+      if (success) setSyncStatus('synced');
+    }
   };
 
   return (
@@ -111,6 +131,7 @@ const App: React.FC = () => {
             highScores={scores}
             userProfile={userProfile}
             isDarkMode={isDarkMode}
+            syncStatus={syncStatus}
             onToggleTheme={() => setIsDarkMode(!isDarkMode)}
             onOpenProfile={() => setShowProfileSetup(true)}
             onToggleFavorite={toggleFavorite}
@@ -121,6 +142,7 @@ const App: React.FC = () => {
       {showProfileSetup && (
         <ProfileModal 
           profile={userProfile} 
+          syncStatus={syncStatus}
           onSave={(p) => { saveProfile(p); setShowProfileSetup(false); }}
           onClose={() => setShowProfileSetup(false)}
         />

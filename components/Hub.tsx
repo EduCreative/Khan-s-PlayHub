@@ -13,13 +13,14 @@ interface HubProps {
   highScores: Record<string, number>;
   userProfile: UserProfile;
   isDarkMode: boolean;
+  syncStatus: 'synced' | 'pending' | 'offline';
   onToggleTheme: () => void;
   onOpenProfile: () => void;
   onToggleFavorite: (id: string) => void;
 }
 
 const Hub: React.FC<HubProps> = ({ 
-  games, onSelectGame, filter, setFilter, highScores, userProfile, isDarkMode, onToggleTheme, onOpenProfile, onToggleFavorite 
+  games, onSelectGame, filter, setFilter, highScores, userProfile, isDarkMode, syncStatus, onToggleTheme, onOpenProfile, onToggleFavorite 
 }) => {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
 
@@ -37,10 +38,18 @@ const Hub: React.FC<HubProps> = ({
         <div className="flex items-center gap-4 md:gap-6">
           <Logo size={window.innerWidth < 768 ? 60 : 80} />
           <div className="flex flex-col">
-            <h1 className="text-3xl md:text-5xl font-black italic tracking-tighter uppercase dark:text-white text-slate-900 leading-none">
-              Khan's <span className="text-indigo-600 dark:text-indigo-400">PlayHub</span>
-            </h1>
-            <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-1">Micro-Gaming Nexus v2.4</p>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl md:text-5xl font-black italic tracking-tighter uppercase dark:text-white text-slate-900 leading-none">
+                Khan's <span className="text-indigo-600 dark:text-indigo-400">PlayHub</span>
+              </h1>
+              {/* Sync Status Badge */}
+              <div className={`mt-1 flex items-center justify-center w-3 h-3 rounded-full shadow-[0_0_10px_currentColor] animate-pulse ${
+                syncStatus === 'synced' ? 'text-emerald-500 bg-emerald-500' : 
+                syncStatus === 'pending' ? 'text-amber-500 bg-amber-500' : 
+                'text-rose-500 bg-rose-500'
+              }`} title={`Nexus Cloud Status: ${syncStatus.toUpperCase()}`} />
+            </div>
+            <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-1">Micro-Gaming Nexus v2.4.5</p>
           </div>
         </div>
 
@@ -48,11 +57,11 @@ const Hub: React.FC<HubProps> = ({
           <button onClick={() => setShowLeaderboard(true)} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-amber-500 shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all">
              <i className="fas fa-trophy"></i>
           </button>
-          <button onClick={onOpenProfile} className="flex items-center gap-3 px-4 h-12 md:h-14 rounded-2xl bg-indigo-600 text-white shadow-xl hover:bg-indigo-500 transition-all active:scale-95 border-2 border-indigo-400/20">
+          <button id="profile-btn" onClick={onOpenProfile} className="flex items-center gap-3 px-4 h-12 md:h-14 rounded-2xl bg-indigo-600 text-white shadow-xl hover:bg-indigo-500 transition-all active:scale-95 border-2 border-indigo-400/20">
              <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-white/20 flex items-center justify-center"><i className={`fas ${userProfile.avatar} text-xs`}></i></div>
              <span className="hidden md:block font-black uppercase italic tracking-tighter text-sm">{userProfile.username}</span>
           </button>
-          <button onClick={onToggleTheme} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700">
+          <button id="theme-toggle" onClick={onToggleTheme} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700">
              <i className={`fas ${isDarkMode ? 'fa-sun text-amber-400' : 'fa-moon text-indigo-600'}`}></i>
           </button>
         </div>
@@ -84,8 +93,8 @@ const Hub: React.FC<HubProps> = ({
 
       <footer className="flex flex-col items-center gap-4 mt-8 pb-12">
         <span className="px-6 py-2 glass-card border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3">
-          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping" />
-          Synchronized Nexus v2.4.1
+          <span className={`w-1.5 h-1.5 rounded-full animate-ping ${syncStatus === 'synced' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+          Nexus Cloud Protocol Enabled v2.4.5
         </span>
       </footer>
     </div>

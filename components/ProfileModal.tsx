@@ -4,13 +4,16 @@ import { UserProfile } from '../types';
 
 interface ProfileModalProps {
   profile: UserProfile;
+  // Added syncStatus to match prop being passed from App.tsx
+  syncStatus: 'synced' | 'pending' | 'offline';
   onSave: (p: UserProfile) => void;
   onClose: () => void;
 }
 
 const AVATARS = ['fa-user-ninja', 'fa-ghost', 'fa-robot', 'fa-dragon', 'fa-mask', 'fa-user-astronaut', 'fa-microchip', 'fa-atom'];
 
-const ProfileModal: React.FC<ProfileModalProps> = ({ profile, onSave, onClose }) => {
+// Destructured syncStatus from props
+const ProfileModal: React.FC<ProfileModalProps> = ({ profile, syncStatus, onSave, onClose }) => {
   const [username, setUsername] = useState(profile.username);
   const [avatar, setAvatar] = useState(profile.avatar);
   const [bio, setBio] = useState(profile.bio);
@@ -19,7 +22,16 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ profile, onSave, onClose })
     <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 animate-in fade-in duration-300">
       <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-xl" onClick={onClose} />
       <div className="relative glass-card w-full max-w-md p-8 border-indigo-500/30 shadow-3xl rounded-[3rem] animate-in zoom-in duration-500">
-        <h2 className="text-3xl font-black italic tracking-tighter uppercase mb-8 text-center text-indigo-400">Operative Identity</h2>
+        <div className="flex justify-between items-center mb-8 px-2">
+          <div className="w-4" /> {/* Spacer */}
+          <h2 className="text-3xl font-black italic tracking-tighter uppercase text-center text-indigo-400">Operative Identity</h2>
+          {/* Visual indicator for Sync Status */}
+          <div className={`w-3 h-3 rounded-full shadow-[0_0_10px_currentColor] animate-pulse ${
+            syncStatus === 'synced' ? 'text-emerald-500 bg-emerald-500' : 
+            syncStatus === 'pending' ? 'text-amber-500 bg-amber-500' : 
+            'text-rose-500 bg-rose-500'
+          }`} title={`Nexus Cloud Status: ${syncStatus.toUpperCase()}`} />
+        </div>
         
         <div className="space-y-6">
           <div className="flex flex-col items-center gap-4">
