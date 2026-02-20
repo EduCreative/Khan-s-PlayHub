@@ -66,9 +66,52 @@ const Tetris: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> 
     }
   }, [activePiece, grid, nextPiece]);
 
+  const move = useCallback((dir: number) => {
+    if (!activePiece) return;
+    if (!checkCollision(activePiece, dir, 0)) {
+      setActivePiece(prev => prev ? { ...prev, pos: { ...prev.pos, x: prev.pos.x + dir } } : null);
+    }
+  }, [activePiece, grid]);
+
+  const rotate = useCallback(() => {
+    if (!activePiece) return;
+    const rotatedShape = activePiece.shape[0].map((_, index) =>
+      activePiece.shape.map(row => row[index]).reverse()
+    );
+    if (!checkCollision(activePiece, 0, 0, rotatedShape)) {
+      setActivePiece(prev => prev ? { ...prev, shape: rotatedShape } : null);
+    }
+  }, [activePiece, grid]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isPlaying) return;
+      switch (e.key) {
+        case 'ArrowLeft': move(-1); break;
+        case 'ArrowRight': move(1); break;
+        case 'ArrowDown': drop(); break;
+        case 'ArrowUp': rotate(); break;
+        case ' ': 
+          // Hard drop
+          if (activePiece) {
+            let newY = activePiece.pos.y;
+            while (!checkCollision(activePiece, 0, newY - activePiece.pos.y + 1)) {
+              newY++;
+            }
+            setActivePiece(prev => prev ? { ...prev, pos: { ...prev.pos, y: newY } } : null);
+            drop();
+          }
+          break;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPlaying, move, drop, rotate, activePiece]);
+
   useEffect(() => {
     if (!isPlaying) return;
     setActivePiece({ ...TETROMINOS['I'], pos: { x: 3, y: 0 }, type: 'I' });
+    setNextPiece({ ...TETROMINOS[Object.keys(TETROMINOS)[Math.floor(Math.random() * 7)]], type: '?' });
   }, [isPlaying]);
 
   useEffect(() => {
