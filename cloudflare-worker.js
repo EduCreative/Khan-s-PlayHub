@@ -1,6 +1,6 @@
 
 /**
- * Khan's PlayHub - Cloudflare Worker Backend v2.5.0
+ * Khan's PlayHub - Cloudflare Worker Backend v2.6.0
  * Requirements: D1 Database named 'PLAYHUB_DB'
  */
 
@@ -46,12 +46,16 @@ export default {
 
       if (url.pathname === '/profile' && method === 'POST') {
         const p = await request.json();
+        // Updated to include email
         await env.PLAYHUB_DB.prepare(`
-          INSERT INTO profiles (deviceId, username, avatar, bio) 
-          VALUES (?, ?, ?, ?)
+          INSERT INTO profiles (deviceId, username, email, avatar, bio) 
+          VALUES (?, ?, ?, ?, ?)
           ON CONFLICT(deviceId) DO UPDATE SET 
-          username = excluded.username, avatar = excluded.avatar, bio = excluded.bio
-        `).bind(p.deviceId, p.username, p.avatar, p.bio).run();
+          username = excluded.username, 
+          email = excluded.email, 
+          avatar = excluded.avatar, 
+          bio = excluded.bio
+        `).bind(p.deviceId, p.username, p.email || null, p.avatar, p.bio).run();
         return new Response(JSON.stringify({ status: 'synced' }), { headers: corsHeaders });
       }
 

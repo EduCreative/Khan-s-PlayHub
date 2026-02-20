@@ -6,13 +6,24 @@ import { Game, UserProfile } from '../types';
 
 const CLOUDFLARE_WORKER_URL = 'https://kmasroor50.cloudflareaccess.com/cdn-cgi/access/certs';
 
+// Fallback UUID generator for non-secure contexts where crypto.randomUUID might be missing
+const generateDeviceId = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 class CloudService {
   private deviceId: string;
 
   constructor() {
     let id = localStorage.getItem('khans-playhub-device-id');
     if (!id) {
-      id = crypto.randomUUID();
+      id = generateDeviceId();
       localStorage.setItem('khans-playhub-device-id', id);
     }
     this.deviceId = id;
@@ -47,10 +58,19 @@ class CloudService {
   async syncProfile(profile: UserProfile): Promise<boolean> {
     if (!this.isSetup()) return false;
     try {
+      // Explicitly map to the D1 Schema: deviceId, username, avatar, bio, email
+      const payload = {
+        deviceId: this.deviceId,
+        username: profile.username,
+        avatar: profile.avatar,
+        bio: profile.bio,
+        email: profile.email || null
+      };
+      
       const res = await fetch(`${CLOUDFLARE_WORKER_URL}/profile`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId: this.deviceId, ...profile })
+        body: JSON.stringify(payload)
       });
       return res.ok;
     } catch (e) { return false; }

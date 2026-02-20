@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Game, Category, UserProfile } from '../types';
 import GameCard from './GameCard';
@@ -100,7 +99,8 @@ const Hub: React.FC<HubProps> = ({
         ))}
       </div>
 
-      {showLeaderboard && <Leaderboard onClose={() => setShowLeaderboard(false)} userScore={Object.values(highScores).reduce((a, b) => a + b, 0)} />}
+      {/* Fix: Explicitly type reduce parameters to resolve unknown operator '+' error */}
+      {showLeaderboard && <Leaderboard onClose={() => setShowLeaderboard(false)} userScore={Object.values(highScores).reduce((a: number, b: number) => a + b, 0)} />}
 
       <footer className="flex flex-col items-center gap-4 mt-8 pb-12">
         <div className="flex flex-col items-center gap-2">

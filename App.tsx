@@ -41,12 +41,8 @@ const App: React.FC = () => {
     const savedProfile = localStorage.getItem('khans-playhub-profile');
     if (savedProfile) {
       setUserProfile(JSON.parse(savedProfile));
-    } else {
-      setShowProfileSetup(true);
     }
-
-    const tutorialComplete = localStorage.getItem('khans-playhub-tutorial-complete');
-    if (!tutorialComplete) setShowTutorial(true);
+    // UX Update: No longer force profile or tutorial on first load. Let them play!
 
     window.history.pushState({ page: 'hub' }, '');
     const handlePopState = () => {
@@ -113,6 +109,8 @@ const App: React.FC = () => {
     }
   };
 
+  const isAnonymous = userProfile.username === 'Operative';
+
   return (
     <div className="min-h-screen relative overflow-hidden bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-white selection:bg-indigo-500 selection:text-white transition-colors duration-500">
       <div className="fixed inset-0 bg-grid-pattern opacity-100 pointer-events-none" />
@@ -128,6 +126,8 @@ const App: React.FC = () => {
             onSaveScore={(s) => saveScore(activeGame.id, s)}
             highScore={scores[activeGame.id] || 0}
             isDarkMode={isDarkMode}
+            isAnonymous={isAnonymous}
+            onOpenProfile={() => setShowProfileSetup(true)}
           />
         ) : (
           <Hub 

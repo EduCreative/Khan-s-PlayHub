@@ -1,6 +1,7 @@
+
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Nexus
 
-**Version:** 2.4.5 "Cloud Synchronized"  
+**Version:** 2.6.0 "Identity Core"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -16,7 +17,7 @@ To enable global leaderboards and cloud saves, follow these manual steps:
 - Log in to [Cloudflare Dashboard](https://dash.cloudflare.com).
 - Navigate to **Workers & Pages** > **D1**.
 - Create a database named `PLAYHUB_DB`.
-- Click **Console** and execute this SQL:
+- Click **Console** and execute this SQL (Note the new `email` column):
 ```sql
 CREATE TABLE scores (
   deviceId TEXT,
@@ -29,6 +30,7 @@ CREATE TABLE scores (
 CREATE TABLE profiles (
   deviceId TEXT PRIMARY KEY,
   username TEXT,
+  email TEXT,
   avatar TEXT,
   bio TEXT
 );
@@ -48,33 +50,11 @@ CREATE TABLE profiles (
 
 ---
 
-## 🚀 Key Features
+## 🎮 The Onboarding Flow
 
-- **Nexus Sync**: Real-time score synchronization with Cloudflare D1.
-- **Offline Mode**: 100% playable without internet; syncs automatically when reconnected.
-- **PWA Optimized**: Zero loading screens, haptic feedback, and custom neon UI.
-
----
-
-## 🎮 The Sector Breakdown
-
-### 🧠 Logic & Brain Sectors
-* **Sudoku Master**: 9x9 logic challenge with three difficulty tiers.
-* **Riddle Rift**: Solve curated enigmas in a high-tech terminal.
-* **Pattern Finder**: Identify next vectors in symbolic sequences.
-* **Memory Matrix**: Cognitive recall training.
-
-### ⚡ Reflex & Arcade Sectors
-* **Blitz Runner**: High-speed 3D-parallax runner.
-* **Bubble Fury**: Tactical physics-based bubble combat.
-* **Neon Snake**: Progressive speed ramping classic.
-* **Cyber Defense**: Orbital shield interception simulator.
-
-### 🔢 Math & Language Sectors
-* **Word Builder Quest**: Vocabulary tower construction.
-* **Sum Surge**: Neon 2048-style merge challenge.
-* **Quick Math**: Mental arithmetic speedrun.
-* **Bit Master**: 4-bit binary to decimal trainer.
+1. **Instant Play**: New users are never blocked by profile setup. They can play immediately as an "Anonymous Operative".
+2. **Post-Game Motivation**: Upon scoring, the Game Over screen prompts the user to save their progress to a persistent profile.
+3. **Identity Sync**: Profiles support custom avatars, bios, and secure email links.
 
 ---
 

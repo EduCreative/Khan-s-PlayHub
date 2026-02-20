@@ -9,6 +9,7 @@ export enum Category {
 
 export interface UserProfile {
   username: string;
+  email?: string;
   avatar: string;
   bio: string;
   favorites: string[];

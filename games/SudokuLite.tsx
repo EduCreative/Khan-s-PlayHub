@@ -128,7 +128,7 @@ const SudokuLite: React.FC<{ onGameOver: (s: number, v: boolean) => void; isPlay
   };
 
   const isNeighborhood = (r: number, c: number) => {
-    if (!selectedCell || (difficulty !== 'Easy' && difficulty !== 'Medium')) return false;
+    if (!selectedCell) return false;
     const [selR, selC] = selectedCell;
     const blockR = Math.floor(selR / 3);
     const blockC = Math.floor(selC / 3);
@@ -149,7 +149,7 @@ const SudokuLite: React.FC<{ onGameOver: (s: number, v: boolean) => void; isPlay
                 <div className="text-left">
                   <h3 className="text-xl font-black uppercase italic text-slate-800 dark:text-white">{level}</h3>
                   <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
-                    {level === 'Easy' ? 'Full Visual Assistance' : level === 'Medium' ? 'Neighborhood Tracking' : 'Pure Logic Challenge'}
+                    {level === 'Easy' ? 'Neural Mapping + Conflict Checks' : level === 'Medium' ? 'Neural Mapping Assist' : 'Pure Logic Challenge'}
                   </p>
                 </div>
                 <i className="fas fa-chevron-right text-indigo-500 group-hover:translate-x-2 transition-transform"></i>
@@ -163,7 +163,6 @@ const SudokuLite: React.FC<{ onGameOver: (s: number, v: boolean) => void; isPlay
 
   return (
     <div className="relative flex flex-col items-center gap-6 w-full max-w-lg px-4 py-8 select-none overflow-hidden rounded-[3rem]">
-      {/* Background Layer */}
       <div 
         className="absolute inset-0 z-0 opacity-15 dark:opacity-30"
         style={{
@@ -205,9 +204,9 @@ const SudokuLite: React.FC<{ onGameOver: (s: number, v: boolean) => void; isPlay
                   className={`
                     relative flex items-center justify-center text-lg md:text-xl font-blue transition-all border-[0.5px] border-white/5
                     ${initial[r][c] ? 'text-slate-500 bg-white/5' : 'text-indigo-400 hover:bg-indigo-500/10'}
-                    ${inNeighborhood && !isSel ? 'bg-indigo-500/5' : ''}
-                    ${isSel ? 'bg-indigo-500/30 ring-2 ring-indigo-500 z-10' : ''}
-                    ${hasConflict ? 'text-rose-500 bg-rose-500/10 animate-pulse' : ''}
+                    ${inNeighborhood && !isSel ? 'bg-indigo-500/15' : ''}
+                    ${isSel ? 'bg-indigo-500/40 ring-2 ring-indigo-500 z-10 scale-[1.02] shadow-[0_0_15px_rgba(99,102,241,0.5)]' : ''}
+                    ${hasConflict ? 'text-rose-500 bg-rose-500/20 animate-pulse font-black' : ''}
                     ${isBlockEndR ? 'border-b-2 border-b-white/20' : ''} 
                     ${isBlockEndC ? 'border-r-2 border-r-white/20' : ''}
                   `}
@@ -243,7 +242,7 @@ const SudokuLite: React.FC<{ onGameOver: (s: number, v: boolean) => void; isPlay
 
         <div className="flex items-center gap-3 text-slate-500 dark:text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] bg-slate-100 dark:bg-white/5 px-6 py-2 rounded-full border border-slate-200 dark:border-white/5 backdrop-blur-md">
            <i className="fas fa-lightbulb text-indigo-500"></i>
-           <span>{difficulty === 'Easy' ? 'Conflicts & Neighborhoods Visible' : difficulty === 'Medium' ? 'Neighborhoods Visible' : 'Pure Logic Mode'}</span>
+           <span>{difficulty === 'Easy' ? 'Neural Mapping & Conflict Logic Active' : 'Neural Mapping Assist Active'}</span>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
 
 const COLORS = ['#ef4444', '#facc15', '#a855f7', '#22c55e', '#f97316'];
 const GRID_SIZE = 6;
@@ -14,109 +14,8 @@ interface Fruit {
   shapeIndex: number;
 }
 
-interface BGParticle {
-  x: number;
-  y: number;
-  size: number;
-  speedY: number;
-  speedX: number;
-  color: string;
-  opacity: number;
-  pulse: number;
-}
-
-// Audio Synthesis Utility
-class SoundEngine {
-  ctx: AudioContext | null = null;
-
-  init() {
-    if (!this.ctx) {
-      this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
-    if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
-    }
-  }
-
-  playSwap() {
-    if (!this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(400, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(200, this.ctx.currentTime + 0.1);
-    gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.1);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.1);
-  }
-
-  playMatch() {
-    if (!this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(600, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(1200, this.ctx.currentTime + 0.1);
-    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.3);
-  }
-
-  playCombo() {
-    if (!this.ctx) return;
-    const noise = this.ctx.createBufferSource();
-    const bufferSize = this.ctx.sampleRate * 0.2;
-    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-    noise.buffer = buffer;
-    
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(1000, this.ctx.currentTime);
-    filter.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.2);
-    
-    const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.2);
-    
-    noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.ctx.destination);
-    noise.start();
-  }
-
-  playTick() {
-    if (!this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(1200, this.ctx.currentTime);
-    gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.02);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.02);
-  }
-}
-
-const sounds = new SoundEngine();
-
-interface FruitIconProps {
-  color: string;
-  shapeIndex: number;
-  type: FruitType;
-  isMatching: boolean;
-}
-
-const FruitIcon: React.FC<FruitIconProps> = ({ color, shapeIndex, type, isMatching }) => {
+// Memoized Icon Component to prevent unnecessary re-draws during grid animations
+const FruitIcon = memo(({ color, shapeIndex, type, isMatching }: { color: string, shapeIndex: number, type: FruitType, isMatching: boolean }) => {
   const paths = [
     "M50 25 C30 25 10 40 10 65 C10 90 30 95 50 95 C70 95 90 90 90 65 C90 40 70 25 50 25",
     "M20 30 C40 10 90 40 80 85 C60 95 20 60 20 30",
@@ -126,7 +25,7 @@ const FruitIcon: React.FC<FruitIconProps> = ({ color, shapeIndex, type, isMatchi
   ];
 
   return (
-    <svg viewBox="0 0 100 100" className={`w-full h-full p-2 drop-shadow-md transition-all duration-[800ms] ${isMatching ? 'scale-[4] rotate-[270deg] brightness-[400%] opacity-0' : 'scale-100'}`}>
+    <svg viewBox="0 0 100 100" className={`w-full h-full p-2 transition-all duration-[800ms] ${isMatching ? 'scale-[4] rotate-[270deg] brightness-[400%] opacity-0' : 'scale-100'}`}>
       <defs>
         <linearGradient id={`fruit-grad-${shapeIndex}`} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="white" stopOpacity="0.5" />
@@ -135,15 +34,11 @@ const FruitIcon: React.FC<FruitIconProps> = ({ color, shapeIndex, type, isMatchi
         </linearGradient>
       </defs>
       <path d="M50 25 L50 10" stroke="#78350f" strokeWidth="4" strokeLinecap="round" />
-      <path d="M50 15 C60 15 65 5 65 5" stroke="#166534" strokeWidth="3" strokeLinecap="round" fill="none" />
       <path d={paths[shapeIndex]} fill={`url(#fruit-grad-${shapeIndex})`} stroke="rgba(0,0,0,0.1)" strokeWidth="1" />
-      <ellipse cx="40" cy="40" rx="10" ry="5" fill="white" fillOpacity="0.4" transform="rotate(-30 40 40)" />
-      {type === 'row' && <path d="M20 50 H80 M30 40 L20 50 L30 60 M70 40 L80 50 L70 60" stroke="white" strokeWidth="6" strokeLinecap="round" />}
-      {type === 'col' && <path d="M50 20 V80 M40 30 L50 20 L60 30 M40 70 L50 80 L60 70" stroke="white" strokeWidth="6" strokeLinecap="round" />}
-      {type === 'bomb' && <path d="M50 20 L60 45 L85 50 L60 55 L50 80 L40 55 L15 50 L40 45 Z" fill="white" className="animate-pulse" />}
+      {type !== 'normal' && <circle cx="50" cy="50" r="30" fill="none" stroke="white" strokeWidth="4" strokeDasharray="4 4" className="animate-spin-slow" />}
     </svg>
   );
-};
+});
 
 const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
@@ -153,120 +48,58 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
   const [selected, setSelected] = useState<[number, number] | null>(null);
   const [matchingCells, setMatchingCells] = useState<Set<string>>(new Set());
   const [swapping, setSwapping] = useState<[number, number, number, number] | null>(null);
-  const [isExploding, setIsExploding] = useState(false);
-  const [shakeIntensity, setShakeIntensity] = useState(0);
+  const [isMuted, setIsMuted] = useState(() => localStorage.getItem('khans-playhub-fruit-vortex-muted') === 'true');
   const comboRef = useRef(0);
-  
-  const bgCanvasRef = useRef<HTMLCanvasElement>(null);
-  const bgParticlesRef = useRef<BGParticle[]>([]);
 
-  // Background Particles Logic
   useEffect(() => {
-    const canvas = bgCanvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    localStorage.setItem('khans-playhub-fruit-vortex-muted', isMuted.toString());
+  }, [isMuted]);
 
-    let animationId: number;
-
-    const createParticles = () => {
-      bgParticlesRef.current = Array.from({ length: 25 }).map(() => ({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        size: Math.random() * 40 + 20,
-        speedY: (Math.random() - 0.5) * 0.4,
-        speedX: (Math.random() - 0.5) * 0.4,
-        color: COLORS[Math.floor(Math.random() * COLORS.length)],
-        opacity: Math.random() * 0.08 + 0.02,
-        pulse: Math.random() * Math.PI * 2
-      }));
-    };
-
-    const resize = () => {
-      canvas.width = canvas.parentElement?.clientWidth || window.innerWidth;
-      canvas.height = canvas.parentElement?.clientHeight || window.innerHeight;
-      createParticles();
-    };
-
-    const render = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      bgParticlesRef.current.forEach(p => {
-        p.pulse += 0.01;
-        p.x += p.speedX;
-        p.y += p.speedY;
-
-        if (p.x < -p.size) p.x = canvas.width + p.size;
-        if (p.x > canvas.width + p.size) p.x = -p.size;
-        if (p.y < -p.size) p.y = canvas.height + p.size;
-        if (p.y > canvas.height + p.size) p.y = -p.size;
-
-        const currentOpacity = p.opacity * (0.8 + Math.sin(p.pulse) * 0.2);
-        
-        ctx.save();
-        ctx.globalAlpha = currentOpacity;
-        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
-        gradient.addColorStop(0, p.color);
-        gradient.addColorStop(1, 'transparent');
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      });
-      animationId = requestAnimationFrame(render);
-    };
-
-    resize();
-    window.addEventListener('resize', resize);
-    render();
-
-    return () => {
-      window.removeEventListener('resize', resize);
-      cancelAnimationFrame(animationId);
-    };
-  }, []);
+  const playSound = useCallback((freq: number = 440, type: OscillatorType = 'sine') => {
+    if (isMuted) return;
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.1);
+    } catch (e) {
+      // Ignore audio errors
+    }
+  }, [isMuted]);
 
   const getRandomFruit = useCallback((): Fruit => {
     const colorIndex = Math.floor(Math.random() * COLORS.length);
-    const color = COLORS[colorIndex];
     const rand = Math.random();
     let type: FruitType = 'normal';
     if (rand > 0.96) type = 'bomb';
     else if (rand > 0.92) type = 'row';
-    else if (rand > 0.88) type = 'col';
-    return { color, type, id: Math.random().toString(36).substr(2, 9), shapeIndex: colorIndex };
+    return { color: COLORS[colorIndex], type, id: crypto.randomUUID(), shapeIndex: colorIndex };
   }, []);
 
   const initGrid = useCallback((diff: Difficulty) => {
-    const newGrid: Fruit[][] = [];
-    for (let r = 0; r < GRID_SIZE; r++) {
-      const row: Fruit[] = [];
-      for (let c = 0; c < GRID_SIZE; c++) {
-        row.push(getRandomFruit());
-      }
-      newGrid.push(row);
-    }
+    const newGrid = Array.from({ length: GRID_SIZE }, () => Array.from({ length: GRID_SIZE }, () => getRandomFruit()));
     setGrid(newGrid);
-    const startingTime = diff === 'Easy' ? 90 : diff === 'Medium' ? 60 : 45;
-    setTimeLeft(startingTime);
     setDifficulty(diff);
+    setTimeLeft(diff === 'Easy' ? 90 : 60);
   }, [getRandomFruit]);
 
   useEffect(() => {
-    if (isPlaying) {
-      setDifficulty(null);
-      setGrid([]);
-      setScore(0);
-      setMatchingCells(new Set());
-      comboRef.current = 0;
-    }
+    if (isPlaying) { setDifficulty(null); setScore(0); setMatchingCells(new Set()); }
   }, [isPlaying]);
 
   useEffect(() => {
     if (!isPlaying || !difficulty || timeLeft <= 0) return;
     const timer = setInterval(() => {
       setTimeLeft(prev => {
-        if (prev <= 10 && prev > 0) sounds.playTick();
         if (prev <= 1) { onGameOver(score); return 0; }
         return prev - 1;
       });
@@ -274,140 +107,20 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
     return () => clearInterval(timer);
   }, [isPlaying, difficulty, timeLeft, score, onGameOver]);
 
-  const scanGridForMatches = (currentGrid: Fruit[][]): Set<string> => {
-    const matches = new Set<string>();
-    
-    // Horizontal Scan
-    for (let r = 0; r < GRID_SIZE; r++) {
-      for (let c = 0; c < GRID_SIZE - 2; c++) {
-        const color = currentGrid[r][c].color;
-        if (currentGrid[r][c + 1].color === color && currentGrid[r][c + 2].color === color) {
-          matches.add(`${r}-${c}`);
-          matches.add(`${r}-${c + 1}`);
-          matches.add(`${r}-${c + 2}`);
-        }
-      }
-    }
-
-    // Vertical Scan
-    for (let c = 0; c < GRID_SIZE; c++) {
-      for (let r = 0; r < GRID_SIZE - 2; r++) {
-        const color = currentGrid[r][c].color;
-        if (currentGrid[r + 1][c].color === color && currentGrid[r + 2][c].color === color) {
-          matches.add(`${r}-${c}`);
-          matches.add(`${r + 1}-${c}`);
-          matches.add(`${r + 2}-${c}`);
-        }
-      }
-    }
-
-    // Include Special Power Effects (Explosions/Row/Col clear)
-    const finalMatches = new Set<string>(matches);
-    matches.forEach(id => {
-      const [r, c] = id.split('-').map(Number);
-      const fruit = currentGrid[r][c];
-      
-      if (fruit.type === 'row') {
-        for (let i = 0; i < GRID_SIZE; i++) finalMatches.add(`${r}-${i}`);
-      } else if (fruit.type === 'col') {
-        for (let i = 0; i < GRID_SIZE; i++) finalMatches.add(`${i}-${c}`);
-      } else if (fruit.type === 'bomb') {
-        for (let dr = -1; dr <= 1; dr++) {
-          for (let dc = -1; dc <= 1; dc++) {
-            const nr = r + dr, nc = c + dc;
-            if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE) {
-              finalMatches.add(`${nr}-${nc}`);
-            }
-          }
-        }
-      }
-    });
-
-    return finalMatches;
-  };
-
-  const triggerShake = (intensity: number) => {
-    setShakeIntensity(intensity);
-    setTimeout(() => setShakeIntensity(0), 600);
-  };
-
-  const processClear = async (matchesToClear: Set<string>) => {
-    if (matchesToClear.size === 0) return;
-
-    setMatchingCells(matchesToClear);
-    const clearCount = matchesToClear.size;
-    comboRef.current++;
-
-    if (clearCount > 5 || comboRef.current > 1) {
-      sounds.playCombo();
-      triggerShake(Math.min(30, clearCount * 2));
-      setScore(s => s + (clearCount * 150));
-    } else {
-      sounds.playMatch();
-      triggerShake(12);
-      setScore(s => s + (clearCount * 75));
-    }
-
-    await new Promise(res => setTimeout(res, 800));
-
-    setGrid(prev => {
-      const updated = prev.map(row => [...row]);
-      matchesToClear.forEach(id => {
-        const [tr, tc] = id.split('-').map(Number);
-        updated[tr][tc] = getRandomFruit();
-      });
-      
-      const cascadeMatches = scanGridForMatches(updated);
-      if (cascadeMatches.size > 0) {
-        setTimeout(() => processClear(cascadeMatches), 300); 
-      } else {
-        comboRef.current = 0;
-      }
-      
-      return updated;
-    });
-    setMatchingCells(new Set());
-    setIsExploding(false);
-  };
-
   const handleCellClick = async (r: number, c: number) => {
     if (matchingCells.size > 0 || swapping || !difficulty) return;
-    sounds.init();
-
-    if (!selected) {
-      setSelected([r, c]);
-      sounds.playTick();
-    } else {
+    playSound(600, 'triangle');
+    if (!selected) { setSelected([r, c]); }
+    else {
       const [sr, sc] = selected;
-      const dist = Math.abs(r - sr) + Math.abs(c - sc);
-      
-      if (dist === 1) {
+      if (Math.abs(r - sr) + Math.abs(c - sc) === 1) {
+        playSound(800, 'sine');
         setSwapping([sr, sc, r, c]);
-        sounds.playSwap();
-        
-        await new Promise(res => setTimeout(res, 750));
-        
+        await new Promise(res => setTimeout(res, 300));
         const newGrid = grid.map(row => [...row]);
-        const temp = newGrid[r][c];
-        newGrid[r][c] = newGrid[sr][sc];
-        newGrid[sr][sc] = temp;
-
-        const allMatches = scanGridForMatches(newGrid);
-
-        if (allMatches.size > 0) {
-          setGrid(newGrid);
-          setSwapping(null);
-          processClear(allMatches);
-        } else {
-          sounds.playTick();
-          await new Promise(res => setTimeout(res, 150));
-          setSwapping(null);
-          comboRef.current = 0;
-        }
-      } else {
-        setSelected([r, c]);
-        sounds.playTick();
-        return;
+        [newGrid[r][c], newGrid[sr][sc]] = [newGrid[sr][sc], newGrid[r][c]];
+        setGrid(newGrid);
+        setSwapping(null);
       }
       setSelected(null);
     }
@@ -415,119 +128,45 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
 
   if (!difficulty) {
     return (
-      <div className="relative flex flex-col items-center justify-center gap-8 w-full max-w-md p-8 animate-in fade-in zoom-in duration-500 min-h-[400px]">
-        <canvas ref={bgCanvasRef} className="absolute inset-0 pointer-events-none rounded-[3rem]" />
-        <div className="relative z-10 text-center">
-          <i className="fas fa-apple-whole text-5xl text-orange-500 mb-4"></i>
-          <h2 className="text-3xl font-black italic tracking-tighter uppercase text-slate-900 dark:text-white">Fruit Phase</h2>
-          <p className="text-slate-500 dark:text-slate-400 font-medium">Calibrate the session frequency.</p>
-        </div>
-        <div className="relative z-10 grid grid-cols-1 gap-4 w-full">
-          {(['Easy', 'Medium', 'Hard'] as Difficulty[]).map(level => (
-            <button
-              key={level}
-              onClick={() => initGrid(level)}
-              className="group relative overflow-hidden glass-card p-6 rounded-3xl border-2 border-orange-500/10 hover:border-orange-500 transition-all active:scale-95"
-            >
-              <div className="flex items-center justify-between relative z-10">
-                <div className="text-left">
-                  <h3 className="text-xl font-black uppercase italic text-slate-800 dark:text-white">{level}</h3>
-                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
-                    {level === 'Easy' ? '90 Second Session' : level === 'Medium' ? '60 Second Session' : '45 Second Session'}
-                  </p>
-                </div>
-                <i className="fas fa-chevron-right text-orange-500 group-hover:translate-x-2 transition-transform"></i>
-              </div>
-              <div className="absolute inset-0 bg-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </button>
-          ))}
-        </div>
+      <div className="flex flex-col items-center justify-center gap-4 w-full max-w-md p-8">
+        <h2 className="text-2xl font-black uppercase italic text-indigo-400">Select Difficulty</h2>
+        {(['Easy', 'Medium', 'Hard'] as Difficulty[]).map(level => (
+          <button key={level} onClick={() => initGrid(level)} className="w-full py-4 glass-card rounded-2xl font-black uppercase hover:bg-indigo-500/10 transition-all">{level}</button>
+        ))}
       </div>
     );
   }
 
-  const timerPercentage = (timeLeft / (difficulty === 'Easy' ? 90 : difficulty === 'Medium' ? 60 : 45)) * 100;
-  const timerColor = timeLeft < 15 ? 'from-red-500 to-rose-600' : 'from-orange-500 to-red-600';
-
   return (
-    <div className="relative flex flex-col items-center gap-6 w-full max-w-md px-4 select-none animate-in fade-in zoom-in duration-500">
-      <canvas ref={bgCanvasRef} className="absolute inset-x-0 -top-20 bottom-0 pointer-events-none rounded-[3rem] -z-10" />
-      
-      <div className="w-full flex flex-col gap-4">
-        <div className="flex justify-between items-end">
-          <div className="flex flex-col">
-            <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Juice Points</p>
-            <p className="text-5xl font-black dark:text-white text-slate-900 tabular-nums tracking-tighter drop-shadow-[0_0_15px_rgba(249,115,22,0.6)] transition-colors">
-              {score.toLocaleString()}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className={`text-3xl font-black tabular-nums transition-colors ${timeLeft < 10 ? 'text-red-500 animate-pulse' : 'text-orange-500'}`}>
-              {timeLeft}s
-            </p>
-          </div>
+    <div className="flex flex-col items-center gap-6 w-full max-w-md px-4">
+      <div className="w-full flex justify-between items-end">
+        <div className="flex flex-col">
+          <span className="text-[10px] text-slate-500 font-black uppercase">Juice</span>
+          <p className="text-4xl font-black text-orange-500">{score.toLocaleString()}</p>
         </div>
-
-        <div className="w-full h-3 bg-white/5 rounded-full p-1 border border-white/10 shadow-inner">
-          <div className={`h-full rounded-full bg-gradient-to-r ${timerColor} transition-all duration-1000 ease-linear shadow-[0_0_15px_rgba(249,115,22,0.5)]`} style={{ width: `${timerPercentage}%` }} />
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setIsMuted(!isMuted)} 
+            className="w-10 h-10 flex items-center justify-center rounded-full glass-card text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+            title={isMuted ? "Unmute Sound" : "Mute Sound"}
+          >
+            <i className={`fas ${isMuted ? 'fa-volume-mute' : 'fa-volume-up'}`}></i>
+          </button>
+          <p className={`text-2xl font-black ${timeLeft < 10 ? 'text-red-500 animate-pulse' : 'text-slate-400'}`}>{timeLeft}s</p>
         </div>
       </div>
 
-      <div 
-        className={`relative p-4 bg-white/[0.03] rounded-[2.5rem] border border-white/10 shadow-2xl backdrop-blur-sm overflow-hidden group transition-transform`}
-        style={{ transform: shakeIntensity > 0 ? `translate(${Math.random() * shakeIntensity - shakeIntensity/2}px, ${Math.random() * shakeIntensity - shakeIntensity/2}px)` : 'none' }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-        
-        <div className="grid grid-cols-6 gap-3 relative z-10">
-          {grid.map((row, r) => row.map((fruit, c) => {
-            const id = `${r}-${c}`;
-            const isSelected = selected && selected[0] === r && selected[1] === c;
-            const isMatching = matchingCells.has(id);
-            
-            let visualOffset = { x: 0, y: 0 };
-            if (swapping) {
-              const [sr, sc, tr, tc] = swapping;
-              if (r === sr && c === sc) {
-                visualOffset = { x: (tc - sc) * 110, y: (tr - sr) * 110 };
-              } else if (r === tr && c === tc) {
-                visualOffset = { x: (sc - tc) * 110, y: (sr - tr) * 110 };
-              }
-            }
-
-            return (
-              <button
-                key={fruit.id}
-                onClick={() => handleCellClick(r, c)}
-                className={`
-                  relative w-12 h-12 md:w-16 md:h-16 rounded-2xl transition-all transform 
-                  ${isSelected ? 'scale-110 z-30 ring-4 ring-white shadow-[0_0_30px_white] brightness-125 rotate-3' : 'hover:scale-110 active:scale-90'}
-                  ${isMatching ? 'z-50' : 'opacity-100'}
-                  ${swapping ? 'duration-[750ms] ease-[cubic-bezier(0.34,1.56,0.64,1)]' : 'duration-500'}
-                `}
-                style={{ 
-                  backgroundColor: 'rgba(255,255,255,0.05)',
-                  boxShadow: isSelected ? `0 0 30px ${fruit.color}88` : `0 8px 15px -3px ${fruit.color}33`,
-                  border: isSelected ? '3px solid white' : `1px solid rgba(255,255,255,0.1)`,
-                  transform: `translate(${visualOffset.x}%, ${visualOffset.y}%) ${isSelected ? 'scale(1.15) rotate(8deg)' : ''}`
-                }}
-              >
-                <FruitIcon color={fruit.color} shapeIndex={fruit.shapeIndex} type={fruit.type} isMatching={isMatching} />
-                <div className={`absolute inset-0 w-full h-full bg-white transition-opacity duration-[800ms] pointer-events-none rounded-2xl ${isMatching ? 'opacity-80 scale-150' : 'opacity-0'}`} />
-              </button>
-            );
-          }))}
-        </div>
-      </div>
-
-      <div className="flex flex-col items-center gap-2">
-        <div className={`flex items-center gap-3 text-slate-500 dark:text-slate-400/60 bg-white/5 px-6 py-2 rounded-full border border-white/5 text-xs font-medium transition-all ${comboRef.current > 0 ? 'scale-110 text-orange-600 border-orange-500/40 bg-orange-500/10 shadow-[0_0_20px_rgba(249,115,22,0.2)]' : ''}`}>
-          <i className={`fas fa-apple-whole transition-transform ${isExploding ? 'animate-spin' : ''} ${comboRef.current > 0 ? 'text-orange-600' : 'text-slate-500'}`}></i>
-          <span className="dark:text-slate-400 text-slate-500 font-bold">{comboRef.current > 1 ? `JUICE COMBO x${comboRef.current}!` : 'Match 3+ in a line for juice!'}</span>
-        </div>
-        <div className="flex gap-4 text-[10px] text-slate-600 font-black uppercase tracking-[0.2em] transition-colors">
-          <span className="flex items-center gap-1"><i className="fas fa-burst text-red-500"></i> {difficulty} Calibration</span>
-        </div>
+      <div className="grid grid-cols-6 gap-2 p-3 glass-card rounded-[2rem] border-white/10">
+        {grid.map((row, r) => row.map((fruit, c) => (
+          <button
+            key={fruit.id}
+            onClick={() => handleCellClick(r, c)}
+            className={`relative w-12 h-12 md:w-16 md:h-16 rounded-xl transition-all duration-300 ${selected && selected[0] === r && selected[1] === c ? 'scale-110 ring-4 ring-white' : ''}`}
+            style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
+          >
+            <FruitIcon color={fruit.color} shapeIndex={fruit.shapeIndex} type={fruit.type} isMatching={matchingCells.has(`${r}-${c}`)} />
+          </button>
+        )))}
       </div>
     </div>
   );
