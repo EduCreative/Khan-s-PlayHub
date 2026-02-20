@@ -85,6 +85,89 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
     return { color: COLORS[colorIndex], type, id: crypto.randomUUID(), shapeIndex: colorIndex };
   }, []);
 
+  const checkMatches = useCallback((currentGrid: Fruit[][]) => {
+    const matches = new Set<string>();
+    
+    // Check horizontal
+    for (let r = 0; r < GRID_SIZE; r++) {
+      for (let c = 0; c < GRID_SIZE - 2; c++) {
+        const color = currentGrid[r][c].color;
+        if (color === currentGrid[r][c+1].color && color === currentGrid[r][c+2].color) {
+          matches.add(`${r}-${c}`);
+          matches.add(`${r}-${c+1}`);
+          matches.add(`${r}-${c+2}`);
+          let k = c + 3;
+          while (k < GRID_SIZE && currentGrid[r][k].color === color) {
+            matches.add(`${r}-${k}`);
+            k++;
+          }
+        }
+      }
+    }
+
+    // Check vertical
+    for (let c = 0; c < GRID_SIZE; c++) {
+      for (let r = 0; r < GRID_SIZE - 2; r++) {
+        const color = currentGrid[r][c].color;
+        if (color === currentGrid[r+1][c].color && color === currentGrid[r+2][c].color) {
+          matches.add(`${r}-${c}`);
+          matches.add(`${r+1}-${c}`);
+          matches.add(`${r+2}-${c}`);
+          let k = r + 3;
+          while (k < GRID_SIZE && currentGrid[k][c].color === color) {
+            matches.add(`${k}-${c}`);
+            k++;
+          }
+        }
+      }
+    }
+    
+    return matches;
+  }, []);
+
+  const processMatches = useCallback(async (currentGrid: Fruit[][]) => {
+    let gridState = [...currentGrid.map(row => [...row])];
+    let hasMatches = true;
+    let currentCombo = 1;
+
+    while (hasMatches) {
+      const matches = checkMatches(gridState);
+      if (matches.size === 0) {
+        hasMatches = false;
+        break;
+      }
+
+      setMatchingCells(matches);
+      playSound(1000 + (currentCombo * 200), 'sine');
+      
+      setScore(s => s + (matches.size * 10 * currentCombo));
+      currentCombo++;
+
+      await new Promise(res => setTimeout(res, 400));
+
+      const newGrid = gridState.map(row => [...row]);
+      for (let c = 0; c < GRID_SIZE; c++) {
+        let emptySpaces = 0;
+        for (let r = GRID_SIZE - 1; r >= 0; r--) {
+          if (matches.has(`${r}-${c}`)) {
+            emptySpaces++;
+          } else if (emptySpaces > 0) {
+            newGrid[r + emptySpaces][c] = newGrid[r][c];
+          }
+        }
+        for (let r = 0; r < emptySpaces; r++) {
+          newGrid[r][c] = getRandomFruit();
+        }
+      }
+
+      gridState = newGrid;
+      setGrid(gridState);
+      setMatchingCells(new Set());
+      
+      await new Promise(res => setTimeout(res, 300));
+    }
+  }, [checkMatches, getRandomFruit, playSound]);
+
   const initGrid = useCallback((diff: Difficulty) => {
     const newGrid = Array.from({ length: GRID_SIZE }, () => Array.from({ length: GRID_SIZE }, () => getRandomFruit()));
     setGrid(newGrid);
@@ -116,11 +199,23 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
       if (Math.abs(r - sr) + Math.abs(c - sc) === 1) {
         playSound(800, 'sine');
         setSwapping([sr, sc, r, c]);
-        await new Promise(res => setTimeout(res, 300));
+        
         const newGrid = grid.map(row => [...row]);
         [newGrid[r][c], newGrid[sr][sc]] = [newGrid[sr][sc], newGrid[r][c]];
         setGrid(newGrid);
-        setSwapping(null);
+        
+        const matches = checkMatches(newGrid);
+        if (matches.size === 0) {
+          await new Promise(res => setTimeout(res, 300));
+          playSound(400, 'triangle');
+          const revertedGrid = newGrid.map(row => [...row]);
+          [revertedGrid[r][c], revertedGrid[sr][sc]] = [revertedGrid[sr][sc], revertedGrid[r][c]];
+          setGrid(revertedGrid);
+          setSwapping(null);
+        } else {
+          setSwapping(null);
+          await processMatches(newGrid);
+        }
       }
       setSelected(null);
     }
