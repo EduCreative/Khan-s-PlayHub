@@ -131,6 +131,23 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
             </div>
             <h1 className="text-4xl font-black mb-3 tracking-tighter italic uppercase dark:text-white text-slate-900 transition-colors">{game.name}</h1>
             <p className="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed font-medium px-4">{game.description}</p>
+            
+            {game.instructions && game.instructions.length > 0 && (
+              <div className="bg-slate-100 dark:bg-slate-800/50 rounded-2xl p-6 mb-8 text-left border border-slate-200 dark:border-white/5">
+                <h3 className="text-xs font-black uppercase tracking-widest text-indigo-500 mb-4 flex items-center gap-2">
+                  <i className="fas fa-book-open"></i> Mission Briefing
+                </h3>
+                <ul className="space-y-3">
+                  {game.instructions.map((inst, idx) => (
+                    <li key={idx} className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300">
+                      <span className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">{idx + 1}</span>
+                      <span>{inst}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <button 
               onClick={() => { setIsPlaying(true); setCurrentScore(0); }}
               className="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-[2rem] font-black text-2xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-500/40 uppercase italic tracking-tighter"

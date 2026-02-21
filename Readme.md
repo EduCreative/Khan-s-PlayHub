@@ -1,11 +1,19 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Nexus
 
-**Version:** 2.6.0 "Identity Core"  
+**Version:** 2.7.0 "Mission Briefing"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
 Khan's PlayHub is a high-performance, mobile-first Progressive Web App (PWA) that synchronizes your elite scores and profile across the Cloudflare Nexus.
+
+---
+
+## 🚀 Recent Enhancements (v2.7.0)
+- **Mission Briefings**: Every game now includes detailed playing instructions before you start.
+- **Difficulty Tiers**: Select between Easy, Medium, and Hard modes for a tailored challenge in key games.
+- **Enhanced Mechanics**: Re-engineered Tetris and Bubble Fury for smoother, more competitive gameplay.
+- **Improved Hub**: A more scannable and visually striking interface for game selection.
 
 ---
 

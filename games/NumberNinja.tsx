@@ -6,7 +6,10 @@ interface NumberNinjaProps {
   isPlaying: boolean;
 }
 
+type Difficulty = 'Easy' | 'Medium' | 'Hard';
+
 const NumberNinja: React.FC<NumberNinjaProps> = ({ onGameOver, isPlaying }) => {
+  const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [equation, setEquation] = useState('');
   const [options, setOptions] = useState<number[]>([]);
   const [score, setScore] = useState(0);
@@ -17,8 +20,10 @@ const NumberNinja: React.FC<NumberNinjaProps> = ({ onGameOver, isPlaying }) => {
   const scoreRef = useRef(0);
 
   const generateEquation = useCallback(() => {
-    const a = Math.floor(Math.random() * 12) + 1;
-    const b = Math.floor(Math.random() * 12) + 1;
+    if (!difficulty) return;
+    const range = difficulty === 'Easy' ? 10 : difficulty === 'Medium' ? 20 : 40;
+    const a = Math.floor(Math.random() * range) + 1;
+    const b = Math.floor(Math.random() * range) + 1;
     const result = a + b;
     setEquation(`${a} + ${b}`);
     
@@ -34,16 +39,22 @@ const NumberNinja: React.FC<NumberNinjaProps> = ({ onGameOver, isPlaying }) => {
 
   useEffect(() => {
     if (isPlaying) {
-      generateEquation();
+      setDifficulty(null);
       setScore(0);
       scoreRef.current = 0;
       setTimeLeft(30);
       setFeedback(null);
     }
-  }, [isPlaying, generateEquation]);
+  }, [isPlaying]);
 
   useEffect(() => {
-    if (!isPlaying || timeLeft <= 0) return;
+    if (difficulty && isPlaying) {
+      generateEquation();
+    }
+  }, [difficulty, isPlaying, generateEquation]);
+
+  useEffect(() => {
+    if (!isPlaying || !difficulty || timeLeft <= 0) return;
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
@@ -64,7 +75,8 @@ const NumberNinja: React.FC<NumberNinjaProps> = ({ onGameOver, isPlaying }) => {
 
     if (val === correct) {
       setFeedback({ index, type: 'correct' });
-      const points = 250 * (Math.floor(scoreRef.current / 1000) + 1);
+      const difficultyMult = difficulty === 'Easy' ? 1 : difficulty === 'Medium' ? 1.5 : 2;
+      const points = Math.floor(250 * (Math.floor(scoreRef.current / 1000) + 1) * difficultyMult);
       scoreRef.current += points;
       setScore(scoreRef.current);
       
@@ -75,7 +87,7 @@ const NumberNinja: React.FC<NumberNinjaProps> = ({ onGameOver, isPlaying }) => {
     } else {
       setFeedback({ index, type: 'wrong' });
       setIsShaking(true);
-      setTimeLeft(t => Math.max(0, t - 3));
+      setTimeLeft(t => Math.max(0, t - (difficulty === 'Hard' ? 5 : 3)));
       
       setTimeout(() => {
         setFeedback(null);
@@ -83,6 +95,37 @@ const NumberNinja: React.FC<NumberNinjaProps> = ({ onGameOver, isPlaying }) => {
       }, 400);
     }
   };
+
+  if (!difficulty) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-8 w-full max-w-md p-8 animate-in fade-in zoom-in duration-500">
+        <div className="text-center">
+          <i className="fas fa-user-ninja text-5xl text-cyan-500 mb-4"></i>
+          <h2 className="text-3xl font-black italic tracking-tighter uppercase text-slate-900 dark:text-white">Ninja Tier</h2>
+          <p className="text-slate-500 dark:text-slate-400 font-medium">Select your calculation speed.</p>
+        </div>
+        <div className="grid grid-cols-1 gap-4 w-full">
+          {(['Easy', 'Medium', 'Hard'] as Difficulty[]).map(level => (
+            <button
+              key={level}
+              onClick={() => setDifficulty(level)}
+              className="group relative overflow-hidden glass-card p-6 rounded-3xl border-2 border-cyan-500/10 hover:border-cyan-500 transition-all active:scale-95"
+            >
+              <div className="flex items-center justify-between relative z-10">
+                <div className="text-left">
+                  <h3 className="text-xl font-black uppercase italic text-slate-800 dark:text-white">{level}</h3>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+                    {level === 'Easy' ? 'Basic Arithmetic' : level === 'Medium' ? 'Rapid Response' : 'Hyper-Speed Logic'}
+                  </p>
+                </div>
+                <i className="fas fa-chevron-right text-cyan-500 group-hover:translate-x-2 transition-transform"></i>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex flex-col items-center gap-8 w-full max-w-lg px-4 py-12 select-none overflow-hidden rounded-[3rem] animate-in fade-in zoom-in duration-500">

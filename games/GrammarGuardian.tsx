@@ -94,7 +94,10 @@ const QUESTIONS = [
   { sentence: "I ____ to the store to buy milk.", options: ["went", "go", "going", "goes"], answer: "went" }
 ];
 
+type Difficulty = 'Easy' | 'Medium' | 'Hard';
+
 const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
+  const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [current, setCurrent] = useState(QUESTIONS[0]);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
@@ -115,15 +118,21 @@ const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: bo
 
   useEffect(() => {
     if (isPlaying) {
+      setDifficulty(null);
       setScore(0);
       setTimeLeft(60);
       questionPool.current = [];
-      nextQuestion();
     }
-  }, [isPlaying, nextQuestion]);
+  }, [isPlaying]);
 
   useEffect(() => {
-    if (!isPlaying || timeLeft <= 0) return;
+    if (difficulty && isPlaying) {
+      nextQuestion();
+    }
+  }, [difficulty, isPlaying, nextQuestion]);
+
+  useEffect(() => {
+    if (!isPlaying || !difficulty || timeLeft <= 0) return;
     const timer = setInterval(() => {
       setTimeLeft(t => {
         if (t <= 1) { onGameOver(score); return 0; }
@@ -131,20 +140,53 @@ const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: bo
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [isPlaying, timeLeft, onGameOver, score]);
+  }, [isPlaying, difficulty, timeLeft, onGameOver, score]);
 
   const handleChoice = (opt: string) => {
     if (feedback) return;
     if (opt === current.answer) {
       setFeedback('correct');
-      setScore(s => s + 600);
+      const difficultyMult = difficulty === 'Easy' ? 1 : difficulty === 'Medium' ? 1.5 : 2;
+      setScore(s => s + Math.floor(600 * difficultyMult));
       setTimeout(nextQuestion, 500);
     } else {
       setFeedback('wrong');
-      setTimeLeft(t => Math.max(0, t - 8)); // 8s penalty
+      const penalty = difficulty === 'Hard' ? 12 : difficulty === 'Medium' ? 8 : 5;
+      setTimeLeft(t => Math.max(0, t - penalty));
       setTimeout(() => setFeedback(null), 800);
     }
   };
+
+  if (!difficulty) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-8 w-full max-w-md p-8 animate-in fade-in zoom-in duration-500">
+        <div className="text-center">
+          <i className="fas fa-book-open text-5xl text-emerald-500 mb-4"></i>
+          <h2 className="text-3xl font-black italic tracking-tighter uppercase text-slate-900 dark:text-white">Lexicon Tier</h2>
+          <p className="text-slate-500 dark:text-slate-400 font-medium">Select your linguistic depth.</p>
+        </div>
+        <div className="grid grid-cols-1 gap-4 w-full">
+          {(['Easy', 'Medium', 'Hard'] as Difficulty[]).map(level => (
+            <button
+              key={level}
+              onClick={() => setDifficulty(level)}
+              className="group relative overflow-hidden glass-card p-6 rounded-3xl border-2 border-emerald-500/10 hover:border-emerald-500 transition-all active:scale-95"
+            >
+              <div className="flex items-center justify-between relative z-10">
+                <div className="text-left">
+                  <h3 className="text-xl font-black uppercase italic text-slate-800 dark:text-white">{level}</h3>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+                    {level === 'Easy' ? 'Basic Syntax' : level === 'Medium' ? 'Advanced Grammar' : 'Hyper-Linguistic Logic'}
+                  </p>
+                </div>
+                <i className="fas fa-chevron-right text-emerald-500 group-hover:translate-x-2 transition-transform"></i>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex flex-col items-center gap-10 w-full max-w-lg px-6 py-12 select-none overflow-hidden rounded-[3rem]">

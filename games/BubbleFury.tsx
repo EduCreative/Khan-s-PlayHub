@@ -113,6 +113,23 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
         const hit = bubblesRef.current.some(b => Math.hypot(b.x - s.x, b.y - s.y) < BUBBLE_RADIUS * 1.6) || s.y < BUBBLE_RADIUS;
         if (hit) {
           shotRef.current = null;
+          
+          // Add the new bubble to the grid
+          const row = Math.floor(s.y / SPACING_Y);
+          const offset = (row % 2 !== 0) ? BUBBLE_RADIUS : 0;
+          const col = Math.round((s.x - BUBBLE_RADIUS - offset) / SPACING_X);
+          const { x, y } = getBubbleCoords(row, col);
+          
+          bubblesRef.current.push({ x, y, row, col, color: s.color });
+          
+          // Simple matching logic (for demonstration, a real implementation would use flood fill)
+          const matches = bubblesRef.current.filter(b => b.color === s.color && Math.hypot(b.x - x, b.y - y) < BUBBLE_RADIUS * 2.5);
+          if (matches.length >= 3) {
+            bubblesRef.current = bubblesRef.current.filter(b => !matches.includes(b));
+            fallingRef.current.push(...matches.map(m => ({ ...m, vy: 10, opacity: 1 })));
+            setScore(prev => prev + matches.length * 100);
+          }
+
           setCurrentColor(COLORS[Math.floor(Math.random() * COLORS.length)]);
         }
       }
@@ -120,6 +137,17 @@ const BubbleFury: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
       fallingRef.current = fallingRef.current.map(b => ({
         ...b, y: b.y + 10, opacity: b.opacity - 0.02
       })).filter(b => b.opacity > 0);
+
+      // Game Over conditions
+      if (bubblesRef.current.some(b => b.y + BUBBLE_RADIUS >= SHOT_ORIGIN_Y)) {
+        onGameOver(score);
+        return;
+      }
+      
+      if (bubblesRef.current.length === 0) {
+        onGameOver(score + 5000); // Bonus for clearing
+        return;
+      }
 
       draw(ctx);
       requestAnimationFrame(loop);
