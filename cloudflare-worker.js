@@ -17,6 +17,14 @@ export default {
 
     if (method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
+    // Check if D1 is bound correctly
+    if (!env.PLAYHUB_DB) {
+      return new Response(JSON.stringify({ 
+        error: "D1 Binding Missing", 
+        message: "The variable 'PLAYHUB_DB' is not bound to a D1 database in Worker settings." 
+      }), { status: 500, headers: corsHeaders });
+    }
+
     try {
       // --- PUBLIC ENDPOINTS ---
 
@@ -30,6 +38,17 @@ export default {
           WHERE excluded.score > scores.score
         `).bind(deviceId, gameId, score, timestamp).run();
         return new Response(JSON.stringify({ status: 'success' }), { headers: corsHeaders });
+      }
+
+      if (url.pathname === '/leaderboard/global' && method === 'GET') {
+        const results = await env.PLAYHUB_DB.prepare(`
+          SELECT p.username, p.avatar, SUM(s.score) as score 
+          FROM scores s
+          LEFT JOIN profiles p ON s.deviceId = p.deviceId
+          GROUP BY s.deviceId
+          ORDER BY score DESC LIMIT 10
+        `).all();
+        return new Response(JSON.stringify(results.results), { headers: corsHeaders });
       }
 
       if (url.pathname.startsWith('/leaderboard/') && method === 'GET') {
@@ -46,16 +65,25 @@ export default {
 
       if (url.pathname === '/profile' && method === 'POST') {
         const p = await request.json();
-        // Updated to include email
         await env.PLAYHUB_DB.prepare(`
-          INSERT INTO profiles (deviceId, username, email, avatar, bio) 
-          VALUES (?, ?, ?, ?, ?)
+          INSERT INTO profiles (deviceId, username, email, avatar, bio, favorites, joinedAt) 
+          VALUES (?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(deviceId) DO UPDATE SET 
           username = excluded.username, 
           email = excluded.email, 
           avatar = excluded.avatar, 
-          bio = excluded.bio
-        `).bind(p.deviceId, p.username, p.email || null, p.avatar, p.bio).run();
+          bio = excluded.bio,
+          favorites = excluded.favorites,
+          joinedAt = excluded.joinedAt
+        `).bind(
+          p.deviceId, 
+          p.username, 
+          p.email || null, 
+          p.avatar, 
+          p.bio, 
+          JSON.stringify(p.favorites || []), 
+          p.joinedAt || Date.now()
+        ).run();
         return new Response(JSON.stringify({ status: 'synced' }), { headers: corsHeaders });
       }
 

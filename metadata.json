@@ -1,8 +1,5 @@
 {
-  "name": "Khans PlayHub",
-  "description": "A vibrant, neon-cyberpunk inspired PWA gaming hub with 21 addictive mini-games for quick fun anytime.",
-  "requestFramePermissions": [
-    "camera",
-    "microphone"
-  ]
+  "name": "Khan's PlayHub",
+  "description": "A premium micro-gaming nexus with classic games, cloud saving, and global leaderboards.",
+  "requestFramePermissions": []
 }
