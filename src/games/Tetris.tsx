@@ -109,7 +109,7 @@ const Tetris: React.FC<{ onGameOver: (score: number) => void; isPlaying: boolean
       }
 
       if (cleared > 0) {
-        const linePoints = [0, 100, 300, 500, 800];
+        const linePoints = [0, 10, 30, 50, 80];
         const points = linePoints[cleared] * level;
         setScore(prev => prev + points);
         scoreRef.current += points;

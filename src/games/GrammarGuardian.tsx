@@ -153,7 +153,7 @@ const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: bo
       playSfx('/sfx/correct.mp3', sfxVolume);
       triggerHapticFeedback();
       setFeedback('correct');
-      setScore(s => s + 600);
+      setScore(s => s + 60);
       setTimeout(nextQuestion, 500);
     } else {
       playSfx('/sfx/wrong.mp3', sfxVolume);

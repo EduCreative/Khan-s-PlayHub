@@ -43,8 +43,8 @@ const ReactionTest: React.FC<{ onGameOver: (score: number) => void; isPlaying: b
     if (attempts.length >= 5) {
       const avg = attempts.reduce((a, b) => a + b, 0) / attempts.length;
       // Score calculation: higher score for lower reaction time
-      // 1000ms = 0 points, 200ms = 800 points
-      const score = Math.max(0, Math.round(1000 - avg));
+      // 1000ms = 0 points, 200ms = 80 points
+      const score = Math.max(0, Math.round((1000 - avg) / 10));
       onGameOver(score);
     } else {
       setState('idle');

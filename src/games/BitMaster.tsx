@@ -61,7 +61,7 @@ const BitMaster: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean 
         color: '#10b981'
       }]);
 
-      const points = 100 + Math.floor(timeLeft * 10);
+      const points = 10 + Math.floor(timeLeft);
       scoreRef.current += points;
       setScore(scoreRef.current);
       setTimeLeft(t => Math.min(15, t + 3));

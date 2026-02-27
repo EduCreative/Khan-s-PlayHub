@@ -122,7 +122,7 @@ const MemoryMatrix: React.FC<{ onGameOver: (s: number) => void; isPlaying: boole
             return updated;
           });
           setFlipped([]);
-          setScore(s => s + (500 * level));
+          setScore(s => s + (50 * level));
         }, 500);
       } else {
         setTimeout(() => {
@@ -130,7 +130,7 @@ const MemoryMatrix: React.FC<{ onGameOver: (s: number) => void; isPlaying: boole
             (c.id === first || c.id === second) ? { ...c, isFlipped: false } : c
           ));
           setFlipped([]);
-          setScore(s => Math.max(0, s - 25));
+          setScore(s => Math.max(0, s - 5));
         }, 1000);
       }
     }
@@ -141,7 +141,7 @@ const MemoryMatrix: React.FC<{ onGameOver: (s: number) => void; isPlaying: boole
     setTimeout(() => {
       const nextLevel = level + 1;
       if (nextLevel > 5) {
-        onGameOver(score + 5000);
+        onGameOver(score + 500);
       } else {
         setLevel(nextLevel);
         initLevel(nextLevel);

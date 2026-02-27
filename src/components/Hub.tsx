@@ -3,12 +3,13 @@ import React, { useState } from 'react';
 import { Game, Category, UserProfile } from '../types';
 import GameCard from './GameCard';
 import Logo from './Logo';
+import Leaderboard from './Leaderboard';
 
 interface HubProps {
   games: Game[];
   onSelectGame: (game: Game) => void;
-  filter: Category | 'All' | 'Favorites';
-  setFilter: (filter: Category | 'All' | 'Favorites') => void;
+  filter: Category | 'All' | 'Favorites' | 'Leaderboard';
+  setFilter: (filter: Category | 'All' | 'Favorites' | 'Leaderboard') => void;
   highScores: Record<string, number>;
   userProfile: UserProfile;
   isDarkMode: boolean;
@@ -29,9 +30,11 @@ const Hub: React.FC<HubProps> = ({
     ? games 
     : filter === 'Favorites'
     ? games.filter(g => userProfile.favorites.includes(g.id))
+    : filter === 'Leaderboard'
+    ? []
     : games.filter(g => g.category === filter);
 
-  const categories = ['All', 'Favorites', ...Object.values(Category)];
+  const categories = ['All', 'Favorites', 'Leaderboard', ...Object.values(Category)];
 
   const handleVersionClick = () => {
     const nextCount = vClickCount + 1;
@@ -129,21 +132,42 @@ const Hub: React.FC<HubProps> = ({
         </section>
       )}
 
-      <div id="games-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 min-h-[400px]">
-        {filteredGames.map((game: Game, idx: number) => (
-          <GameCard 
-            key={game.id} 
-            game={game} 
-            index={idx} 
-            onPlay={() => onSelectGame(game)} 
-            highScore={highScores[game.id] || 0}
-            isFavorite={userProfile.favorites.includes(game.id)}
-            onToggleFavorite={() => onToggleFavorite(game.id)}
-          />
-        ))}
-      </div>
+      {filter === 'Leaderboard' ? (
+        <Leaderboard games={games} />
+      ) : (
+        <div id="games-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 min-h-[400px]">
+          {filteredGames.map((game: Game, idx: number) => (
+            <GameCard 
+              key={game.id} 
+              game={game} 
+              index={idx} 
+              onPlay={() => onSelectGame(game)} 
+              highScore={highScores[game.id] || 0}
+              isFavorite={userProfile.favorites.includes(game.id)}
+              onToggleFavorite={() => onToggleFavorite(game.id)}
+            />
+          ))}
+        </div>
+      )}
 
-      <footer className="flex flex-col items-center gap-4 mt-8 pb-12">
+      <footer className="flex flex-col items-center gap-8 mt-8 pb-12">
+        <div className="w-full max-w-2xl glass-card p-6 md:p-8 rounded-[2.5rem] border-2 border-slate-200 dark:border-indigo-500/10 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="text-center md:text-left">
+            <h3 className="text-lg font-black uppercase italic text-slate-900 dark:text-white">Contact Developer</h3>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Nexus Support & Feedback</p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-4">
+            <a href="mailto:kmasroor50@gmail.com" className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 hover:border-indigo-500 transition-all group">
+              <i className="fas fa-envelope text-indigo-500 group-hover:scale-110 transition-transform"></i>
+              <span className="text-xs font-black uppercase tracking-tighter text-slate-600 dark:text-slate-300">kmasroor50@gmail.com</span>
+            </a>
+            <a href="https://wa.me/923331306603" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 hover:border-emerald-500 transition-all group">
+              <i className="fab fa-whatsapp text-emerald-500 group-hover:scale-110 transition-transform"></i>
+              <span className="text-xs font-black uppercase tracking-tighter text-slate-600 dark:text-slate-300">+92 333 1306603</span>
+            </a>
+          </div>
+        </div>
+
         <div className="flex flex-col items-center gap-2">
           <span 
             onClick={handleVersionClick}

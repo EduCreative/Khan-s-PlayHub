@@ -24,7 +24,7 @@ const ResonanceBreathing: React.FC<{ onGameOver: (score: number) => void; isPlay
       setTimer(prev => {
         if (prev <= 1) {
           setIsActive(false);
-          onGameOver(cycleCount * 100);
+          onGameOver(cycleCount * 10);
           return 0;
         }
         return prev - 1;
@@ -131,7 +131,7 @@ const ResonanceBreathing: React.FC<{ onGameOver: (score: number) => void; isPlay
       <button 
         onClick={() => {
           setIsActive(false);
-          onGameOver(cycleCount * 100);
+          onGameOver(cycleCount * 10);
         }}
         className="mt-32 px-8 py-3 bg-white/5 border border-white/10 text-slate-500 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-rose-500/10 transition-all"
       >

@@ -99,7 +99,7 @@ const BinaryDash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
 
     if (correct) {
       streakRef.current += 1;
-      const points = 100 + streakRef.current * 10;
+      const points = 10 + streakRef.current;
       scoreRef.current += points;
       setScore(scoreRef.current);
       setStreak(streakRef.current);

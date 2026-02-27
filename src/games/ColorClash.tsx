@@ -81,7 +81,7 @@ const ColorClash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
       playSfx('/sfx/correct.mp3', sfxVolume);
       triggerHapticFeedback();
       const difficultyBonus = difficulty === 'Easy' ? 1 : difficulty === 'Medium' ? 2 : 3;
-      const newScore = scoreRef.current + (100 * difficultyBonus);
+      const newScore = scoreRef.current + (10 * difficultyBonus);
       scoreRef.current = newScore;
       setScore(newScore);
       

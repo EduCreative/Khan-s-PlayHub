@@ -21,7 +21,7 @@ const DEFAULT_PROFILE: UserProfile = {
 
 const App: React.FC = () => {
   const [activeGame, setActiveGame] = useState<Game | null>(null);
-  const [filter, setFilter] = useState<Category | 'All' | 'Favorites'>('All');
+  const [filter, setFilter] = useState<Category | 'All' | 'Favorites' | 'Leaderboard'>('All');
   const [scores, setScores] = useState<Record<string, number>>({});
   const [userProfile, setUserProfile] = useState<UserProfile>(DEFAULT_PROFILE);
   const [isDarkMode, setIsDarkMode] = useState(true);

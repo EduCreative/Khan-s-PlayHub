@@ -166,7 +166,7 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
     await new Promise(res => setTimeout(res, 600));
 
     // Calculate score
-    const points = matches.size * 100 * (comboRef.current + 1);
+    const points = matches.size * 10 * (comboRef.current + 1);
     setScore(prev => prev + points);
     comboRef.current += 1;
 
