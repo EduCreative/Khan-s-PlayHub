@@ -83,6 +83,16 @@ export const GAMES: Game[] = [
     instructions: ['Wait for the screen to turn green', 'Click as fast as you can', 'Complete 5 attempts for an average']
   },
   {
+    id: 'tetris',
+    name: 'Neon Tetris',
+    tagline: 'Cybernetic Block Alignment',
+    category: Category.Arcade,
+    icon: 'fa-shapes',
+    color: 'from-fuchsia-500 to-purple-700',
+    description: 'A high-speed block fitting challenge in a neon-drenched digital void.',
+    instructions: ['Use arrow keys or buttons to move and rotate', 'Complete horizontal lines to clear them', 'Don\'t let the blocks reach the top']
+  },
+  {
     id: 'binary-dash',
     name: 'Binary Dash',
     tagline: 'Data Stream Sorting',

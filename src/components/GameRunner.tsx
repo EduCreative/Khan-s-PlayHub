@@ -14,6 +14,7 @@ import PatternFinder from '../games/PatternFinder';
 import GrammarGuardian from '../games/GrammarGuardian';
 import ResonanceBreathing from '../games/ResonanceBreathing';
 import ReactionTest from '../games/ReactionTest';
+import Tetris from '../games/Tetris';
 import Logo from './Logo';
 import VictoryEffect from './VictoryEffect';
 
@@ -86,6 +87,7 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
       case 'grammar-guardian': return <GrammarGuardian {...commonProps} />;
       case 'resonance-breathing': return <ResonanceBreathing {...commonProps} />;
       case 'reaction-test': return <ReactionTest {...commonProps} />;
+      case 'tetris': return <Tetris {...commonProps} />;
       default:
         return (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
