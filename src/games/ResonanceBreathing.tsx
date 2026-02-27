@@ -6,12 +6,12 @@ const ResonanceBreathing: React.FC<{ onGameOver: (score: number) => void; isPlay
   const [phase, setPhase] = useState<'inhale' | 'exhale'>('inhale');
   const [cycleCount, setCycleCount] = useState(0);
   const [isActive, setIsActive] = useState(false);
-  const [timer, setTimer] = useState(300); // 5 minutes
+  const [timer, setTimer] = useState(60); // 1 minute
 
   useEffect(() => {
     if (!isPlaying) {
       setIsActive(false);
-      setTimer(300);
+      setTimer(60);
       setCycleCount(0);
       setPhase('inhale');
     }
@@ -54,7 +54,7 @@ const ResonanceBreathing: React.FC<{ onGameOver: (score: number) => void; isPlay
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  if (!isActive && timer === 300) {
+  if (!isActive && timer === 60) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center max-w-md">
         <div className="w-32 h-32 rounded-full bg-indigo-500/20 flex items-center justify-center mb-8 animate-pulse">
@@ -89,24 +89,47 @@ const ResonanceBreathing: React.FC<{ onGameOver: (score: number) => void; isPlay
       </div>
 
       <div className="relative w-64 h-64 flex items-center justify-center">
+        {/* Expanding Rings Animation */}
+        <AnimatePresence>
+          {phase === 'inhale' && isActive && (
+            [1, 2, 3].map((i) => (
+              <motion.div
+                key={`ring-${i}`}
+                initial={{ scale: 0.5, opacity: 0.8 }}
+                animate={{ scale: 2.5, opacity: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ 
+                  duration: 4, 
+                  repeat: Infinity, 
+                  delay: i * 1.3,
+                  ease: "easeOut" 
+                }}
+                className="absolute w-32 h-32 border-2 border-indigo-400/30 rounded-full"
+              />
+            ))
+          )}
+        </AnimatePresence>
+
         {/* Outer Glow */}
         <motion.div 
           animate={{ 
-            scale: phase === 'inhale' ? 1.5 : 1,
-            opacity: phase === 'inhale' ? 0.5 : 0.2
+            scale: phase === 'inhale' ? 1.8 : 1,
+            opacity: phase === 'inhale' ? 0.6 : 0.2,
+            filter: phase === 'inhale' ? 'blur(40px)' : 'blur(20px)'
           }}
           transition={{ duration: 5, ease: "easeInOut" }}
-          className="absolute inset-0 bg-indigo-500 rounded-full blur-3xl"
+          className="absolute inset-0 bg-indigo-500 rounded-full"
         />
 
-        {/* Lotus Icon */}
+        {/* Lotus Icon with extra pulse */}
         <motion.div
           animate={{ 
-            scale: phase === 'inhale' ? 1.2 : 0.8,
-            rotate: phase === 'inhale' ? 45 : 0
+            scale: phase === 'inhale' ? 1.4 : 0.8,
+            rotate: phase === 'inhale' ? 90 : 0,
+            color: phase === 'inhale' ? '#818cf8' : '#6366f1'
           }}
           transition={{ duration: 5, ease: "easeInOut" }}
-          className="relative z-10 text-8xl text-indigo-400 drop-shadow-[0_0_30px_rgba(99,102,241,0.8)]"
+          className="relative z-10 text-8xl drop-shadow-[0_0_30px_rgba(99,102,241,0.8)]"
         >
           <i className="fas fa-lotus"></i>
         </motion.div>

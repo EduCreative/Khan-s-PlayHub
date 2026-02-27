@@ -26,11 +26,12 @@ interface GameRunnerProps {
   isDarkMode: boolean;
   isAnonymous: boolean;
   onOpenProfile: () => void;
+  onViewLeaderboard: () => void;
   sfxVolume: number;
   hapticFeedback: boolean;
 }
 
-const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, highScore, isDarkMode, isAnonymous, onOpenProfile, sfxVolume, hapticFeedback }) => {
+const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, highScore, isDarkMode, isAnonymous, onOpenProfile, onViewLeaderboard, sfxVolume, hapticFeedback }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showGameOver, setShowGameOver] = useState(false);
   const [isVictory, setIsVictory] = useState(false);
@@ -161,6 +162,9 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
                 </button>
               )}
               <button onClick={handleRetry} className="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-black text-xl hover:scale-105 active:scale-95 transition-all shadow-xl uppercase italic tracking-tighter">RETRY SESSION</button>
+              <button onClick={onViewLeaderboard} className="w-full py-4 bg-indigo-500/10 border border-indigo-500/20 text-indigo-500 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-500/20 transition-all">
+                <i className="fas fa-trophy mr-2"></i> View Global Leaderboard
+              </button>
               <button onClick={handleClose} className="py-4 bg-white/5 border border-white/10 text-slate-500 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-rose-500/10 transition-all">Close Session</button>
             </div>
           </div>

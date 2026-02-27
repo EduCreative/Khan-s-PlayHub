@@ -7,7 +7,7 @@ interface LeaderboardProps {
   games: Game[];
 }
 
-const Leaderboard: React.FC<LeaderboardProps> = ({ games }) => {
+const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({ games, onBack }) => {
   const [selectedGameId, setSelectedGameId] = useState<string>(games[0]?.id || '');
   const [scores, setScores] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -25,9 +25,16 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ games }) => {
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-black uppercase italic text-slate-900 dark:text-white">Global Leaderboard</h2>
-          <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Nexus Neural Rankings</p>
+        <div className="flex items-center gap-4">
+          {onBack && (
+            <button onClick={onBack} className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-indigo-500 transition-all">
+              <i className="fas fa-arrow-left"></i>
+            </button>
+          )}
+          <div>
+            <h2 className="text-2xl font-black uppercase italic text-slate-900 dark:text-white">Global Leaderboard</h2>
+            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Nexus Neural Rankings</p>
+          </div>
         </div>
         
         <select 

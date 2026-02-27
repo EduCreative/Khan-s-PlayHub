@@ -74,6 +74,9 @@ const Hub: React.FC<HubProps> = ({
              <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-white/20 flex items-center justify-center"><i className={`fas ${userProfile.avatar} text-xs`}></i></div>
              <span className="hidden md:block font-black uppercase italic tracking-tighter text-sm">{userProfile.username}</span>
           </button>
+          <button id="leaderboard-header-btn" onClick={() => setFilter('Leaderboard')} className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-lg shadow-xl border-2 transition-all ${filter === 'Leaderboard' ? 'bg-amber-500 border-amber-400 text-white' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500'}`}>
+            <i className="fas fa-trophy"></i>
+          </button>
           <button id="settings-btn" onClick={onOpenSettings} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all">
             <i className="fas fa-cog text-slate-500"></i>
           </button>
@@ -85,8 +88,18 @@ const Hub: React.FC<HubProps> = ({
 
       <div id="category-filters" className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
         {categories.map((cat) => (
-          <button key={cat} onClick={() => setFilter(cat as any)} className={`px-4 md:px-6 py-2 md:py-2.5 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all border-2 ${filter === cat ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg scale-105' : 'bg-white/50 dark:bg-slate-900/40 border-slate-200 dark:border-white/5 text-slate-500 hover:border-indigo-500/30'}`}>
-            {cat === 'Favorites' && <i className="fas fa-star mr-1.5 text-amber-400"></i>}{cat}
+          <button 
+            key={cat} 
+            onClick={() => setFilter(cat as any)} 
+            className={`px-4 md:px-6 py-2 md:py-2.5 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all border-2 ${
+              filter === cat 
+                ? cat === 'Leaderboard' ? 'bg-amber-500 border-amber-400 text-white shadow-lg scale-105' : 'bg-indigo-600 border-indigo-400 text-white shadow-lg scale-105' 
+                : 'bg-white/50 dark:bg-slate-900/40 border-slate-200 dark:border-white/5 text-slate-500 hover:border-indigo-500/30'
+            }`}
+          >
+            {cat === 'Favorites' && <i className="fas fa-star mr-1.5 text-amber-400"></i>}
+            {cat === 'Leaderboard' && <i className="fas fa-trophy mr-1.5 text-amber-400"></i>}
+            {cat}
           </button>
         ))}
       </div>
@@ -123,7 +136,7 @@ const Hub: React.FC<HubProps> = ({
                   </div>
                   <div>
                     <h3 className="text-sm font-black text-white uppercase italic">{game.name}</h3>
-                    <p className="text-[8px] text-slate-500 font-bold uppercase tracking-tighter">5 Min Session</p>
+                    <p className="text-[8px] text-slate-500 font-bold uppercase tracking-tighter">1 Min Session</p>
                   </div>
                 </button>
               );
@@ -133,7 +146,7 @@ const Hub: React.FC<HubProps> = ({
       )}
 
       {filter === 'Leaderboard' ? (
-        <Leaderboard games={games} />
+        <Leaderboard games={games} onBack={() => setFilter('All')} />
       ) : (
         <div id="games-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 min-h-[400px]">
           {filteredGames.map((game: Game, idx: number) => (

@@ -168,6 +168,10 @@ const App: React.FC = () => {
             isDarkMode={isDarkMode}
             isAnonymous={isAnonymous}
             onOpenProfile={() => setShowProfileSetup(true)}
+            onViewLeaderboard={() => {
+              setActiveGame(null);
+              setFilter('Leaderboard');
+            }}
             sfxVolume={sfxVolume}
             hapticFeedback={hapticFeedback}
           />
