@@ -23,6 +23,7 @@ interface Card {
 
 const MemoryMatrix: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean; sfxVolume: number; hapticFeedback: boolean }> = ({ onGameOver, isPlaying, sfxVolume, hapticFeedback }) => {
   const [level, setLevel] = useState(1);
+  const [puzzleCount, setPuzzleCount] = useState(0);
   const [cards, setCards] = useState<Card[]>([]);
   const [flipped, setFlipped] = useState<number[]>([]);
   const [score, setScore] = useState(0);
@@ -34,9 +35,11 @@ const MemoryMatrix: React.FC<{ onGameOver: (s: number) => void; isPlaying: boole
 
   const playSfx = useCallback((src: string, volume: number) => {
     if (volume > 0) {
-      const audio = new Audio(src);
-      audio.volume = volume;
-      audio.play();
+      try {
+        const audio = new Audio(src);
+        audio.volume = volume;
+        audio.play().catch(() => {});
+      } catch (e) {}
     }
   }, []);
 
@@ -85,6 +88,7 @@ const MemoryMatrix: React.FC<{ onGameOver: (s: number) => void; isPlaying: boole
   useEffect(() => {
     if (isPlaying) {
       setLevel(1);
+      setPuzzleCount(0);
       setScore(0);
       setMoves(0);
       initLevel(1);
@@ -139,12 +143,19 @@ const MemoryMatrix: React.FC<{ onGameOver: (s: number) => void; isPlaying: boole
   const handleLevelComplete = () => {
     setIsLevelClearing(true);
     setTimeout(() => {
-      const nextLevel = level + 1;
-      if (nextLevel > 5) {
-        onGameOver(score + 500);
+      const nextPuzzleCount = puzzleCount + 1;
+      if (nextPuzzleCount >= 3) {
+        const nextLevel = level + 1;
+        if (nextLevel > 5) {
+          onGameOver(score + 500);
+        } else {
+          setLevel(nextLevel);
+          setPuzzleCount(0);
+          initLevel(nextLevel);
+        }
       } else {
-        setLevel(nextLevel);
-        initLevel(nextLevel);
+        setPuzzleCount(nextPuzzleCount);
+        initLevel(level);
       }
     }, 1500);
   };
@@ -165,8 +176,15 @@ const MemoryMatrix: React.FC<{ onGameOver: (s: number) => void; isPlaying: boole
           <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Matrix Level</p>
           <div className="flex items-center gap-2">
              <span className="text-3xl font-black text-teal-500 italic">0{level}</span>
-             <div className="h-1.5 w-12 bg-white/5 rounded-full overflow-hidden">
-                <div className="h-full bg-teal-500" style={{ width: `${(level/5)*100}%` }} />
+             <div className="flex flex-col gap-1">
+               <div className="h-1.5 w-12 bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-full bg-teal-500" style={{ width: `${(level/5)*100}%` }} />
+               </div>
+               <div className="flex gap-1">
+                 {[0, 1, 2].map(i => (
+                   <div key={i} className={`h-1 w-3.5 rounded-full ${i < puzzleCount ? 'bg-teal-500' : 'bg-white/10'}`} />
+                 ))}
+               </div>
              </div>
           </div>
         </div>

@@ -38,6 +38,10 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
   const [currentScore, setCurrentScore] = useState(0);
   const [isClosing, setIsClosing] = useState(false);
 
+  const handleScoreUpdate = React.useCallback((score: number) => {
+    setCurrentScore(score);
+  }, []);
+
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data === 'exitToHub') {
@@ -88,7 +92,7 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
       case 'grammar-guardian': return <GrammarGuardian {...commonProps} />;
       case 'resonance-breathing': return <ResonanceBreathing {...commonProps} />;
       case 'reaction-test': return <ReactionTest {...commonProps} />;
-      case 'tetris': return <Tetris {...commonProps} />;
+      case 'tetris': return <Tetris {...commonProps} onScoreUpdate={handleScoreUpdate} />;
       default:
         return (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
@@ -109,12 +113,21 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
           </button>
           <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl border border-white/10 backdrop-blur-md shadow-xl">
             <Logo size={24} showGlow={false} />
-            <h2 className="text-sm font-black italic dark:text-white text-slate-900 uppercase tracking-tighter leading-none">{game.name}</h2>
+            {isPlaying && game.id === 'tetris' ? (
+              <div className="flex items-center gap-4">
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest">Score</span>
+                  <span className="text-sm font-black text-white tabular-nums italic leading-none">{currentScore.toLocaleString()}</span>
+                </div>
+              </div>
+            ) : (
+              <h2 className="text-sm font-black italic dark:text-white text-slate-900 uppercase tracking-tighter leading-none">{game.name}</h2>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center relative bg-grid-white/[0.02] overflow-y-auto pt-24 pb-12 transition-all duration-700">
+      <div className={`flex-1 flex flex-col items-center justify-center relative bg-grid-white/[0.02] ${isPlaying && game.id === 'tetris' ? 'overflow-hidden pt-16 pb-4' : 'overflow-y-auto pt-24 pb-12'} transition-all duration-700`}>
         {!isPlaying && !showGameOver ? (
           <div className="text-center p-8 glass-card rounded-[3rem] max-w-xl w-full border-indigo-500/30 shadow-2xl animate-in fade-in zoom-in-95 duration-700 border-2 my-auto mx-4">
             <div className={`w-24 h-24 mx-auto rounded-[2.2rem] bg-gradient-to-br ${game.color} flex items-center justify-center text-5xl mb-6 shadow-2xl shadow-indigo-500/40 transform -rotate-3 hover:rotate-0 transition-transform duration-500`}>

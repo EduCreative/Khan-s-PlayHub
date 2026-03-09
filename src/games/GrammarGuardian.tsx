@@ -104,9 +104,11 @@ const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: bo
 
   const playSfx = useCallback((src: string, volume: number) => {
     if (volume > 0) {
-      const audio = new Audio(src);
-      audio.volume = volume;
-      audio.play();
+      try {
+        const audio = new Audio(src);
+        audio.volume = volume;
+        audio.play().catch(() => {});
+      } catch (e) {}
     }
   }, []);
 

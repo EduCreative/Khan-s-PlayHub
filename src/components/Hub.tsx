@@ -36,6 +36,8 @@ const Hub: React.FC<HubProps> = ({
 
   const categories = ['All', 'Favorites', 'Leaderboard', ...Object.values(Category)];
 
+  const totalScore = Object.values(highScores).reduce((sum, s) => sum + s, 0);
+
   const handleVersionClick = () => {
     const nextCount = vClickCount + 1;
     if (nextCount >= 5) {
@@ -70,6 +72,10 @@ const Hub: React.FC<HubProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
+          <div className="hidden sm:flex flex-col items-end mr-2">
+            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Total Juice</span>
+            <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 tabular-nums italic leading-none">{totalScore.toLocaleString()}</span>
+          </div>
           <button id="profile-btn" onClick={onOpenProfile} className="flex items-center gap-3 px-4 h-12 md:h-14 rounded-2xl bg-indigo-600 text-white shadow-xl hover:bg-indigo-500 transition-all active:scale-95 border-2 border-indigo-400/20">
              <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-white/20 flex items-center justify-center"><i className={`fas ${userProfile.avatar} text-xs`}></i></div>
              <span className="hidden md:block font-black uppercase italic tracking-tighter text-sm">{userProfile.username}</span>

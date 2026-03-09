@@ -45,7 +45,10 @@ class CloudService {
   async getGlobalHighScores(gameId: string): Promise<any[]> {
     if (!this.isSetup()) return [];
     try {
-      const res = await fetch(`${CLOUDFLARE_WORKER_URL}/leaderboard/${gameId}`);
+      const url = gameId === 'all' 
+        ? `${CLOUDFLARE_WORKER_URL}/leaderboard-total` 
+        : `${CLOUDFLARE_WORKER_URL}/leaderboard/${gameId}`;
+      const res = await fetch(url);
       if (res.ok) return await res.json();
       return [];
     } catch (e) { return []; }

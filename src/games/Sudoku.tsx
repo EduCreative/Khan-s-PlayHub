@@ -20,7 +20,12 @@ const INITIAL_STATE: SudokuState = {
   difficulty: null,
 };
 
-const Sudoku: React.FC<{ onGameOver: (s: number, v: boolean) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
+const Sudoku: React.FC<{ 
+  onGameOver: (s: number, v: boolean) => void; 
+  isPlaying: boolean;
+  sfxVolume: number;
+  hapticFeedback: boolean;
+}> = ({ onGameOver, isPlaying, sfxVolume, hapticFeedback }) => {
   const [gameState, setGameState, clearSavedState] = useSavableGameState<SudokuState>('sudoku', INITIAL_STATE);
 
   const { grid, solution, initial, time, difficulty } = gameState;

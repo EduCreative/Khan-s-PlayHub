@@ -8,7 +8,7 @@ interface LeaderboardProps {
 }
 
 const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({ games, onBack }) => {
-  const [selectedGameId, setSelectedGameId] = useState<string>(games[0]?.id || '');
+  const [selectedGameId, setSelectedGameId] = useState<string>('all');
   const [scores, setScores] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -42,6 +42,7 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({ gam
           onChange={(e) => setSelectedGameId(e.target.value)}
           className="bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 text-sm font-bold focus:outline-none focus:border-indigo-500 transition-all cursor-pointer"
         >
+          <option value="all">Total Score (All Games)</option>
           {games.map(g => (
             <option key={g.id} value={g.id}>{g.name}</option>
           ))}
@@ -55,7 +56,9 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({ gam
               <tr className="bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
                 <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Rank</th>
                 <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Player</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Juice</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">
+                  {selectedGameId === 'all' ? 'Total Juice' : 'Juice'}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -96,7 +99,9 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({ gam
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <span className="text-xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums">{(s.score || 0).toLocaleString()}</span>
+                      <span className="text-xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums">
+                        {(s.score || 0).toLocaleString()}
+                      </span>
                     </td>
                   </tr>
                 ))

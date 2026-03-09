@@ -40,9 +40,12 @@ export default {
         return new Response(JSON.stringify({ status: 'success' }), { headers: corsHeaders });
       }
 
-      if (url.pathname === '/leaderboard/global' && method === 'GET') {
+      if (url.pathname === '/leaderboard-total' && method === 'GET') {
         const results = await env.PLAYHUB_DB.prepare(`
-          SELECT p.username, p.avatar, SUM(s.score) as score 
+          SELECT 
+            COALESCE(p.username, 'Anonymous') as username, 
+            COALESCE(p.avatar, 'fa-user-ninja') as avatar, 
+            SUM(s.score) as score 
           FROM scores s
           LEFT JOIN profiles p ON s.deviceId = p.deviceId
           GROUP BY s.deviceId
