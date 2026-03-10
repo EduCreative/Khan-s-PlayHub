@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Game } from '../types';
+import { audioService } from '../services/audioService';
 
 interface GameCardProps {
   game: Game;
@@ -24,7 +25,10 @@ const GameHero: React.FC<{ game: Game }> = ({ game }) => {
 
 const GameCard: React.FC<GameCardProps> = ({ game, onPlay, highScore, index, isFavorite, onToggleFavorite }) => {
   return (
-    <div className="group relative glass-card rounded-[2.5rem] overflow-hidden cursor-pointer transition-all duration-500 hover:-translate-y-4 hover:shadow-3xl hover:shadow-indigo-500/30 active:scale-95 stagger-item" style={{ animationDelay: `${index * 80}ms` }}>
+    <div className="group relative glass-card rounded-[2.5rem] overflow-hidden cursor-pointer transition-all duration-500 hover:-translate-y-4 hover:shadow-3xl hover:shadow-indigo-500/30 active:scale-95 stagger-item" 
+      style={{ animationDelay: `${index * 80}ms` }}
+      onMouseEnter={() => audioService.playNav()}
+    >
       <button 
         onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
         className={`absolute top-4 right-4 z-30 w-10 h-10 rounded-xl backdrop-blur-md border-2 transition-all flex items-center justify-center active:scale-75 ${isFavorite ? 'bg-amber-400/20 border-amber-400/50 text-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.3)]' : 'bg-black/20 border-white/10 text-white/40 hover:text-white'}`}

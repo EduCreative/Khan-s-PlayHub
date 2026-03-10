@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Game } from '../types';
+import { audioService } from '../services/audioService';
 import FruitVortex from '../games/FruitVortex';
 import WordBuilder from '../games/WordBuilder';
 import Sudoku from '../games/Sudoku';
@@ -66,6 +67,8 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
     setIsVictory(victory);
     setIsPlaying(false);
     setShowGameOver(true);
+    if (victory) audioService.playSuccess();
+    else audioService.playError();
   }, [onSaveScore]);
 
   const handleRetry = () => {
@@ -73,6 +76,7 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
     setShowGameOver(false);
     setIsVictory(false);
     setIsPlaying(true);
+    audioService.playClick();
   };
 
   const renderGame = (sfxVolume: number, hapticFeedback: boolean) => {
@@ -151,7 +155,11 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
             </div>
 
             <button 
-              onClick={() => { setIsPlaying(true); setCurrentScore(0); }}
+              onClick={() => { 
+                setIsPlaying(true); 
+                setCurrentScore(0); 
+                audioService.playClick();
+              }}
               className="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-[2rem] font-black text-2xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-500/40 uppercase italic tracking-tighter"
             >
               START SESSION

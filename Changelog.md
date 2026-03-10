@@ -1,6 +1,14 @@
 
 # Changelog
 
+## [3.0.0] - 2026-03-10
+### Added
+- **Onboarding Flow**: Automatic profile setup for new players.
+- **Responsive Profile**: Redesigned `ProfileModal` with fixed header/footer and scrollable content for mobile compatibility.
+- **More Achievements**: Added 7 new achievements for various games.
+- **Tooltips**: Added descriptive tooltips to Hub and Profile buttons.
+- **Player Rebranding**: Renamed "Operative" and "Nexus" terms to "Player" for better clarity.
+
 ## [2.9.0] - 2026-03-10
 ### Added
 - **Enhanced Admin Console**: A professional dashboard with real-time analytics.

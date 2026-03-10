@@ -12,13 +12,14 @@ import AchievementToast from './components/AchievementToast';
 import { cloud } from './services/cloud';
 import { ACHIEVEMENTS } from './achievements';
 import { Achievement } from './types';
+import { audioService } from './services/audioService';
 
 const DEFAULT_PROFILE: UserProfile = {
-  username: 'Operative',
+  username: 'New Player',
   email: '',
   avatar: 'fa-user-ninja',
   joinedAt: Date.now(),
-  bio: 'Nexus Operative',
+  bio: 'Elite Player',
   favorites: [],
   achievements: []
 };
@@ -38,6 +39,11 @@ const App: React.FC = () => {
   const [hapticFeedback, setHapticFeedback] = useState(true);
   const [syncStatus, setSyncStatus] = useState<'synced' | 'pending' | 'offline'>('synced');
   const [recentAchievement, setRecentAchievement] = useState<Achievement | null>(null);
+
+  // Sync audioService volume
+  useEffect(() => {
+    audioService.setVolume(sfxVolume);
+  }, [sfxVolume]);
 
   // Initialize state from localStorage - ONLY ONCE
   useEffect(() => {
@@ -72,15 +78,19 @@ const App: React.FC = () => {
     const handlePopState = () => {
       if (activeGame) {
         setActiveGame(null);
+        audioService.playNav();
         window.history.pushState({ page: 'hub' }, '');
       } else if (showAdmin) {
         setShowAdmin(false);
+        audioService.playNav();
         window.history.pushState({ page: 'hub' }, '');
       } else if (showSettings) {
         setShowSettings(false);
+        audioService.playNav();
         window.history.pushState({ page: 'hub' }, '');
       } else {
         setShowExitConfirm(true);
+        audioService.playError();
         window.history.pushState({ page: 'hub' }, '');
       }
     };
@@ -121,18 +131,25 @@ const App: React.FC = () => {
     setSyncStatus('pending');
     const success = await cloud.syncProfile(updated);
     setSyncStatus(success ? 'synced' : 'offline');
-  }, []);
+    if (success) {
+      audioService.playSuccess();
+      if (hapticFeedback) audioService.vibrate([10, 50, 10]);
+    }
+  }, [hapticFeedback]);
 
   const toggleFavorite = React.useCallback((gameId: string) => {
     setUserProfile(prev => {
-      const newFavorites = prev.favorites.includes(gameId)
+      const isFav = prev.favorites.includes(gameId);
+      const newFavorites = isFav
         ? prev.favorites.filter((id: string) => id !== gameId)
         : [...prev.favorites, gameId];
       const updated = { ...prev, favorites: newFavorites };
       saveProfile(updated);
+      audioService.playToggle(!isFav);
+      if (hapticFeedback) audioService.vibrate(10);
       return updated;
     });
-  }, [saveProfile]);
+  }, [saveProfile, hapticFeedback]);
 
   const unlockAchievement = React.useCallback((id: string) => {
     if (userProfile.achievements?.includes(id)) return;
@@ -140,13 +157,15 @@ const App: React.FC = () => {
     const achievement = ACHIEVEMENTS.find(a => a.id === id);
     if (achievement) {
       setRecentAchievement(achievement);
+      audioService.playSuccess();
+      if (hapticFeedback) audioService.vibrate([50, 100, 50]);
       const updatedProfile = {
         ...userProfile,
         achievements: [...(userProfile.achievements || []), id]
       };
       saveProfile(updatedProfile);
     }
-  }, [userProfile, saveProfile]);
+  }, [userProfile, saveProfile, hapticFeedback]);
 
   const saveScore = React.useCallback(async (gameId: string, score: number, metadata?: any) => {
     // Achievement Checks
@@ -168,15 +187,26 @@ const App: React.FC = () => {
           setSyncStatus('pending');
           const success = await cloud.syncScore(gameId, score);
           setSyncStatus(success ? 'synced' : 'offline');
+          if (success) audioService.playSuccess();
         })();
         
         return next;
       }
       return prev;
     });
-  }, []);
+  }, [unlockAchievement]);
 
-  const isAnonymous = userProfile.username === 'Operative';
+  const isAnonymous = userProfile.username === 'New Player' || userProfile.username === 'Operative';
+
+  useEffect(() => {
+    if (isAnonymous && !showTutorial) {
+      const timer = setTimeout(() => {
+        setShowProfileSetup(true);
+        audioService.playNav();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isAnonymous, showTutorial]);
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-white selection:bg-indigo-500 selection:text-white transition-colors duration-500">
@@ -185,19 +215,29 @@ const App: React.FC = () => {
       
       <main className="relative z-10 w-full min-h-screen">
         {showAdmin ? (
-          <AdminPanel onClose={() => setShowAdmin(false)} />
+          <AdminPanel onClose={() => {
+            setShowAdmin(false);
+            audioService.playNav();
+          }} />
         ) : activeGame ? (
           <GameRunner 
             game={activeGame} 
-            onClose={() => setActiveGame(null)} 
+            onClose={() => {
+              setActiveGame(null);
+              audioService.playNav();
+            }} 
             onSaveScore={(s, meta) => saveScore(activeGame.id, s, meta)}
             highScore={scores[activeGame.id] || 0}
             isDarkMode={isDarkMode}
             isAnonymous={isAnonymous}
-            onOpenProfile={() => setShowProfileSetup(true)}
+            onOpenProfile={() => {
+              setShowProfileSetup(true);
+              audioService.playNav();
+            }}
             onViewLeaderboard={() => {
               setActiveGame(null);
               setFilter('Leaderboard');
+              audioService.playNav();
             }}
             sfxVolume={sfxVolume}
             hapticFeedback={hapticFeedback}
@@ -205,18 +245,36 @@ const App: React.FC = () => {
         ) : (
           <Hub 
             games={GAMES} 
-            onSelectGame={setActiveGame} 
+            onSelectGame={(game) => {
+              setActiveGame(game);
+              audioService.playClick();
+            }} 
             filter={filter} 
-            setFilter={setFilter}
+            setFilter={(f) => {
+              setFilter(f);
+              audioService.playNav();
+            }}
             highScores={scores}
             userProfile={userProfile}
             isDarkMode={isDarkMode}
             syncStatus={syncStatus}
-            onToggleTheme={() => setIsDarkMode(!isDarkMode)}
-            onOpenProfile={() => setShowProfileSetup(true)}
+            onToggleTheme={() => {
+              setIsDarkMode(!isDarkMode);
+              audioService.playToggle(!isDarkMode);
+            }}
+            onOpenProfile={() => {
+              setShowProfileSetup(true);
+              audioService.playNav();
+            }}
             onToggleFavorite={toggleFavorite}
-            onOpenAdmin={() => setShowAdmin(true)}
-            onOpenSettings={() => setShowSettings(true)}
+            onOpenAdmin={() => {
+              setShowAdmin(true);
+              audioService.playNav();
+            }}
+            onOpenSettings={() => {
+              setShowSettings(true);
+              audioService.playNav();
+            }}
           />
         )}
       </main>
@@ -224,8 +282,14 @@ const App: React.FC = () => {
       {showProfileSetup && (
         <ProfileModal 
           userProfile={userProfile} 
-          onSave={saveProfile} 
-          onClose={() => setShowProfileSetup(false)} 
+          onSave={(profile) => {
+            saveProfile(profile);
+            setShowProfileSetup(false);
+          }} 
+          onClose={() => {
+            setShowProfileSetup(false);
+            audioService.playNav();
+          }} 
         />
       )}
 
@@ -234,10 +298,24 @@ const App: React.FC = () => {
           sfxVolume={sfxVolume}
           hapticFeedback={hapticFeedback}
           isDarkMode={isDarkMode}
-          onUpdateSfx={setSfxVolume}
-          onUpdateHaptic={setHapticFeedback}
-          onToggleTheme={() => setIsDarkMode(!isDarkMode)}
-          onClose={() => setShowSettings(false)}
+          onUpdateSfx={(vol) => {
+            setSfxVolume(vol);
+            // Volume change feedback
+            audioService.setVolume(vol);
+            audioService.playClick();
+          }}
+          onUpdateHaptic={(h) => {
+            setHapticFeedback(h);
+            audioService.playToggle(h);
+          }}
+          onToggleTheme={() => {
+            setIsDarkMode(!isDarkMode);
+            audioService.playToggle(!isDarkMode);
+          }}
+          onClose={() => {
+            setShowSettings(false);
+            audioService.playNav();
+          }}
         />
       )}
 

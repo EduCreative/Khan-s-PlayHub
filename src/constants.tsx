@@ -67,7 +67,7 @@ export const GAMES: Game[] = [
     name: 'Resonance Breathing',
     tagline: 'Coherent Nervous System Sync',
     category: Category.Wellness,
-    icon: 'fa-lotus',
+    icon: 'fa-lungs',
     color: 'from-indigo-400 to-purple-500',
     description: 'Practice coherent breathing at the scientifically optimal rate of 6 breaths per minute.',
     instructions: ['Inhale as the lotus expands', 'Exhale as the lotus shrinks', 'Maintain rhythm for 5 minutes']

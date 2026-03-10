@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { cloud } from '../services/cloud';
 import { Game } from '../types';
+import { audioService } from '../services/audioService';
 
 interface LeaderboardProps {
   games: Game[];
@@ -45,7 +46,10 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({ gam
       <div className="flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           {onBack && (
-            <button onClick={onBack} className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-indigo-500 transition-all">
+            <button onClick={() => {
+              audioService.playNav();
+              onBack();
+            }} className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-indigo-500 transition-all">
               <i className="fas fa-arrow-left"></i>
             </button>
           )}
@@ -57,7 +61,10 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({ gam
         
         <div className="flex items-center gap-2">
           <button 
-            onClick={() => setShowGuide(true)}
+            onClick={() => {
+              setShowGuide(true);
+              audioService.playNav();
+            }}
             className="flex items-center gap-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-500 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
           >
             <i className="fas fa-info-circle"></i>
@@ -65,7 +72,10 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({ gam
           </button>
           <select 
             value={selectedGameId} 
-            onChange={(e) => setSelectedGameId(e.target.value)}
+            onChange={(e) => {
+              setSelectedGameId(e.target.value);
+              audioService.playClick();
+            }}
             className="bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 text-sm font-bold focus:outline-none focus:border-indigo-500 transition-all cursor-pointer"
           >
             <option value="all">Total Score (All Games)</option>
@@ -84,7 +94,10 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({ gam
                 <h3 className="text-xl font-black uppercase italic text-slate-900 dark:text-white">Nexus Scoring Protocol</h3>
                 <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Neural Reward Calibration v2.3</p>
               </div>
-              <button onClick={() => setShowGuide(false)} className="w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 flex items-center justify-center text-slate-500 transition-colors">
+              <button onClick={() => {
+                setShowGuide(false);
+                audioService.playNav();
+              }} className="w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 flex items-center justify-center text-slate-500 transition-colors">
                 <i className="fas fa-times text-lg"></i>
               </button>
             </div>

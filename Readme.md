@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Nexus
 
-**Version:** 2.9.0 "Nexus Analytics"  
+**Version:** 3.0.0 "Player Identity"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,7 +9,11 @@ Khan's PlayHub is a high-performance, mobile-first Progressive Web App (PWA) tha
 
 ---
 
-## 🚀 Recent Enhancements (v2.9.0)
+## 🚀 Recent Enhancements (v3.0.0)
+- **Player Identity & Onboarding**: New players are now greeted with a setup flow to personalize their name, email, and avatar.
+- **Responsive Profile Modal**: Completely redesigned the profile window to fit perfectly on all screens with scrollable content.
+- **Expanded Achievements**: Added 7 new achievements (total 13) to track your progress across all games.
+- **Enhanced UX**: Added tooltips to all major buttons and renamed "Operative" to "Player" for a friendlier experience.
 - **Enhanced Admin Console**: Professional dashboard with charts, graphs, and detailed game statistics.
 - **Grammar Guardian Overhaul**: Transformed into a learning-focused game with 50 unique questions, detailed explanations, and no time limits.
 - **Share App Feature**: Added a "Share" button to the Hub header for easy sharing via native share dialog or clipboard.

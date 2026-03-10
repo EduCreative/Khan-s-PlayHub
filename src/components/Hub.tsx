@@ -5,6 +5,8 @@ import GameCard from './GameCard';
 import Logo from './Logo';
 import Leaderboard from './Leaderboard';
 
+import { audioService } from '../services/audioService';
+
 interface HubProps {
   games: Game[];
   onSelectGame: (game: Game) => void;
@@ -40,6 +42,7 @@ const Hub: React.FC<HubProps> = ({
 
   const handleVersionClick = () => {
     const nextCount = vClickCount + 1;
+    audioService.playClick();
     if (nextCount >= 5) {
       onOpenAdmin();
       setVClickCount(0);
@@ -64,8 +67,7 @@ const Hub: React.FC<HubProps> = ({
                 'text-rose-500 bg-rose-500 shadow-rose-500/50'
               }`} title={`Nexus Cloud Status: ${syncStatus.toUpperCase()}`} />
             </div>
-            <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-1">Micro-Gaming Nexus v2.5.0</p>
-            <p className="text-[7px] md:text-[9px] font-bold text-indigo-500/80 uppercase tracking-widest ml-1 mt-1 hidden sm:block">
+            <p className="text-[7px] md:text-[9px] font-black bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full uppercase tracking-widest ml-1 mt-2 hidden sm:inline-block border border-indigo-500/20">
               Free Focus Games & Brain Training: Boost Your Memory & Attention
             </p>
           </div>
@@ -80,10 +82,11 @@ const Hub: React.FC<HubProps> = ({
              <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-white/20 flex items-center justify-center"><i className={`fas ${userProfile.avatar} text-xs`}></i></div>
              <span className="hidden md:block font-black uppercase italic tracking-tighter text-sm">{userProfile.username}</span>
           </button>
-          <button id="leaderboard-header-btn" onClick={() => setFilter('Leaderboard')} className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-lg shadow-xl border-2 transition-all ${filter === 'Leaderboard' ? 'bg-amber-500 border-amber-400 text-white' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500'}`}>
+          <button id="leaderboard-header-btn" onClick={() => setFilter('Leaderboard')} className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-lg shadow-xl border-2 transition-all ${filter === 'Leaderboard' ? 'bg-amber-500 border-amber-400 text-white' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500'}`} title="Global Leaderboards">
             <i className="fas fa-trophy"></i>
           </button>
           <button id="share-btn" onClick={() => {
+            audioService.playNav();
             if (navigator.share) {
               navigator.share({
                 title: "Khan's PlayHub",
@@ -97,10 +100,10 @@ const Hub: React.FC<HubProps> = ({
           }} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all" title="Share this app">
             <i className="fas fa-share-alt text-emerald-500"></i>
           </button>
-          <button id="settings-btn" onClick={onOpenSettings} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all">
+          <button id="settings-btn" onClick={onOpenSettings} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all" title="App Settings">
             <i className="fas fa-cog text-slate-500"></i>
           </button>
-          <button id="theme-toggle" onClick={onToggleTheme} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700">
+          <button id="theme-toggle" onClick={onToggleTheme} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700" title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
              <i className={`fas ${isDarkMode ? 'fa-sun text-amber-400' : 'fa-moon text-indigo-600'}`}></i>
           </button>
         </div>
@@ -207,7 +210,7 @@ const Hub: React.FC<HubProps> = ({
             className="px-6 py-2 glass-card border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 cursor-pointer hover:bg-indigo-500/5 transition-all select-none"
           >
             <span className={`w-1.5 h-1.5 rounded-full animate-ping ${syncStatus === 'synced' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-            Nexus Cloud Protocol Enabled v2.5.0
+            Nexus Cloud Protocol Enabled v3.0.0
           </span>
           <button onClick={onOpenAdmin} className="text-[9px] font-bold text-slate-500/30 hover:text-indigo-500/40 transition-colors uppercase tracking-widest mt-2">
              <i className="fas fa-terminal mr-2"></i> Access Admin Console
