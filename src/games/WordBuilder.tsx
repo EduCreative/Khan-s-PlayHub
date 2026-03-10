@@ -46,9 +46,12 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
   const [time, setTime] = useState(90);
   const [currentWord, setCurrentWord] = useState<{ char: string; index: number }[]>([]);
   const [pool, setPool] = useState<string[]>([]);
+  const [history, setHistory] = useState<string[]>([]);
   const [themeIndex, setThemeIndex] = useState(0);
   const [isShaking, setIsShaking] = useState(false);
   const [bounty, setBounty] = useState(BOUNTIES[0]);
+  const [combo, setCombo] = useState(0);
+  const lastSubmitRef = useRef(0);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
@@ -146,14 +149,102 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
       setTowerHeight(0);
       setTargetHeight(8);
       setStreak(0);
+      setCombo(0);
       setTime(90);
       setThemeIndex(0);
+      setHistory([]);
       blocksRef.current = [];
       particlesRef.current = [];
       setBounty(BOUNTIES[Math.floor(Math.random() * BOUNTIES.length)]);
       generatePool();
     }
   }, [isPlaying, generatePool]);
+
+  const submitWord = useCallback(() => {
+    const word = currentWord.map(i => i.char).join('').toUpperCase();
+    if (word.length < 3) {
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 500);
+      return;
+    }
+
+    const isBounty = word === bounty.word.toUpperCase();
+    const isValid = isBounty || COMMON_WORDS.has(word);
+
+    if (isValid) {
+      const now = Date.now();
+      const timeSinceLast = now - lastSubmitRef.current;
+      const newCombo = timeSinceLast < 3000 ? combo + 1 : 0;
+      setCombo(newCombo);
+      lastSubmitRef.current = now;
+
+      const blocksCount = isBounty ? 10 : Math.floor(word.length / 2);
+      setTowerHeight(h => h + blocksCount);
+      setStreak(s => s + 1);
+      
+      // Improved scoring: length multiplier + combo bonus
+      const lengthBonus = word.length > 5 ? word.length * 2 : 0;
+      const comboBonus = newCombo * 5;
+      const points = (isBounty ? 100 : word.length * 5) + (streak > 2 ? streak * 2 : 0) + lengthBonus + comboBonus;
+      
+      setScore(s => s + points);
+      setHistory(prev => [word, ...prev].slice(0, 5));
+      
+      const { primary } = getThemeColors(themeIndex);
+      spawnParticles(window.innerWidth / 2, 0, primary, 30);
+      spawnBlock(word.length, isBounty);
+      
+      if (isBounty) {
+        setBounty(BOUNTIES[Math.floor(Math.random() * BOUNTIES.length)]);
+        setTime(t => t + 15);
+      } else {
+        // Time bonus for long words
+        if (word.length >= 6) setTime(t => t + word.length);
+      }
+      
+      if (towerHeight + blocksCount >= targetHeight) {
+        setLevel(l => l + 1);
+        setTargetHeight(th => th + 5);
+        setTime(t => t + 20);
+        setThemeIndex(ti => (ti + 1) % themes.length);
+      }
+      
+      setCurrentWord([]);
+      generatePool();
+    } else {
+      setIsShaking(true);
+      setStreak(0);
+      setCombo(0);
+      setTimeout(() => setIsShaking(false), 500);
+    }
+  }, [currentWord, bounty, combo, streak, towerHeight, targetHeight, themeIndex, generatePool]);
+
+  // Keyboard Support
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        submitWord();
+      } else if (e.key === 'Backspace') {
+        setCurrentWord(prev => prev.slice(0, -1));
+      } else if (e.key === 'Escape') {
+        setCurrentWord([]);
+      } else if (/^[a-zA-Z]$/.test(e.key)) {
+        const char = e.key.toUpperCase();
+        // Find first available index in pool
+        const availableIndex = pool.findIndex((l, idx) => 
+          l === char && !currentWord.some(item => item.index === idx)
+        );
+        if (availableIndex !== -1) {
+          setCurrentWord(prev => [...prev, { char, index: availableIndex }]);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPlaying, pool, currentWord, submitWord]);
 
   useEffect(() => {
     if (!isPlaying || time <= 0) return;
@@ -275,47 +366,6 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
     return () => cancelAnimationFrame(animFrame);
   }, [isDarkMode]);
 
-  const submitWord = () => {
-    const word = currentWord.map(i => i.char).join('').toUpperCase();
-    if (word.length < 3) {
-      setIsShaking(true);
-      setTimeout(() => setIsShaking(false), 500);
-      return;
-    }
-
-    const isBounty = word === bounty.word.toUpperCase();
-    const isValid = isBounty || COMMON_WORDS.has(word);
-
-    if (isValid) {
-      const blocksCount = isBounty ? 10 : Math.floor(word.length / 2);
-      setTowerHeight(h => h + blocksCount);
-      setStreak(s => s + 1);
-      setScore(s => s + (isBounty ? 100 : word.length * 5) + (streak > 2 ? streak * 2 : 0));
-      
-      const { primary } = getThemeColors(themeIndex);
-      spawnParticles(window.innerWidth / 2, 0, primary, 30);
-      spawnBlock(word.length, isBounty);
-      
-      if (isBounty) {
-        setBounty(BOUNTIES[Math.floor(Math.random() * BOUNTIES.length)]);
-      }
-      
-      if (towerHeight + blocksCount >= targetHeight) {
-        setLevel(l => l + 1);
-        setTargetHeight(th => th + 5);
-        setTime(t => t + 20);
-        setThemeIndex(ti => (ti + 1) % themes.length);
-      }
-      
-      setCurrentWord([]);
-      generatePool();
-    } else {
-      setIsShaking(true);
-      setStreak(0);
-      setTimeout(() => setIsShaking(false), 500);
-    }
-  };
-
   const activeColors = getThemeColors(themeIndex);
 
   return (
@@ -340,7 +390,10 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
         </div>
         <div className="text-center">
           <div className="font-black text-xl tracking-tighter uppercase italic opacity-80" style={{ color: activeColors.secondary }}>Lvl {level}</div>
-          {streak > 2 && <div className="text-[10px] font-black bg-white/10 px-2 py-0.5 rounded-full uppercase italic animate-pulse" style={{ color: activeColors.primary }}>Streak x{streak}</div>}
+          <div className="flex flex-col items-center gap-1">
+            {streak > 2 && <div className="text-[10px] font-black bg-white/10 px-2 py-0.5 rounded-full uppercase italic animate-pulse" style={{ color: activeColors.primary }}>Streak x{streak}</div>}
+            {combo > 0 && <div className="text-[9px] font-black text-amber-500 uppercase tracking-widest">Combo x{combo}</div>}
+          </div>
         </div>
         <div className="text-right">
           <span className="text-[10px] uppercase font-black text-slate-500 tracking-widest">Time</span>
@@ -353,6 +406,19 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
       <div className="flex-1 w-full relative flex flex-col items-center justify-end overflow-hidden">
         <canvas ref={canvasRef} className="w-full h-full max-h-[50vh]" />
         
+        {/* Word History */}
+        <div className="absolute top-20 right-4 z-10 flex flex-col gap-1 items-end pointer-events-none">
+          {history.map((word, i) => (
+            <div 
+              key={`${word}-${i}`} 
+              className="text-[10px] font-black uppercase italic text-white/30 animate-out fade-out slide-out-to-right duration-1000 fill-mode-forwards"
+              style={{ animationDelay: `${i * 100}ms` }}
+            >
+              {word}
+            </div>
+          ))}
+        </div>
+
         <div className="absolute top-4 left-4 z-10">
            <div className="flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase transition-colors bg-white/5 border border-white/10" style={{ color: activeColors.primary }}>
               <i className="fas fa-check-circle"></i>

@@ -9,7 +9,7 @@ interface LeaderboardProps {
 
 const SCORING_GUIDE = [
   { game: "Labyrinth", action: "Level Clear", scoring: "200 / 500 / 1000", note: "Based on difficulty" },
-  { game: "Word Builder", action: "Bounty / Word", scoring: "100 / 5x Length", note: "Streak bonuses apply" },
+  { game: "Word Builder", action: "Bounty / Word", scoring: "100 / 5x Length", note: "Combo & Length bonuses apply" },
   { game: "Grammar Guardian", action: "Correct Answer", scoring: "10 Juice", note: "8s time penalty on miss" },
   { game: "Sudoku", action: "Full Clear", scoring: "up to 2000", note: "Difficulty + Time bonus" },
   { game: "Reaction Test", action: "Fast Response", scoring: "(1000 - avg) / 5", note: "Lower is better" },
