@@ -7,10 +7,28 @@ interface LeaderboardProps {
   games: Game[];
 }
 
+const SCORING_GUIDE = [
+  { game: "Labyrinth", action: "Level Clear", scoring: "200 / 500 / 1000", note: "Based on difficulty" },
+  { game: "Word Builder", action: "Bounty / Word", scoring: "100 / 5x Length", note: "Streak bonuses apply" },
+  { game: "Grammar Guardian", action: "Correct Answer", scoring: "10 Juice", note: "8s time penalty on miss" },
+  { game: "Sudoku", action: "Full Clear", scoring: "up to 2000", note: "Difficulty + Time bonus" },
+  { game: "Reaction Test", action: "Fast Response", scoring: "(1000 - avg) / 5", note: "Lower is better" },
+  { game: "Color Clash", action: "Correct Match", scoring: "20 / 40 / 60", note: "Difficulty multiplier" },
+  { game: "Quick Math", action: "Correct Answer", scoring: "5 * Multiplier", note: "Time penalty on miss" },
+  { game: "Bit Master", action: "Decryption", scoring: "5 + Time/2", note: "Time penalty on miss" },
+  { game: "Pattern Finder", action: "Correct Pattern", scoring: "20 Juice", note: "Game over on miss" },
+  { game: "Fruit Vortex", action: "Match", scoring: "2 per fruit", note: "Combo multipliers apply" },
+  { game: "Tetris", action: "Line Clear", scoring: "40 / 100 / 300 / 1200", note: "Level multiplier" },
+  { game: "Memory Matrix", action: "Match / Level", scoring: "10 / 100", note: "Mistake penalty applies" },
+  { game: "Binary Dash", action: "Process", scoring: "2 + Streak/2", note: "Integrity penalty on miss" },
+  { game: "Resonance Breathing", action: "Breath Cycle", scoring: "10 Juice", note: "6 breaths per minute" }
+];
+
 const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({ games, onBack }) => {
   const [selectedGameId, setSelectedGameId] = useState<string>('all');
   const [scores, setScores] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     if (selectedGameId) {
@@ -37,17 +55,80 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({ gam
           </div>
         </div>
         
-        <select 
-          value={selectedGameId} 
-          onChange={(e) => setSelectedGameId(e.target.value)}
-          className="bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 text-sm font-bold focus:outline-none focus:border-indigo-500 transition-all cursor-pointer"
-        >
-          <option value="all">Total Score (All Games)</option>
-          {games.map(g => (
-            <option key={g.id} value={g.id}>{g.name}</option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setShowGuide(true)}
+            className="flex items-center gap-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-500 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+          >
+            <i className="fas fa-info-circle"></i>
+            Scoring Guide
+          </button>
+          <select 
+            value={selectedGameId} 
+            onChange={(e) => setSelectedGameId(e.target.value)}
+            className="bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 text-sm font-bold focus:outline-none focus:border-indigo-500 transition-all cursor-pointer"
+          >
+            <option value="all">Total Score (All Games)</option>
+            {games.map(g => (
+              <option key={g.id} value={g.id}>{g.name}</option>
+            ))}
+          </select>
+        </div>
       </div>
+
+      {showGuide && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-2xl max-h-[80vh] rounded-[2.5rem] border-2 border-indigo-500/20 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in duration-300">
+            <div className="p-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-black uppercase italic text-slate-900 dark:text-white">Nexus Scoring Protocol</h3>
+                <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Neural Reward Calibration v2.3</p>
+              </div>
+              <button onClick={() => setShowGuide(false)} className="w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 flex items-center justify-center text-slate-500 transition-colors">
+                <i className="fas fa-times text-lg"></i>
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="glass-card rounded-2xl border border-indigo-500/10 overflow-hidden">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
+                      <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">Sector</th>
+                      <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">Action</th>
+                      <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">Juice Reward</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {SCORING_GUIDE.map((item, idx) => (
+                      <tr key={idx} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                        <td className="px-4 py-3">
+                          <span className="font-black uppercase italic text-xs text-slate-700 dark:text-slate-200">{item.game}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase">{item.action}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-col">
+                            <span className="font-black text-indigo-500 text-xs">{item.scoring}</span>
+                            <span className="text-[8px] text-slate-400 uppercase font-bold">{item.note}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div className="p-6 bg-slate-50 dark:bg-white/5 border-t border-slate-100 dark:border-white/5 text-center">
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                Difficulty Multipliers: Easy (1x) • Medium (1.5x) • Hard (2x-2.5x)
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="glass-card rounded-[2rem] border-2 border-slate-200 dark:border-indigo-500/10 overflow-hidden shadow-2xl">
         <div className="overflow-x-auto">
