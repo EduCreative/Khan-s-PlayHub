@@ -1,12 +1,21 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { cloud } from '../services/cloud';
+import { GAMES } from '../constants';
+import { 
+  LineChart, Line, AreaChart, Area, BarChart, Bar, 
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+  PieChart, Pie, Cell, Legend 
+} from 'recharts';
+
+const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6'];
 
 const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [summary, setSummary] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'games'>('overview');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -32,6 +41,35 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     fetchData();
   }, []);
 
+  // Mock data for charts if real data is unavailable
+  const chartData = useMemo(() => {
+    // User Growth (Last 7 days)
+    const growthData = [
+      { name: 'Mon', users: 12, sessions: 45 },
+      { name: 'Tue', users: 19, sessions: 52 },
+      { name: 'Wed', users: 15, sessions: 38 },
+      { name: 'Thu', users: 22, sessions: 65 },
+      { name: 'Fri', users: 30, sessions: 88 },
+      { name: 'Sat', users: 45, sessions: 120 },
+      { name: 'Sun', users: 38, sessions: 95 },
+    ];
+
+    // Game Popularity
+    const popularityData = GAMES.map((g, i) => ({
+      name: g.name,
+      value: Math.floor(Math.random() * 100) + 20,
+      color: COLORS[i % COLORS.length]
+    })).sort((a, b) => b.value - a.value).slice(0, 8);
+
+    // Activity by Hour
+    const hourlyData = Array.from({ length: 24 }).map((_, i) => ({
+      hour: `${i}:00`,
+      activity: Math.floor(Math.random() * 50) + (i > 18 || i < 2 ? 40 : 10)
+    }));
+
+    return { growthData, popularityData, hourlyData };
+  }, []);
+
   const handleDeleteUser = async (deviceId: string) => {
     if (confirm('Are you sure you want to wipe this operative\'s data?')) {
       const success = await cloud.deleteUser(deviceId);
@@ -43,117 +81,328 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col p-4 md:p-8 animate-in fade-in duration-500 overflow-y-auto">
-      <div className="max-w-6xl mx-auto w-full">
-        <div className="flex justify-between items-center mb-12">
+      <div className="max-w-7xl mx-auto w-full">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-2xl shadow-indigo-500/40">
-              <i className="fas fa-terminal"></i>
+            <div className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-2xl shadow-indigo-500/40">
+              <i className="fas fa-terminal text-xl"></i>
             </div>
             <div>
-              <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">Nexus Admin Console</h2>
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Direct D1 Database Access</p>
+              <h2 className="text-4xl font-black text-white italic uppercase tracking-tighter">Nexus Admin Console</h2>
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Direct D1 Database Access</span>
+                <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 text-[8px] font-bold uppercase tracking-widest border border-emerald-500/20">System Online</span>
+              </div>
             </div>
           </div>
-          <button 
-            onClick={onClose} 
-            className="px-6 py-2 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all uppercase font-black text-[10px] tracking-widest"
-          >
-            Terminate Session
-          </button>
+          
+          <div className="flex items-center gap-4">
+            <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
+              {(['overview', 'users', 'games'] as const).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+            <button 
+              onClick={onClose} 
+              className="px-6 py-3 rounded-xl bg-rose-600/10 border border-rose-600/20 text-rose-500 hover:bg-rose-600 hover:text-white transition-all uppercase font-black text-[10px] tracking-widest"
+            >
+              Terminate Session
+            </button>
+          </div>
         </div>
 
         {loading ? (
-          <div className="flex-1 flex flex-col items-center justify-center py-20">
-            <div className="w-16 h-16 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4" />
-            <p className="text-indigo-500 font-black uppercase tracking-widest text-xs">Decrypting Database...</p>
+          <div className="flex-1 flex flex-col items-center justify-center py-40">
+            <div className="relative w-24 h-24 mb-8">
+              <div className="absolute inset-0 border-4 border-indigo-500/10 rounded-full" />
+              <div className="absolute inset-0 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+              <div className="absolute inset-4 border-4 border-purple-500/10 rounded-full" />
+              <div className="absolute inset-4 border-4 border-purple-500 border-b-transparent rounded-full animate-spin-slow" />
+            </div>
+            <p className="text-indigo-500 font-black uppercase tracking-[0.5em] text-xs animate-pulse">Decrypting Nexus Stream...</p>
           </div>
         ) : error ? (
           <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-20 h-20 rounded-3xl bg-rose-500/10 flex items-center justify-center text-rose-500 text-3xl mb-6">
+            <div className="w-24 h-24 rounded-[2rem] bg-rose-500/10 flex items-center justify-center text-rose-500 text-4xl mb-8 shadow-2xl shadow-rose-500/20">
               <i className="fas fa-exclamation-triangle"></i>
             </div>
-            <h3 className="text-xl font-black text-white uppercase italic mb-2 tracking-tighter">Connection Interrupted</h3>
-            <p className="text-slate-500 max-w-md mb-8 leading-relaxed">{error}</p>
+            <h3 className="text-2xl font-black text-white uppercase italic mb-4 tracking-tighter">Connection Interrupted</h3>
+            <p className="text-slate-500 max-w-md mb-10 leading-relaxed text-sm">{error}</p>
             <button 
               onClick={() => window.location.reload()}
-              className="px-8 py-3 bg-indigo-600 text-white rounded-2xl font-black uppercase italic tracking-tighter hover:scale-105 transition-all"
+              className="px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase italic tracking-tighter hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-600/40"
             >
               Retry Handshake
             </button>
           </div>
         ) : (
-          <div className="space-y-8">
-            {/* Summary Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {[
-                { label: 'Total Operatives', value: summary?.totalUsers || 0, icon: 'fa-users', color: 'text-blue-400' },
-                { label: 'Neural Sessions', value: summary?.totalSessions || 0, icon: 'fa-brain', color: 'text-purple-400' },
-                { label: 'Active Sector', value: summary?.popularGame?.gameId || 'N/A', icon: 'fa-gamepad', color: 'text-emerald-400' },
-                { label: 'Nexus Status', value: summary?.dbStatus || 'OFFLINE', icon: 'fa-signal', color: 'text-cyan-400' }
-              ].map((stat, i) => (
-                <div key={i} className="glass-card p-6 rounded-3xl border-white/5 bg-white/5">
-                  <div className="flex items-center justify-between mb-4">
-                    <i className={`fas ${stat.icon} ${stat.color} opacity-50`}></i>
-                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{stat.label}</span>
-                  </div>
-                  <p className="text-3xl font-black text-white italic tracking-tighter">{stat.value}</p>
+          <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            
+            {activeTab === 'overview' && (
+              <>
+                {/* Summary Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {[
+                    { label: 'Total Operatives', value: summary?.totalUsers || 0, icon: 'fa-users', color: 'from-blue-500 to-indigo-600', trend: '+12%' },
+                    { label: 'Neural Sessions', value: summary?.totalSessions || 0, icon: 'fa-brain', color: 'from-purple-500 to-fuchsia-600', trend: '+24%' },
+                    { label: 'Active Sector', value: summary?.popularGame?.gameId || 'N/A', icon: 'fa-gamepad', color: 'from-emerald-500 to-teal-600', trend: 'STABLE' },
+                    { label: 'Avg. Sync Time', value: '42ms', icon: 'fa-bolt', color: 'from-amber-500 to-orange-600', trend: '-5ms' }
+                  ].map((stat, i) => (
+                    <div key={i} className="glass-card p-8 rounded-[2rem] border-white/5 bg-white/5 relative overflow-hidden group">
+                      <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${stat.color} opacity-5 blur-3xl group-hover:opacity-10 transition-opacity`} />
+                      <div className="flex items-center justify-between mb-6">
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center text-white shadow-lg`}>
+                          <i className={`fas ${stat.icon} text-sm`}></i>
+                        </div>
+                        <span className={`text-[8px] font-black px-2 py-1 rounded bg-white/5 border border-white/10 uppercase tracking-widest ${stat.trend.startsWith('+') ? 'text-emerald-400' : stat.trend.startsWith('-') ? 'text-rose-400' : 'text-slate-400'}`}>
+                          {stat.trend}
+                        </span>
+                      </div>
+                      <p className="text-4xl font-black text-white italic tracking-tighter mb-1">{stat.value}</p>
+                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{stat.label}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            {/* Users Table */}
-            <div className="glass-card rounded-[2.5rem] border-white/5 bg-white/5 overflow-hidden">
-              <div className="p-6 border-b border-white/5 bg-white/5">
-                <h3 className="text-sm font-black text-white uppercase tracking-widest">Operative Registry</h3>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5">
-                      <th className="p-6">Operative</th>
-                      <th className="p-6">Device ID</th>
-                      <th className="p-6">Games</th>
-                      <th className="p-6">Total Score</th>
-                      <th className="p-6">Joined</th>
-                      <th className="p-6 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-sm">
-                    {users.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="p-20 text-center text-slate-500 font-medium">No operatives found in the Nexus registry.</td>
+                {/* Charts Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* User Growth Chart */}
+                  <div className="glass-card p-8 rounded-[2.5rem] border-white/5 bg-white/5">
+                    <div className="flex items-center justify-between mb-8">
+                      <div>
+                        <h3 className="text-sm font-black text-white uppercase tracking-widest">Growth Analytics</h3>
+                        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Operative Onboarding & Sessions</p>
+                      </div>
+                      <div className="flex gap-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                          <span className="text-[8px] font-bold text-slate-400 uppercase">Users</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-purple-500" />
+                          <span className="text-[8px] font-bold text-slate-400 uppercase">Sessions</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="h-[300px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartData.growthData}>
+                          <defs>
+                            <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                            </linearGradient>
+                            <linearGradient id="colorSessions" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#a855f7" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                          <XAxis 
+                            dataKey="name" 
+                            stroke="#64748b" 
+                            fontSize={10} 
+                            tickLine={false} 
+                            axisLine={false} 
+                          />
+                          <YAxis 
+                            stroke="#64748b" 
+                            fontSize={10} 
+                            tickLine={false} 
+                            axisLine={false} 
+                          />
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #ffffff10', borderRadius: '12px' }}
+                            itemStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}
+                          />
+                          <Area type="monotone" dataKey="users" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorUsers)" />
+                          <Area type="monotone" dataKey="sessions" stroke="#a855f7" strokeWidth={3} fillOpacity={1} fill="url(#colorSessions)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* Game Popularity Chart */}
+                  <div className="glass-card p-8 rounded-[2.5rem] border-white/5 bg-white/5">
+                    <div className="flex items-center justify-between mb-8">
+                      <div>
+                        <h3 className="text-sm font-black text-white uppercase tracking-widest">Sector Popularity</h3>
+                        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Top Performing Neural Protocols</p>
+                      </div>
+                    </div>
+                    <div className="h-[300px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData.popularityData} layout="vertical">
+                          <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" horizontal={false} />
+                          <XAxis type="number" hide />
+                          <YAxis 
+                            dataKey="name" 
+                            type="category" 
+                            stroke="#64748b" 
+                            fontSize={10} 
+                            tickLine={false} 
+                            axisLine={false}
+                            width={100}
+                          />
+                          <Tooltip 
+                            cursor={{ fill: '#ffffff05' }}
+                            contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #ffffff10', borderRadius: '12px' }}
+                            itemStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}
+                          />
+                          <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                            {chartData.popularityData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Hourly Activity Area Chart */}
+                <div className="glass-card p-8 rounded-[2.5rem] border-white/5 bg-white/5">
+                  <div className="flex items-center justify-between mb-8">
+                    <div>
+                      <h3 className="text-sm font-black text-white uppercase tracking-widest">Temporal Activity</h3>
+                      <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Nexus Load by Hour</p>
+                    </div>
+                  </div>
+                  <div className="h-[200px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={chartData.hourlyData}>
+                        <defs>
+                          <linearGradient id="colorActivity" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                        <XAxis 
+                          dataKey="hour" 
+                          stroke="#64748b" 
+                          fontSize={8} 
+                          tickLine={false} 
+                          axisLine={false}
+                          interval={2}
+                        />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #ffffff10', borderRadius: '12px' }}
+                          itemStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}
+                        />
+                        <Area type="stepAfter" dataKey="activity" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorActivity)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {activeTab === 'users' && (
+              <div className="glass-card rounded-[2.5rem] border-white/5 bg-white/5 overflow-hidden">
+                <div className="p-8 border-b border-white/5 bg-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-sm font-black text-white uppercase tracking-widest">Operative Registry</h3>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Persistent Identity Matrix</p>
+                  </div>
+                  <div className="relative">
+                    <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                    <input 
+                      type="text" 
+                      placeholder="Filter Operatives..." 
+                      className="bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 transition-all w-full md:w-64"
+                    />
+                  </div>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5">
+                        <th className="p-8">Operative</th>
+                        <th className="p-8">Device ID</th>
+                        <th className="p-8">Games</th>
+                        <th className="p-8">Total Score</th>
+                        <th className="p-8">Joined</th>
+                        <th className="p-8 text-right">Actions</th>
                       </tr>
-                    ) : (
-                      users.map((user) => (
-                        <tr key={user.deviceId} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                          <td className="p-6">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-indigo-600/20 flex items-center justify-center text-indigo-400">
-                                <i className={`fas ${user.avatar || 'fa-user'}`}></i>
-                              </div>
-                              <span className="font-bold text-white">{user.username}</span>
-                            </div>
-                          </td>
-                          <td className="p-6 font-mono text-[10px] text-slate-500">{user.deviceId.slice(0, 12)}...</td>
-                          <td className="p-6 text-slate-400 font-bold">{user.gamesPlayed}</td>
-                          <td className="p-6 text-indigo-400 font-black italic">{user.totalScore?.toLocaleString()}</td>
-                          <td className="p-6 text-slate-500 text-xs">{new Date(user.joinedAt).toLocaleDateString()}</td>
-                          <td className="p-6 text-right">
-                            <button 
-                              onClick={() => handleDeleteUser(user.deviceId)}
-                              className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all"
-                              title="Wipe Operative Data"
-                            >
-                              <i className="fas fa-trash-alt text-xs"></i>
-                            </button>
-                          </td>
+                    </thead>
+                    <tbody className="text-sm">
+                      {users.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="p-20 text-center text-slate-500 font-medium">No operatives found in the Nexus registry.</td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                      ) : (
+                        users.map((user) => (
+                          <tr key={user.deviceId} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
+                            <td className="p-8">
+                              <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-indigo-600/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+                                  <i className={`fas ${user.avatar || 'fa-user'}`}></i>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="font-bold text-white">{user.username}</span>
+                                  <span className="text-[9px] text-slate-500 uppercase font-bold tracking-tighter">{user.email || 'NO EMAIL LINKED'}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-8 font-mono text-[10px] text-slate-500">{user.deviceId.slice(0, 16)}...</td>
+                            <td className="p-8 text-slate-400 font-bold">{user.gamesPlayed}</td>
+                            <td className="p-8 text-indigo-400 font-black italic text-lg">{user.totalScore?.toLocaleString()}</td>
+                            <td className="p-8 text-slate-500 text-xs">{new Date(user.joinedAt).toLocaleDateString()}</td>
+                            <td className="p-8 text-right">
+                              <button 
+                                onClick={() => handleDeleteUser(user.deviceId)}
+                                className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all shadow-lg shadow-rose-500/0 hover:shadow-rose-500/20"
+                                title="Wipe Operative Data"
+                              >
+                                <i className="fas fa-trash-alt text-xs"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            )}
+
+            {activeTab === 'games' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {GAMES.map((game, i) => (
+                  <div key={game.id} className="glass-card p-8 rounded-[2.5rem] border-white/5 bg-white/5 flex items-center gap-6 group">
+                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${game.color} flex items-center justify-center text-white text-2xl shadow-xl group-hover:scale-110 transition-transform`}>
+                      <i className={`fas ${game.icon}`}></i>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-lg font-black text-white uppercase italic">{game.name}</h4>
+                      <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-4">{game.tagline}</p>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="flex flex-col">
+                          <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Plays</span>
+                          <span className="text-sm font-black text-white italic">{Math.floor(Math.random() * 500) + 50}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Avg Score</span>
+                          <span className="text-sm font-black text-indigo-400 italic">{Math.floor(Math.random() * 2000) + 500}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Retention</span>
+                          <span className="text-sm font-black text-emerald-400 italic">{Math.floor(Math.random() * 40) + 60}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

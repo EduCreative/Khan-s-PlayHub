@@ -1,7 +1,7 @@
 {
   "name": "khans-playhub",
   "private": true,
-  "version": "2.3.0",
+  "version": "2.9.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,10 +13,12 @@
     "@google/genai": "^1.38.0",
     "@types/canvas-confetti": "^1.9.0",
     "canvas-confetti": "^1.9.4",
+    "d3": "^7.9.0",
     "lucide-react": "^0.575.0",
-    "motion": "^12.34.3",
+    "motion": "^12.35.2",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "recharts": "^3.8.0"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

@@ -1,104 +1,70 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 
 const QUESTIONS = [
-  { sentence: "They ____ going to the park yesterday.", options: ["were", "was", "are", "be"], answer: "were" },
-  { sentence: "She ____ her keys in the car.", options: ["left", "leaved", "leaf", "laved"], answer: "left" },
-  { sentence: "Neither of the boys ____ here.", options: ["is", "are", "am", "be"], answer: "is" },
-  { sentence: "____ bag is this?", options: ["Whose", "Who's", "Who", "Whom"], answer: "Whose" },
-  { sentence: "____ doing a great job!", options: ["You're", "Your", "Yore", "Yours"], answer: "You're" },
-  { sentence: "I should have ____ better.", options: ["known", "knew", "knowed", "know"], answer: "known" },
-  { sentence: "The building was taller ____ the tree.", options: ["than", "then", "them", "that"], answer: "than" },
-  { sentence: "____ important to feed the cat.", options: ["It's", "Its", "Its'", "Is"], answer: "It's" },
-  { sentence: "They went ____ the house together.", options: ["into", "in to", "in", "to"], answer: "into" },
-  { sentence: "I can't believe it's already ____.", options: ["lost", "loose", "lose", "loss"], answer: "lose" },
-  { sentence: "____ going to the concert tonight.", options: ["They're", "There", "Their", "Theirs"], answer: "They're" },
-  { sentence: "He is the person ____ I met at the party.", options: ["whom", "who", "whose", "which"], answer: "whom" },
-  { sentence: "Every one of the cookies ____ delicious.", options: ["is", "are", "was", "were"], answer: "is" },
-  { sentence: "The group ____ decided on a plan.", options: ["has", "have", "had", "having"], answer: "has" },
-  { sentence: "I feel ____ today about the mistake.", options: ["bad", "badly", "worse", "worst"], answer: "bad" },
-  { sentence: "She plays the piano ____.", options: ["well", "good", "better", "best"], answer: "well" },
-  { sentence: "This is between you and ____.", options: ["me", "I", "my", "mine"], answer: "me" },
-  { sentence: "The cat licked ____ paws.", options: ["its", "it's", "it", "its'"], answer: "its" },
-  { sentence: "I ____ finished my homework already.", options: ["have", "has", "had", "having"], answer: "have" },
-  { sentence: "None of the students ____ the answer.", options: ["know", "knows", "knowing", "known"], answer: "knows" },
-  { sentence: "I will ____ the book on the table.", options: ["lay", "lie", "laid", "lain"], answer: "lay" },
-  { sentence: "He has ____ in that bed for hours.", options: ["lain", "laid", "lay", "lied"], answer: "lain" },
-  { sentence: "The ____ of the storm was devastating.", options: ["effect", "affect", "effec", "affec"], answer: "effect" },
-  { sentence: "The weather will ____ our travel plans.", options: ["affect", "effect", "affects", "effects"], answer: "affect" },
-  { sentence: "She is smarter ____ her brother.", options: ["than", "then", "that", "those"], answer: "than" },
-  { sentence: "I have ____ apples than you.", options: ["fewer", "less", "fewest", "least"], answer: "fewer" },
-  { sentence: "There is ____ water in the glass.", options: ["less", "fewer", "least", "fewest"], answer: "less" },
-  { sentence: "He ____ the ball perfectly.", options: ["threw", "through", "throwed", "throne"], answer: "threw" },
-  { sentence: "We walked ____ the tunnel.", options: ["through", "threw", "thorough", "though"], answer: "through" },
-  { sentence: "The principal is my ____.", options: ["principle", "principal", "principl", "principality"], answer: "principal" },
-  { sentence: "I like to stay ____ in my room.", options: ["quiet", "quite", "quit", "quilt"], answer: "quiet" },
-  { sentence: "It was ____ nice of you to help.", options: ["quite", "quiet", "quit", "quilt"], answer: "quite" },
-  { sentence: "She is a person ____ cares deeply.", options: ["who", "whom", "whose", "which"], answer: "who" },
-  { sentence: "The dog wagged ____ tail happily.", options: ["its", "it's", "its'", "is"], answer: "its" },
-  { sentence: "____ are you going with?", options: ["Whom", "Who", "Whose", "Which"], answer: "Whom" },
-  { sentence: "I need to ____ down for a nap.", options: ["lie", "lay", "laid", "lain"], answer: "lie" },
-  { sentence: "He ____ the keys on the counter.", options: ["laid", "lied", "lay", "lain"], answer: "laid" },
-  { sentence: "There are ____ cookies in the jar.", options: ["fewer", "less", "fewer than", "lesser"], answer: "fewer" },
-  { sentence: "The movie was ____ long.", options: ["too", "to", "two", "toe"], answer: "too" },
-  { sentence: "We are going ____ the store.", options: ["to", "too", "two", "tow"], answer: "to" },
-  { sentence: "I have ____ sisters.", options: ["two", "to", "too", "tow"], answer: "two" },
-  { sentence: "The ____ of the sun is warm.", options: ["effect", "affect", "effec", "affec"], answer: "effect" },
-  { sentence: "Please do not ____ the outcome.", options: ["affect", "effect", "affects", "effects"], answer: "affect" },
-  { sentence: "The scissors ____ on the table.", options: ["are", "is", "be", "am"], answer: "are" },
-  { sentence: "Each of the players ____ a trophy.", options: ["gets", "get", "getting", "gotten"], answer: "gets" },
-  { sentence: "Mathematics ____ a difficult subject.", options: ["is", "are", "be", "am"], answer: "is" },
-  { sentence: "Neither the teacher nor the students ____ here.", options: ["are", "is", "be", "am"], answer: "are" },
-  { sentence: "Bread and butter ____ my favorite breakfast.", options: ["is", "are", "be", "am"], answer: "is" },
-  { sentence: "The number of visitors ____ increasing.", options: ["is", "are", "be", "am"], answer: "is" },
-  { sentence: "A number of students ____ absent today.", options: ["are", "is", "be", "am"], answer: "are" },
-  { sentence: "If I ____ you, I would go.", options: ["were", "was", "am", "be"], answer: "were" },
-  { sentence: "He acted as if he ____ the boss.", options: ["were", "was", "is", "be"], answer: "were" },
-  { sentence: "The car needs ____.", options: ["washing", "to wash", "wash", "washed"], answer: "washing" },
-  { sentence: "I am looking forward to ____ you.", options: ["seeing", "see", "seen", "saw"], answer: "seeing" },
-  { sentence: "She is capable of ____ anything.", options: ["doing", "do", "does", "did"], answer: "doing" },
-  { sentence: "I object to ____ like this.", options: ["being treated", "be treated", "treat", "treating"], answer: "being treated" },
-  { sentence: "He is used to ____ early.", options: ["waking up", "wake up", "wakes up", "woke up"], answer: "waking up" },
-  { sentence: "The news ____ not very good.", options: ["is", "are", "be", "am"], answer: "is" },
-  { sentence: "The police ____ searching for the suspect.", options: ["are", "is", "be", "am"], answer: "are" },
-  { sentence: "Everyone ____ finished their work.", options: ["has", "have", "having", "had"], answer: "has" },
-  { sentence: "Many a student ____ made that mistake.", options: ["has", "have", "having", "had"], answer: "has" },
-  { sentence: "There ____ many stars in the sky.", options: ["are", "is", "be", "am"], answer: "are" },
-  { sentence: "One of my friends ____ going to Paris.", options: ["is", "are", "be", "am"], answer: "is" },
-  { sentence: "The committee ____ reached a decision.", options: ["has", "have", "had", "having"], answer: "has" },
-  { sentence: "The data ____ being analyzed.", options: ["are", "is", "be", "am"], answer: "are" },
-  { sentence: "Criteria ____ used to judge the entries.", options: ["were", "was", "is", "be"], answer: "were" },
-  { sentence: "The phenomena ____ very unusual.", options: ["were", "was", "is", "be"], answer: "were" },
-  { sentence: "Each of the candidates ____ given a task.", options: ["was", "were", "be", "am"], answer: "was" },
-  { sentence: "None of the information ____ useful.", options: ["was", "were", "is", "be"], answer: "was" },
-  { sentence: "The majority of the voters ____ in favor.", options: ["are", "is", "be", "am"], answer: "are" },
-  { sentence: "Fifty dollars ____ too much to pay.", options: ["is", "are", "be", "am"], answer: "is" },
-  { sentence: "Ten miles ____ a long way to walk.", options: ["is", "are", "be", "am"], answer: "is" },
-  { sentence: "Physics ____ my favorite subject.", options: ["is", "are", "be", "am"], answer: "is" },
-  { sentence: "The scissors ____ very sharp.", options: ["are", "is", "be", "am"], answer: "are" },
-  { sentence: "Politics ____ a complex business.", options: ["is", "are", "be", "am"], answer: "is" },
-  { sentence: "She is the one ____ won the race.", options: ["who", "whom", "whose", "which"], answer: "who" },
-  { sentence: "The book is ____ than the movie.", options: ["better", "best", "well", "good"], answer: "better" },
-  { sentence: "I ____ already seen that movie.", options: ["have", "had", "has", "am"], answer: "have" },
-  { sentence: "The weather is ____ today than yesterday.", options: ["colder", "coldest", "coldly", "cold"], answer: "colder" },
-  { sentence: "He ____ to the gym every morning.", options: ["goes", "go", "going", "gone"], answer: "goes" },
-  { sentence: "The children ____ playing in the park.", options: ["are", "is", "am", "be"], answer: "are" },
-  { sentence: "I ____ a new car next week.", options: ["will buy", "buy", "buying", "bought"], answer: "will buy" },
-  { sentence: "The flowers ____ beautiful in the garden.", options: ["look", "looks", "looking", "looked"], answer: "look" },
-  { sentence: "She ____ her homework before dinner.", options: ["finished", "finish", "finishing", "finishes"], answer: "finished" },
-  { sentence: "The sun ____ in the east.", options: ["rises", "rise", "rising", "rose"], answer: "rises" },
-  { sentence: "I ____ my keys on the table.", options: ["put", "puts", "putting", "place"], answer: "put" },
-  { sentence: "The coffee is ____ hot to drink.", options: ["too", "to", "two", "toe"], answer: "too" },
-  { sentence: "He ____ a letter to his parents.", options: ["wrote", "write", "writing", "writes"], answer: "wrote" },
-  { sentence: "The movie ____ at 7 PM.", options: ["starts", "start", "starting", "started"], answer: "starts" },
-  { sentence: "I ____ to the store to buy milk.", options: ["went", "go", "going", "goes"], answer: "went" }
+  { sentence: "They ____ going to the park yesterday.", options: ["were", "was", "are", "be"], answer: "were", explanation: "'They' is plural, and 'yesterday' indicates past tense, so 'were' is correct." },
+  { sentence: "She ____ her keys in the car.", options: ["left", "leaved", "leaf", "laved"], answer: "left", explanation: "The past tense of 'leave' is the irregular verb 'left'." },
+  { sentence: "Neither of the boys ____ here.", options: ["is", "are", "am", "be"], answer: "is", explanation: "'Neither' is a singular pronoun, so it takes the singular verb 'is'." },
+  { sentence: "____ bag is this?", options: ["Whose", "Who's", "Who", "Whom"], answer: "Whose", explanation: "'Whose' shows possession, whereas 'Who's' is a contraction for 'Who is'." },
+  { sentence: "____ doing a great job!", options: ["You're", "Your", "Yore", "Yours"], answer: "You're", explanation: "'You're' is the contraction for 'You are', which fits the sentence." },
+  { sentence: "I should have ____ better.", options: ["known", "knew", "knowed", "know"], answer: "known", explanation: "'Should have' requires the past participle form of the verb, which is 'known'." },
+  { sentence: "The building was taller ____ the tree.", options: ["than", "then", "them", "that"], answer: "than", explanation: "'Than' is used for comparisons, while 'then' refers to time." },
+  { sentence: "____ important to feed the cat.", options: ["It's", "Its", "Its'", "Is"], answer: "It's", explanation: "'It's' is the contraction for 'It is'." },
+  { sentence: "They went ____ the house together.", options: ["into", "in to", "in", "to"], answer: "into", explanation: "'Into' indicates movement toward the inside of a place." },
+  { sentence: "Please don't ____ your keys.", options: ["lose", "loose", "lost", "loss"], answer: "lose", explanation: "'Lose' means to misplace, while 'loose' means not tight." },
+  { sentence: "____ going to the concert tonight.", options: ["They're", "There", "Their", "Theirs"], answer: "They're", explanation: "'They're' is the contraction for 'They are'." },
+  { sentence: "He is the person ____ I met at the party.", options: ["whom", "who", "whose", "which"], answer: "whom", explanation: "'Whom' is used as the object of a verb or preposition." },
+  { sentence: "Every one of the cookies ____ delicious.", options: ["is", "are", "was", "were"], answer: "is", explanation: "'Every one' is a singular subject, so it takes the singular verb 'is'." },
+  { sentence: "The group ____ decided on a plan.", options: ["has", "have", "had", "having"], answer: "has", explanation: "As a collective noun acting as a single unit, 'group' takes the singular verb 'has'." },
+  { sentence: "I feel ____ today about the mistake.", options: ["bad", "badly", "worse", "worst"], answer: "bad", explanation: "Linking verbs like 'feel' are followed by adjectives ('bad'), not adverbs ('badly')." },
+  { sentence: "She plays the piano ____.", options: ["well", "good", "better", "best"], answer: "well", explanation: "'Well' is an adverb modifying the verb 'plays', whereas 'good' is an adjective." },
+  { sentence: "This is between you and ____.", options: ["me", "I", "my", "mine"], answer: "me", explanation: "Prepositions like 'between' take object pronouns like 'me'." },
+  { sentence: "The cat licked ____ paws.", options: ["its", "it's", "it", "its'"], answer: "its", explanation: "'Its' is the possessive form. 'It's' means 'it is'." },
+  { sentence: "I ____ finished my homework already.", options: ["have", "has", "had", "having"], answer: "have", explanation: "The pronoun 'I' takes the auxiliary verb 'have' for the present perfect tense." },
+  { sentence: "None of the students ____ the answer.", options: ["knows", "know", "knowing", "known"], answer: "knows", explanation: "'None' is traditionally treated as singular, taking the singular verb 'knows'." },
+  { sentence: "I will ____ the book on the table.", options: ["lay", "lie", "laid", "lain"], answer: "lay", explanation: "'Lay' means to place something down and requires a direct object ('the book')." },
+  { sentence: "He has ____ in that bed for hours.", options: ["lain", "laid", "lay", "lied"], answer: "lain", explanation: "'Lain' is the past participle of 'lie' (to recline)." },
+  { sentence: "The ____ of the storm was devastating.", options: ["effect", "affect", "effec", "affec"], answer: "effect", explanation: "'Effect' is usually a noun meaning a result, while 'affect' is usually a verb." },
+  { sentence: "The weather will ____ our travel plans.", options: ["affect", "effect", "affects", "effects"], answer: "affect", explanation: "'Affect' is a verb meaning to influence." },
+  { sentence: "She is smarter ____ her brother.", options: ["than", "then", "that", "those"], answer: "than", explanation: "'Than' is used for comparisons." },
+  { sentence: "I have ____ apples than you.", options: ["fewer", "less", "fewest", "least"], answer: "fewer", explanation: "'Fewer' is used for countable nouns like 'apples'." },
+  { sentence: "There is ____ water in the glass.", options: ["less", "fewer", "least", "fewest"], answer: "less", explanation: "'Less' is used for uncountable nouns like 'water'." },
+  { sentence: "He ____ the ball perfectly.", options: ["threw", "through", "throwed", "throne"], answer: "threw", explanation: "'Threw' is the past tense of the verb 'throw'." },
+  { sentence: "We walked ____ the tunnel.", options: ["through", "threw", "thorough", "though"], answer: "through", explanation: "'Through' is a preposition indicating movement from one side to another." },
+  { sentence: "The school ____ spoke to the students.", options: ["principal", "principle", "principl", "principality"], answer: "principal", explanation: "'Principal' refers to the head of a school." },
+  { sentence: "He is a man of high ____.", options: ["principle", "principal", "principl", "principality"], answer: "principle", explanation: "'Principle' refers to a fundamental truth or moral rule." },
+  { sentence: "I like to stay ____ in my room.", options: ["quiet", "quite", "quit", "quilt"], answer: "quiet", explanation: "'Quiet' means making little or no noise." },
+  { sentence: "It was ____ nice of you to help.", options: ["quite", "quiet", "quit", "quilt"], answer: "quite", explanation: "'Quite' is an adverb meaning 'very' or 'completely'." },
+  { sentence: "She is a person ____ cares deeply.", options: ["who", "whom", "whose", "which"], answer: "who", explanation: "'Who' is used as the subject of the clause ('who cares')." },
+  { sentence: "The movie was ____ long.", options: ["too", "to", "two", "toe"], answer: "too", explanation: "'Too' means 'excessively' or 'also'." },
+  { sentence: "We are going ____ the store.", options: ["to", "too", "two", "tow"], answer: "to", explanation: "'To' is a preposition indicating direction." },
+  { sentence: "The scissors ____ on the table.", options: ["are", "is", "be", "am"], answer: "are", explanation: "'Scissors' is a plural noun and takes a plural verb." },
+  { sentence: "Each of the players ____ a trophy.", options: ["gets", "get", "getting", "gotten"], answer: "gets", explanation: "'Each' is a singular subject, so it takes the singular verb 'gets'." },
+  { sentence: "Mathematics ____ a difficult subject.", options: ["is", "are", "be", "am"], answer: "is", explanation: "Fields of study ending in '-ics' (like mathematics) are singular." },
+  { sentence: "Bread and butter ____ my favorite breakfast.", options: ["is", "are", "be", "am"], answer: "is", explanation: "When two nouns represent a single idea or dish, they take a singular verb." },
+  { sentence: "The number of visitors ____ increasing.", options: ["is", "are", "be", "am"], answer: "is", explanation: "'The number' is a singular subject, taking a singular verb." },
+  { sentence: "A number of students ____ absent today.", options: ["are", "is", "be", "am"], answer: "are", explanation: "'A number of' means 'several' and takes a plural verb." },
+  { sentence: "If I ____ you, I would go.", options: ["were", "was", "am", "be"], answer: "were", explanation: "In the subjunctive mood (hypothetical situations), 'were' is used for all subjects." },
+  { sentence: "The car needs ____.", options: ["washing", "to wash", "wash", "washed"], answer: "washing", explanation: "After 'needs', we use the gerund ('washing') or passive infinitive ('to be washed')." },
+  { sentence: "I am looking forward to ____ you.", options: ["seeing", "see", "seen", "saw"], answer: "seeing", explanation: "The 'to' in 'look forward to' is a preposition, so it must be followed by a gerund (-ing form)." },
+  { sentence: "She is capable of ____ anything.", options: ["doing", "do", "does", "did"], answer: "doing", explanation: "Prepositions like 'of' are followed by gerunds (-ing forms)." },
+  { sentence: "The news ____ not very good.", options: ["is", "are", "be", "am"], answer: "is", explanation: "'News' is a singular uncountable noun." },
+  { sentence: "The police ____ searching for the suspect.", options: ["are", "is", "be", "am"], answer: "are", explanation: "'Police' is a collective noun that takes a plural verb." },
+  { sentence: "Everyone ____ finished their work.", options: ["has", "have", "having", "had"], answer: "has", explanation: "Indefinite pronouns like 'everyone' are singular and take singular verbs." },
+  { sentence: "Many a student ____ made that mistake.", options: ["has", "have", "having", "had"], answer: "has", explanation: "The phrase 'many a' is followed by a singular noun and a singular verb." },
+  { sentence: "Criteria ____ used to judge the entries.", options: ["were", "was", "is", "be"], answer: "were", explanation: "'Criteria' is the plural form of 'criterion', so it takes a plural verb." },
+  { sentence: "The phenomena ____ very unusual.", options: ["were", "was", "is", "be"], answer: "were", explanation: "'Phenomena' is the plural form of 'phenomenon'." },
+  { sentence: "Fifty dollars ____ too much to pay.", options: ["is", "are", "be", "am"], answer: "is", explanation: "Amounts of money, time, or distance are treated as singular units." },
+  { sentence: "Ten miles ____ a long way to walk.", options: ["is", "are", "be", "am"], answer: "is", explanation: "Distances are treated as singular units." }
 ];
 
 const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean; sfxVolume: number; hapticFeedback: boolean }> = ({ onGameOver, isPlaying, sfxVolume, hapticFeedback }) => {
   const [current, setCurrent] = useState(QUESTIONS[0]);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(60);
-  const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
+  const [questionCount, setQuestionCount] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   
   const questionPool = useRef<number[]>([]);
 
@@ -126,48 +92,50 @@ const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: bo
     
     const nextIndex = questionPool.current.pop()!;
     setCurrent(QUESTIONS[nextIndex]);
-    setFeedback(null);
+    setSelectedOption(null);
+    setIsSubmitted(false);
   }, []);
 
   useEffect(() => {
     if (isPlaying) {
       setScore(0);
-      setTimeLeft(60);
+      setQuestionCount(0);
       questionPool.current = [];
       nextQuestion();
     }
   }, [isPlaying, nextQuestion]);
 
-  useEffect(() => {
-    if (!isPlaying || timeLeft <= 0) return;
-    const timer = setInterval(() => {
-      setTimeLeft(t => {
-        if (t <= 1) { onGameOver(score); return 0; }
-        return t - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [isPlaying, timeLeft, onGameOver, score]);
+  const handleSelect = (opt: string) => {
+    if (isSubmitted) return;
+    setSelectedOption(opt);
+    triggerHapticFeedback();
+  };
 
-  const handleChoice = (opt: string) => {
-    if (feedback) return;
-    if (opt === current.answer) {
+  const handleSubmit = () => {
+    if (!selectedOption || isSubmitted) return;
+    
+    setIsSubmitted(true);
+    const isCorrect = selectedOption === current.answer;
+    
+    if (isCorrect) {
       playSfx('/sfx/correct.mp3', sfxVolume);
-      triggerHapticFeedback();
-      setFeedback('correct');
       setScore(s => s + 10);
-      setTimeout(nextQuestion, 500);
     } else {
       playSfx('/sfx/wrong.mp3', sfxVolume);
-      triggerHapticFeedback();
-      setFeedback('wrong');
-      setTimeLeft(t => Math.max(0, t - 8)); // 8s penalty
-      setTimeout(() => setFeedback(null), 800);
+    }
+  };
+
+  const handleNext = () => {
+    if (questionCount >= 9) { // 10 questions per round
+      onGameOver(score);
+    } else {
+      setQuestionCount(c => c + 1);
+      nextQuestion();
     }
   };
 
   return (
-    <div className="relative flex flex-col items-center gap-10 w-full max-w-lg px-6 py-12 select-none overflow-hidden rounded-[3rem]">
+    <div className="relative flex flex-col items-center gap-6 w-full max-w-lg px-6 py-12 select-none overflow-hidden rounded-[3rem]">
       {/* Background Layer */}
       <div 
         className="absolute inset-0 z-0 opacity-20 dark:opacity-40"
@@ -179,11 +147,11 @@ const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: bo
       />
       <div className="absolute inset-0 bg-slate-50/70 dark:bg-[#0f172a]/80 backdrop-blur-md z-[1]" />
 
-      <div className="relative z-10 w-full flex flex-col items-center gap-10">
+      <div className="relative z-10 w-full flex flex-col items-center gap-6">
         <div className="w-full flex justify-between items-center glass-card p-6 rounded-3xl border-emerald-500/20 shadow-xl backdrop-blur-xl bg-white/5">
           <div className="flex flex-col">
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Integrity</span>
-            <span className={`text-3xl font-black tabular-nums ${timeLeft < 10 ? 'text-rose-500 animate-pulse' : 'text-emerald-500'}`}>{timeLeft}s</span>
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Progress</span>
+            <span className="text-3xl font-black text-emerald-500 tabular-nums">{questionCount + 1}/10</span>
           </div>
           <div className="text-right flex flex-col">
             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Lexicon Rank</span>
@@ -191,30 +159,90 @@ const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: bo
           </div>
         </div>
 
-        <div className="w-full text-center space-y-8">
+        <div className="w-full text-center space-y-4">
           <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Repair the Syntax Rift</p>
           <div className="glass-card p-8 rounded-[2.5rem] border-2 border-emerald-500/10 min-h-[160px] flex items-center justify-center relative overflow-hidden backdrop-blur-2xl bg-white/5">
             <div className="absolute inset-0 bg-emerald-500/5 pointer-events-none" />
             <h2 className="text-2xl md:text-3xl font-bold italic dark:text-white text-slate-800 leading-relaxed z-10 animate-in fade-in slide-in-from-top-2">
-              "{current.sentence}"
+              "{current.sentence.replace('____', isSubmitted && selectedOption ? selectedOption : '____')}"
             </h2>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4 w-full">
-          {current.options.map((opt, i) => (
-            <button
-              key={i}
-              onClick={() => handleChoice(opt)}
-              className={`
-                h-20 glass-card rounded-2xl flex items-center justify-center text-xl font-black transition-all border-2 backdrop-blur-md
-                ${feedback === 'correct' && opt === current.answer ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_20px_emerald]' : 'bg-white/5'}
-                ${feedback === 'wrong' && opt !== current.answer ? 'opacity-50' : 'hover:scale-105 active:scale-95 border-emerald-500/10'}
-              `}
+          {current.options.map((opt, i) => {
+            const isSelected = selectedOption === opt;
+            const isCorrectAnswer = opt === current.answer;
+            
+            let btnClass = 'bg-white/5 border-emerald-500/10 hover:border-emerald-500/30 text-slate-700 dark:text-slate-300';
+            
+            if (isSubmitted) {
+              if (isCorrectAnswer) {
+                btnClass = 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_20px_emerald]';
+              } else if (isSelected) {
+                btnClass = 'bg-rose-500 border-rose-400 text-white';
+              } else {
+                btnClass = 'opacity-50 bg-white/5 border-emerald-500/10';
+              }
+            } else if (isSelected) {
+              btnClass = 'bg-indigo-500 border-indigo-400 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)] scale-105';
+            }
+
+            return (
+              <button
+                key={i}
+                onClick={() => handleSelect(opt)}
+                disabled={isSubmitted}
+                className={`
+                  h-16 glass-card rounded-2xl flex items-center justify-center text-xl font-black transition-all border-2 backdrop-blur-md
+                  ${btnClass}
+                  ${!isSubmitted && !isSelected ? 'hover:scale-105 active:scale-95' : ''}
+                `}
+              >
+                {opt}
+              </button>
+            );
+          })}
+        </div>
+
+        <AnimatePresence mode="wait">
+          {isSubmitted && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className={`w-full p-6 rounded-3xl border-2 ${selectedOption === current.answer ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}`}
             >
-              {opt}
+              <div className="flex items-center gap-3 mb-2">
+                <i className={`fas ${selectedOption === current.answer ? 'fa-check-circle text-emerald-500' : 'fa-times-circle text-rose-500'} text-xl`}></i>
+                <h3 className={`font-black uppercase tracking-widest text-sm ${selectedOption === current.answer ? 'text-emerald-500' : 'text-rose-500'}`}>
+                  {selectedOption === current.answer ? 'Correct!' : 'Incorrect'}
+                </h3>
+              </div>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300 leading-relaxed">
+                {current.explanation}
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className="w-full mt-2">
+          {!isSubmitted ? (
+            <button 
+              onClick={handleSubmit}
+              disabled={!selectedOption}
+              className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest transition-all ${selectedOption ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg active:scale-95' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}
+            >
+              Submit Answer
             </button>
-          ))}
+          ) : (
+            <button 
+              onClick={handleNext}
+              className="w-full py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center gap-3"
+            >
+              {questionCount >= 9 ? 'Complete Training' : 'Next Question'} <i className="fas fa-arrow-right"></i>
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -222,3 +250,4 @@ const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: bo
 };
 
 export default GrammarGuardian;
+

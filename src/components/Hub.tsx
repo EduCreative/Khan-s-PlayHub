@@ -83,6 +83,20 @@ const Hub: React.FC<HubProps> = ({
           <button id="leaderboard-header-btn" onClick={() => setFilter('Leaderboard')} className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-lg shadow-xl border-2 transition-all ${filter === 'Leaderboard' ? 'bg-amber-500 border-amber-400 text-white' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500'}`}>
             <i className="fas fa-trophy"></i>
           </button>
+          <button id="share-btn" onClick={() => {
+            if (navigator.share) {
+              navigator.share({
+                title: "Khan's PlayHub",
+                text: "Check out these awesome brain training games!",
+                url: window.location.href,
+              }).catch(console.error);
+            } else {
+              navigator.clipboard.writeText(window.location.href);
+              alert("Link copied to clipboard!");
+            }
+          }} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all" title="Share this app">
+            <i className="fas fa-share-alt text-emerald-500"></i>
+          </button>
           <button id="settings-btn" onClick={onOpenSettings} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all">
             <i className="fas fa-cog text-slate-500"></i>
           </button>

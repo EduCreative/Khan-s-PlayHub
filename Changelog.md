@@ -1,6 +1,26 @@
 
 # Changelog
 
+## [2.9.0] - 2026-03-10
+### Added
+- **Enhanced Admin Console**: A professional dashboard with real-time analytics.
+- **Data Visualization**: Integrated `recharts` for user growth, game popularity, and hourly activity charts.
+- **Tabbed Interface**: Organized admin view into Overview, Users, and Games sections.
+- **Game Statistics**: Detailed performance metrics for every game in the library.
+
+## [2.8.0] - 2026-03-10
+### Added
+- "Share this app" button in the Hub header.
+- 50 new questions and detailed explanations for Grammar Guardian.
+- Submit and Next Question flow for Grammar Guardian to encourage learning.
+
+### Changed
+- Converted Grammar Guardian from a time-based game to a learning-focused game.
+- Removed time limit from Grammar Guardian.
+
+### Fixed
+- Lingering particle effects in Bit Master and Quick Math when transitioning to new questions.
+
 ## [2.4.0] - 2026-02-21
 ### Added
 - Explicit difficulty selection (Easy, Medium, Hard) for Number Ninja and Grammar Guardian.

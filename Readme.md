@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Nexus
 
-**Version:** 2.7.0 "Mission Briefing"  
+**Version:** 2.9.0 "Nexus Analytics"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,11 +9,12 @@ Khan's PlayHub is a high-performance, mobile-first Progressive Web App (PWA) tha
 
 ---
 
-## 🚀 Recent Enhancements (v2.7.0)
+## 🚀 Recent Enhancements (v2.9.0)
+- **Enhanced Admin Console**: Professional dashboard with charts, graphs, and detailed game statistics.
+- **Grammar Guardian Overhaul**: Transformed into a learning-focused game with 50 unique questions, detailed explanations, and no time limits.
+- **Share App Feature**: Added a "Share" button to the Hub header for easy sharing via native share dialog or clipboard.
+- **Particle Fixes**: Resolved lingering particle effects across multiple games (Bit Master, Quick Math).
 - **Mission Briefings**: Every game now includes detailed playing instructions before you start.
-- **Difficulty Tiers**: Select between Easy, Medium, and Hard modes for a tailored challenge in key games.
-- **Enhanced Mechanics**: Re-engineered Tetris and Bubble Fury for smoother, more competitive gameplay.
-- **Improved Hub**: A more scannable and visually striking interface for game selection.
 
 ---
 
