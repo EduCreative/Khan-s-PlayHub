@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 type Difficulty = 'Easy' | 'Medium' | 'Hard';
 
-const Labyrinth: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean; sfxVolume: number; hapticFeedback: boolean }> = ({ onGameOver, isPlaying, sfxVolume, hapticFeedback }) => {
+const Labyrinth: React.FC<{ onGameOver: (s: number, victory?: boolean, metadata?: any) => void; isPlaying: boolean; sfxVolume: number; hapticFeedback: boolean }> = ({ onGameOver, isPlaying, sfxVolume, hapticFeedback }) => {
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [score, setScore] = useState(0);
   const [level, setLevel] = useState(1);
@@ -126,8 +126,14 @@ const Labyrinth: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean;
         playSfx('/sfx/win.mp3', sfxVolume);
         triggerHapticFeedback();
         const diffMult = difficulty === 'Easy' ? 200 : difficulty === 'Medium' ? 500 : 1000;
-        setScore(s => s + diffMult);
+        const newScore = score + diffMult;
+        setScore(newScore);
         setLevel(l => l + 1);
+        
+        // Report progress for achievements
+        if (difficulty === 'Hard') {
+          onGameOver(newScore, true, { difficulty: 'hard', completed: true, level: level });
+        }
       }
       draw();
     }

@@ -8,7 +8,10 @@ import ParticleBackground from './components/ParticleBackground';
 import AdminPanel from './components/AdminPanel';
 import ProfileModal from './components/ProfileModal';
 import SettingsModal from './components/SettingsModal';
+import AchievementToast from './components/AchievementToast';
 import { cloud } from './services/cloud';
+import { ACHIEVEMENTS } from './achievements';
+import { Achievement } from './types';
 
 const DEFAULT_PROFILE: UserProfile = {
   username: 'Operative',
@@ -16,7 +19,8 @@ const DEFAULT_PROFILE: UserProfile = {
   avatar: 'fa-user-ninja',
   joinedAt: Date.now(),
   bio: 'Nexus Operative',
-  favorites: []
+  favorites: [],
+  achievements: []
 };
 
 const App: React.FC = () => {
@@ -33,6 +37,7 @@ const App: React.FC = () => {
   const [sfxVolume, setSfxVolume] = useState(0.5);
   const [hapticFeedback, setHapticFeedback] = useState(true);
   const [syncStatus, setSyncStatus] = useState<'synced' | 'pending' | 'offline'>('synced');
+  const [recentAchievement, setRecentAchievement] = useState<Achievement | null>(null);
 
   // Initialize state from localStorage - ONLY ONCE
   useEffect(() => {
@@ -129,7 +134,29 @@ const App: React.FC = () => {
     });
   }, [saveProfile]);
 
-  const saveScore = React.useCallback(async (gameId: string, score: number) => {
+  const unlockAchievement = React.useCallback((id: string) => {
+    if (userProfile.achievements?.includes(id)) return;
+    
+    const achievement = ACHIEVEMENTS.find(a => a.id === id);
+    if (achievement) {
+      setRecentAchievement(achievement);
+      const updatedProfile = {
+        ...userProfile,
+        achievements: [...(userProfile.achievements || []), id]
+      };
+      saveProfile(updatedProfile);
+    }
+  }, [userProfile, saveProfile]);
+
+  const saveScore = React.useCallback(async (gameId: string, score: number, metadata?: any) => {
+    // Achievement Checks
+    if (gameId === 'word-builder' && metadata?.level >= 10) unlockAchievement('tower_master');
+    if (gameId === 'reaction-test' && metadata?.best > 0 && metadata?.best <= 200) unlockAchievement('speed_demon');
+    if (gameId === 'quick-math' && score >= 1000) unlockAchievement('math_wizard');
+    if (gameId === 'resonance-breathing' && metadata?.completed) unlockAchievement('zen_master');
+    if (gameId === 'labyrinth' && metadata?.difficulty === 'hard' && metadata?.completed) unlockAchievement('labyrinth_conqueror');
+    if (gameId === 'sudoku-lite' && metadata?.difficulty === 'Hard' && metadata?.completed) unlockAchievement('sudoku_master');
+
     setScores(prev => {
       const currentHigh = prev[gameId] || 0;
       if (score > currentHigh) {
@@ -163,7 +190,7 @@ const App: React.FC = () => {
           <GameRunner 
             game={activeGame} 
             onClose={() => setActiveGame(null)} 
-            onSaveScore={(s) => saveScore(activeGame.id, s)}
+            onSaveScore={(s, meta) => saveScore(activeGame.id, s, meta)}
             highScore={scores[activeGame.id] || 0}
             isDarkMode={isDarkMode}
             isAnonymous={isAnonymous}
@@ -227,6 +254,11 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
+
+      <AchievementToast 
+        achievement={recentAchievement} 
+        onClose={() => setRecentAchievement(null)} 
+      />
     </div>
   );
 };

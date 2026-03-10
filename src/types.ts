@@ -8,6 +8,15 @@ export enum Category {
   Wellness = 'Wellness'
 }
 
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  unlockedAt?: number;
+}
+
 export interface UserProfile {
   username: string;
   email?: string;
@@ -15,6 +24,7 @@ export interface UserProfile {
   bio: string;
   favorites: string[];
   joinedAt: number;
+  achievements: string[]; // IDs of unlocked achievements
 }
 
 export interface AppSettings {

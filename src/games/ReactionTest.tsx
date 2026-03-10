@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-const ReactionTest: React.FC<{ onGameOver: (score: number) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
+const ReactionTest: React.FC<{ onGameOver: (score: number, victory?: boolean, metadata?: any) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
   const [state, setState] = useState<'idle' | 'waiting' | 'click' | 'result' | 'early'>('idle');
   const [startTime, setStartTime] = useState(0);
   const [reactionTime, setReactionTime] = useState(0);
@@ -42,10 +42,11 @@ const ReactionTest: React.FC<{ onGameOver: (score: number) => void; isPlaying: b
   const reset = () => {
     if (attempts.length >= 5) {
       const avg = attempts.reduce((a, b) => a + b, 0) / attempts.length;
+      const best = Math.min(...attempts);
       // Score calculation: higher score for lower reaction time
       // 1000ms = 0 points, 200ms = 160 points
       const score = Math.max(0, Math.round((1000 - avg) / 5));
-      onGameOver(score);
+      onGameOver(score, true, { best });
     } else {
       setState('idle');
     }

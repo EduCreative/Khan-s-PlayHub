@@ -4,7 +4,7 @@ import ParticleBurst from '../components/ParticleBurst';
 
 type Difficulty = 'Easy' | 'Medium' | 'Hard';
 
-const QuickMath: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
+const QuickMath: React.FC<{ onGameOver: (s: number, victory?: boolean, metadata?: any) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [equation, setEquation] = useState('');
   const [answer, setAnswer] = useState(0);
@@ -79,7 +79,7 @@ const QuickMath: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean 
     if (!isPlaying || !difficulty || time <= 0) return;
     const timer = setInterval(() => {
       setTime(t => {
-        if (t <= 1) { onGameOver(scoreRef.current); return 0; }
+        if (t <= 1) { onGameOver(scoreRef.current, true, { difficulty }); return 0; }
         return t - 1;
       });
     }, 1000);

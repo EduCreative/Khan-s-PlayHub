@@ -12,7 +12,7 @@ const BOUNTIES = [
 ];
 
 interface WordBuilderProps {
-  onGameOver: (score: number) => void;
+  onGameOver: (score: number, victory?: boolean, metadata?: any) => void;
   isPlaying: boolean;
   isDarkMode?: boolean;
 }
@@ -250,7 +250,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
     if (!isPlaying || time <= 0) return;
     const timer = setInterval(() => {
       setTime(prev => {
-        if (prev <= 1) { onGameOver(score); return 0; }
+        if (prev <= 1) { onGameOver(score, false, { level }); return 0; }
         return prev - 1;
       });
     }, 1000);

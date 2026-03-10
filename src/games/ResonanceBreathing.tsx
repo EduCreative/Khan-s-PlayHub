@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
-const ResonanceBreathing: React.FC<{ onGameOver: (score: number) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
+const ResonanceBreathing: React.FC<{ onGameOver: (score: number, victory?: boolean, metadata?: any) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
   const [phase, setPhase] = useState<'inhale' | 'exhale'>('inhale');
   const [cycleCount, setCycleCount] = useState(0);
   const [isActive, setIsActive] = useState(false);
@@ -24,7 +24,7 @@ const ResonanceBreathing: React.FC<{ onGameOver: (score: number) => void; isPlay
       setTimer(prev => {
         if (prev <= 1) {
           setIsActive(false);
-          onGameOver(cycleCount * 10);
+          onGameOver(cycleCount * 10, true, { completed: true });
           return 0;
         }
         return prev - 1;

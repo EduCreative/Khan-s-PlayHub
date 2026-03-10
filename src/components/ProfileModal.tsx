@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { UserProfile } from '../types';
+import { ACHIEVEMENTS } from '../achievements';
 
 interface ProfileModalProps {
   userProfile: UserProfile;
@@ -94,6 +95,31 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ userProfile, onSave, onClos
                 placeholder="Enter bio..."
                 className="w-full bg-white/5 border-2 border-white/10 rounded-2xl px-6 py-4 text-white font-bold focus:border-indigo-500 outline-none transition-all h-24 resize-none"
               />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Nexus Achievements</label>
+            <div className="grid grid-cols-5 gap-2">
+              {ACHIEVEMENTS.map(ach => {
+                const isUnlocked = userProfile.achievements?.includes(ach.id);
+                return (
+                  <div 
+                    key={ach.id} 
+                    className={`aspect-square rounded-xl flex items-center justify-center text-xl transition-all relative group ${isUnlocked ? `bg-${ach.color}-500/20 text-${ach.color}-500 border-2 border-${ach.color}-500/50 shadow-lg shadow-${ach.color}-500/20` : 'bg-white/5 text-slate-700 border-2 border-white/5'}`}
+                    title={ach.name}
+                  >
+                    <i className={`fas ${ach.icon}`}></i>
+                    
+                    {/* Tooltip */}
+                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-32 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 text-center shadow-2xl">
+                      <p className="text-indigo-400 uppercase mb-1">{ach.name}</p>
+                      <p className="text-slate-400">{ach.description}</p>
+                      {!isUnlocked && <p className="text-rose-500 mt-1 uppercase italic">[LOCKED]</p>}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

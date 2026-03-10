@@ -21,7 +21,7 @@ const INITIAL_STATE: SudokuState = {
 };
 
 const Sudoku: React.FC<{ 
-  onGameOver: (s: number, v: boolean) => void; 
+  onGameOver: (s: number, v: boolean, metadata?: any) => void; 
   isPlaying: boolean;
   sfxVolume: number;
   hapticFeedback: boolean;
@@ -139,7 +139,7 @@ const Sudoku: React.FC<{
       const difficultyBonus = difficulty === 'Easy' ? 200 : difficulty === 'Medium' ? 500 : 1000;
       const timeBonus = Math.max(0, 1000 - time);
       setTimeout(() => {
-        onGameOver(difficultyBonus + timeBonus, true);
+        onGameOver(difficultyBonus + timeBonus, true, { difficulty, completed: true });
         clearSavedState();
       }, 1500);
     }

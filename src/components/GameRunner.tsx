@@ -21,7 +21,7 @@ import VictoryEffect from './VictoryEffect';
 interface GameRunnerProps {
   game: Game;
   onClose: () => void;
-  onSaveScore: (score: number) => void;
+  onSaveScore: (score: number, metadata?: any) => void;
   highScore: number;
   isDarkMode: boolean;
   isAnonymous: boolean;
@@ -48,7 +48,7 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
         handleClose();
       }
       if (typeof event.data === 'object' && event.data.type === 'gameScore') {
-        onSaveScore(event.data.score);
+        onSaveScore(event.data.score, event.data.metadata);
       }
     };
     window.addEventListener('message', handleMessage);
@@ -60,9 +60,9 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
     setTimeout(onClose, 400); 
   };
 
-  const handleGameOver = React.useCallback((finalScore: number, victory: boolean = false) => {
+  const handleGameOver = React.useCallback((finalScore: number, victory: boolean = false, metadata?: any) => {
     setCurrentScore(finalScore);
-    onSaveScore(finalScore);
+    onSaveScore(finalScore, metadata);
     setIsVictory(victory);
     setIsPlaying(false);
     setShowGameOver(true);
