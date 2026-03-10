@@ -41,7 +41,7 @@ const App: React.FC = () => {
   const [recentAchievement, setRecentAchievement] = useState<Achievement | null>(null);
   const [appUpdate, setAppUpdate] = useState<{ version: string; changelog: string[] } | null>(null);
 
-  const CURRENT_VERSION = '3.0.0';
+  const CURRENT_VERSION = '3.0.1';
 
   // Check for updates
   useEffect(() => {
