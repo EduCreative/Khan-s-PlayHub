@@ -100,7 +100,7 @@ const Tetris: React.FC<{
     }
 
     if (cleared > 0) {
-      const linePoints = [0, 100, 300, 500, 800];
+      const linePoints = [0, 40, 100, 300, 1200];
       const points = linePoints[cleared] * level;
       setScore(prev => {
         const next = prev + points;
@@ -199,7 +199,7 @@ const Tetris: React.FC<{
   const ghostPos = getGhostPos();
 
   return (
-    <div className="flex flex-col lg:flex-row items-center lg:items-center justify-center gap-2 lg:gap-8 p-1 md:p-4 w-full h-full animate-in fade-in zoom-in duration-500 overflow-hidden">
+    <div className="flex flex-col lg:flex-row items-center lg:items-center justify-center gap-4 lg:gap-8 p-6 md:p-10 w-full max-w-4xl bg-white/5 backdrop-blur-md rounded-[3rem] border border-white/10 shadow-2xl animate-in fade-in zoom-in duration-500 overflow-hidden">
       {/* Main Game Board */}
       <div className="relative bg-slate-950 border-2 lg:border-4 border-slate-800 rounded-xl lg:rounded-2xl p-0.5 lg:p-1 shadow-2xl overflow-hidden shrink-0">
         <div className="grid grid-cols-10 gap-px bg-slate-800/30">

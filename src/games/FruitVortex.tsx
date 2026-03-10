@@ -168,7 +168,7 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
     await new Promise(res => setTimeout(res, 600));
 
     // Calculate score
-    const points = matches.size * 10 * (comboRef.current + 1);
+    const points = matches.size * 2 * (comboRef.current + 1);
     setScore(prev => prev + points);
     comboRef.current += 1;
 
@@ -229,17 +229,31 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
 
   if (!difficulty) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 w-full max-w-md p-8">
-        <h2 className="text-2xl font-black uppercase italic text-indigo-400">Select Difficulty</h2>
-        {(['Easy', 'Medium', 'Hard'] as Difficulty[]).map(level => (
-          <button key={level} onClick={() => initGrid(level)} className="w-full py-4 glass-card rounded-2xl font-black uppercase hover:bg-indigo-500/10 transition-all">{level}</button>
-        ))}
+      <div className="flex flex-col items-center justify-center gap-6 w-full max-w-md p-10 bg-white/5 backdrop-blur-md rounded-[2.5rem] border border-white/10 shadow-2xl animate-in fade-in zoom-in duration-500">
+        <div className="text-center mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-500 text-3xl mx-auto mb-4">
+            <i className="fas fa-apple-whole"></i>
+          </div>
+          <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter">Select Difficulty</h2>
+          <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Calibrate Vortex Intensity</p>
+        </div>
+        <div className="grid grid-cols-1 gap-3 w-full">
+          {(['Easy', 'Medium', 'Hard'] as Difficulty[]).map(level => (
+            <button 
+              key={level} 
+              onClick={() => initGrid(level)} 
+              className="w-full py-5 bg-white dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 rounded-2xl font-black uppercase italic tracking-tighter hover:border-orange-500 hover:scale-[1.02] active:scale-95 transition-all text-slate-700 dark:text-white"
+            >
+              {level}
+            </button>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center gap-6 w-full max-w-md px-4">
+    <div className="flex flex-col items-center gap-6 w-full max-w-md px-6 py-8 bg-white/5 backdrop-blur-md rounded-[3rem] border border-white/10 shadow-2xl select-none">
       <div className="w-full flex justify-between items-end">
         <div className="flex flex-col">
           <span className="text-[10px] text-slate-500 font-black uppercase">Juice</span>

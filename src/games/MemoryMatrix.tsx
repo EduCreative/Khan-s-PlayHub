@@ -21,7 +21,20 @@ interface Card {
   color: string;
 }
 
+enum Difficulty {
+  Easy = 'Easy',
+  Medium = 'Medium',
+  Hard = 'Hard'
+}
+
+const DIFFICULTY_CONFIG = {
+  [Difficulty.Easy]: { pairs: [3, 3, 4, 4, 5], multiplier: 1, label: 'Easy' },
+  [Difficulty.Medium]: { pairs: [4, 5, 6, 7, 8], multiplier: 1.5, label: 'Medium' },
+  [Difficulty.Hard]: { pairs: [6, 7, 8, 9, 10], multiplier: 2.5, label: 'Hard' }
+};
+
 const MemoryMatrix: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean; sfxVolume: number; hapticFeedback: boolean }> = ({ onGameOver, isPlaying, sfxVolume, hapticFeedback }) => {
+  const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [level, setLevel] = useState(1);
   const [puzzleCount, setPuzzleCount] = useState(0);
   const [cards, setCards] = useState<Card[]>([]);
@@ -49,20 +62,18 @@ const MemoryMatrix: React.FC<{ onGameOver: (s: number) => void; isPlaying: boole
     }
   }, [hapticFeedback]);
 
-  const getPairsForLevel = (lvl: number) => {
-    if (lvl === 1) return 3; // 6 cards
-    if (lvl === 2) return 4; // 8 cards
-    if (lvl === 3) return 6; // 12 cards
-    if (lvl === 4) return 8; // 16 cards
-    return 10; // 20 cards max
-  };
+  const getPairsForLevel = useCallback((lvl: number, diff: Difficulty) => {
+    const config = DIFFICULTY_CONFIG[diff];
+    const index = Math.min(lvl - 1, config.pairs.length - 1);
+    return config.pairs[index];
+  }, []);
 
-  const initLevel = useCallback((lvl: number) => {
+  const initLevel = useCallback((lvl: number, diff: Difficulty) => {
     if (previewTimeoutRef.current) window.clearTimeout(previewTimeoutRef.current);
     
     setIsLevelClearing(false);
     setIsPreviewing(true);
-    const numPairs = getPairsForLevel(lvl);
+    const numPairs = getPairsForLevel(lvl, diff);
     const selectedIcons = ALL_ICONS.slice(0, numPairs);
     const pairIcons = [...selectedIcons, ...selectedIcons];
     
@@ -83,23 +94,25 @@ const MemoryMatrix: React.FC<{ onGameOver: (s: number) => void; isPlaying: boole
       setCards(prev => prev.map(c => ({ ...c, isFlipped: false })));
       setIsPreviewing(false);
     }, 2500);
-  }, []);
+  }, [getPairsForLevel]);
 
   useEffect(() => {
-    if (isPlaying) {
+    if (isPlaying && difficulty) {
       setLevel(1);
       setPuzzleCount(0);
       setScore(0);
       setMoves(0);
-      initLevel(1);
+      initLevel(1, difficulty);
+    } else if (!isPlaying) {
+      setDifficulty(null);
     }
     return () => {
       if (previewTimeoutRef.current) window.clearTimeout(previewTimeoutRef.current);
     };
-  }, [isPlaying, initLevel]);
+  }, [isPlaying, difficulty, initLevel]);
 
   const handleFlip = (id: number) => {
-    if (isPreviewing || isLevelClearing || flipped.length === 2 || cards[id].isFlipped || cards[id].isMatched) return;
+    if (!difficulty || isPreviewing || isLevelClearing || flipped.length === 2 || cards[id].isFlipped || cards[id].isMatched) return;
 
     playSfx('/sfx/flip.mp3', sfxVolume);
     triggerHapticFeedback();
@@ -126,7 +139,9 @@ const MemoryMatrix: React.FC<{ onGameOver: (s: number) => void; isPlaying: boole
             return updated;
           });
           setFlipped([]);
-          setScore(s => s + (50 * level));
+          const baseScore = 10 * level;
+          const multiplier = DIFFICULTY_CONFIG[difficulty].multiplier;
+          setScore(s => s + Math.round(baseScore * multiplier));
         }, 500);
       } else {
         setTimeout(() => {
@@ -134,28 +149,30 @@ const MemoryMatrix: React.FC<{ onGameOver: (s: number) => void; isPlaying: boole
             (c.id === first || c.id === second) ? { ...c, isFlipped: false } : c
           ));
           setFlipped([]);
-          setScore(s => Math.max(0, s - 5));
+          setScore(s => Math.max(0, s - 10));
         }, 1000);
       }
     }
   };
 
   const handleLevelComplete = () => {
+    if (!difficulty) return;
     setIsLevelClearing(true);
     setTimeout(() => {
       const nextPuzzleCount = puzzleCount + 1;
       if (nextPuzzleCount >= 3) {
         const nextLevel = level + 1;
         if (nextLevel > 5) {
-          onGameOver(score + 500);
+          const bonus = 100 * DIFFICULTY_CONFIG[difficulty].multiplier;
+          onGameOver(score + Math.round(bonus));
         } else {
           setLevel(nextLevel);
           setPuzzleCount(0);
-          initLevel(nextLevel);
+          initLevel(nextLevel, difficulty);
         }
       } else {
         setPuzzleCount(nextPuzzleCount);
-        initLevel(level);
+        initLevel(level, difficulty);
       }
     }, 1500);
   };
@@ -169,8 +186,42 @@ const MemoryMatrix: React.FC<{ onGameOver: (s: number) => void; isPlaying: boole
     return 'grid-cols-4 md:grid-cols-5';
   };
 
+  if (isPlaying && !difficulty) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-8 w-full max-w-lg px-6 py-12 bg-white/5 backdrop-blur-md rounded-[2.5rem] border border-white/10 shadow-2xl animate-in fade-in zoom-in duration-500">
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-500 text-3xl mx-auto mb-4">
+            <i className="fas fa-layer-group"></i>
+          </div>
+          <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter">Select Difficulty</h2>
+          <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Calibrate Neural Matrix Complexity</p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 w-full">
+          {Object.values(Difficulty).map((diff) => (
+            <button
+              key={diff}
+              onClick={() => setDifficulty(diff)}
+              className="group relative flex items-center justify-between p-6 rounded-2xl bg-white dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 hover:border-teal-500 transition-all hover:scale-[1.02] active:scale-95 overflow-hidden"
+            >
+              <div className="flex flex-col items-start">
+                <span className="text-xl font-black text-slate-800 dark:text-white uppercase italic">{diff}</span>
+                <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">
+                  {DIFFICULTY_CONFIG[diff].multiplier}x Juice Multiplier
+                </span>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-500 group-hover:bg-teal-500 group-hover:text-white transition-colors">
+                <i className="fas fa-chevron-right"></i>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col items-center gap-6 w-full max-w-lg px-4 select-none">
+    <div className="flex flex-col items-center gap-6 w-full max-w-lg px-4 py-6 select-none bg-white/5 backdrop-blur-md rounded-[3rem] border border-white/10 shadow-2xl">
       <div className="w-full flex justify-between items-center glass-card p-4 rounded-3xl border-teal-500/20 shadow-xl border-2 transition-colors">
         <div className="flex flex-col">
           <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Matrix Level</p>

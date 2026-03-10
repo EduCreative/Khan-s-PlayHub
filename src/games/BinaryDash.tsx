@@ -99,13 +99,13 @@ const BinaryDash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
 
     if (correct) {
       streakRef.current += 1;
-      const points = 10 + streakRef.current;
+      const points = 2 + Math.floor(streakRef.current / 2);
       scoreRef.current += points;
       setScore(scoreRef.current);
       setStreak(streakRef.current);
       bitsRef.current = bitsRef.current.filter(b => b.id !== bitToSort.id);
     } else {
-      integrityRef.current -= 10;
+      integrityRef.current -= 15;
       streakRef.current = 0;
       setIntegrity(integrityRef.current);
       setStreak(0);
