@@ -43,11 +43,39 @@ const Hub: React.FC<HubProps> = ({
   const handleVersionClick = () => {
     const nextCount = vClickCount + 1;
     audioService.playClick();
-    if (nextCount >= 5) {
+    if (nextCount >= 3) {
       onOpenAdmin();
       setVClickCount(0);
     } else {
       setVClickCount(nextCount);
+    }
+  };
+
+  const handleShare = async () => {
+    audioService.playNav();
+    const shareData = {
+      title: "Khan's PlayHub",
+      text: "Check out these awesome brain training games!",
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        await navigator.share(shareData);
+      } else {
+        throw new Error('Web Share not supported or desktop');
+      }
+    } catch (err) {
+      await navigator.clipboard.writeText(window.location.href);
+      // Show a temporary toast or alert
+      const btn = document.getElementById('share-btn');
+      if (btn) {
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check text-emerald-500"></i>';
+        setTimeout(() => {
+          btn.innerHTML = originalContent;
+        }, 2000);
+      }
     }
   };
 
@@ -67,16 +95,23 @@ const Hub: React.FC<HubProps> = ({
                 'text-rose-500 bg-rose-500 shadow-rose-500/50'
               }`} title={`Nexus Cloud Status: ${syncStatus.toUpperCase()}`} />
             </div>
-            <p className="text-[7px] md:text-[9px] font-black bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full uppercase tracking-widest ml-1 mt-2 hidden sm:inline-block border border-indigo-500/20">
+            <p className="text-[8px] md:text-[11px] font-black bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-1.5 rounded-full uppercase tracking-widest ml-1 mt-2 hidden sm:inline-block border-2 border-indigo-400/30 shadow-[0_0_15px_rgba(79,70,229,0.4)] animate-pulse">
               Free Focus Games & Brain Training: Boost Your Memory & Attention
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex flex-col items-end mr-2">
-            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Total Juice</span>
+          <div className="hidden sm:flex flex-col items-end mr-2 group relative">
+            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
+              Total Juice <i className="fas fa-circle-info text-[6px] opacity-50"></i>
+            </span>
             <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 tabular-nums italic leading-none">{totalScore.toLocaleString()}</span>
+            
+            {/* Tooltip */}
+            <div className="absolute bottom-full right-0 mb-2 w-32 p-2 bg-slate-900 text-[8px] text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 border border-white/10 text-center">
+              Sum of your high scores across all games
+            </div>
           </div>
           <button id="profile-btn" onClick={onOpenProfile} className="flex items-center gap-3 px-4 h-12 md:h-14 rounded-2xl bg-indigo-600 text-white shadow-xl hover:bg-indigo-500 transition-all active:scale-95 border-2 border-indigo-400/20">
              <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-white/20 flex items-center justify-center"><i className={`fas ${userProfile.avatar} text-xs`}></i></div>
@@ -85,19 +120,7 @@ const Hub: React.FC<HubProps> = ({
           <button id="leaderboard-header-btn" onClick={() => setFilter('Leaderboard')} className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-lg shadow-xl border-2 transition-all ${filter === 'Leaderboard' ? 'bg-amber-500 border-amber-400 text-white' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500'}`} title="Global Leaderboards">
             <i className="fas fa-trophy"></i>
           </button>
-          <button id="share-btn" onClick={() => {
-            audioService.playNav();
-            if (navigator.share) {
-              navigator.share({
-                title: "Khan's PlayHub",
-                text: "Check out these awesome brain training games!",
-                url: window.location.href,
-              }).catch(console.error);
-            } else {
-              navigator.clipboard.writeText(window.location.href);
-              alert("Link copied to clipboard!");
-            }
-          }} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all" title="Share this app">
+          <button id="share-btn" onClick={handleShare} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all" title="Share this app">
             <i className="fas fa-share-alt text-emerald-500"></i>
           </button>
           <button id="settings-btn" onClick={onOpenSettings} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all" title="App Settings">

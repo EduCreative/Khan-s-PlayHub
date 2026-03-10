@@ -1,0 +1,10 @@
+{
+  "version": "3.0.1",
+  "changelog": [
+    "Improved category organization",
+    "Fixed share button behavior on PC",
+    "Simplified Admin Console access (3 clicks)",
+    "Added background update checking",
+    "Clarified Total Juice calculation"
+  ]
+}

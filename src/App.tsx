@@ -39,6 +39,30 @@ const App: React.FC = () => {
   const [hapticFeedback, setHapticFeedback] = useState(true);
   const [syncStatus, setSyncStatus] = useState<'synced' | 'pending' | 'offline'>('synced');
   const [recentAchievement, setRecentAchievement] = useState<Achievement | null>(null);
+  const [appUpdate, setAppUpdate] = useState<{ version: string; changelog: string[] } | null>(null);
+
+  const CURRENT_VERSION = '3.0.0';
+
+  // Check for updates
+  useEffect(() => {
+    const checkUpdates = async () => {
+      try {
+        const response = await fetch('/version.json');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.version !== CURRENT_VERSION) {
+            setAppUpdate(data);
+          }
+        }
+      } catch (e) {
+        console.warn('Update check failed', e);
+      }
+    };
+
+    checkUpdates();
+    const interval = setInterval(checkUpdates, 1000 * 60 * 5); // Every 5 minutes
+    return () => clearInterval(interval);
+  }, []);
 
   // Sync audioService volume
   useEffect(() => {
@@ -337,6 +361,42 @@ const App: React.FC = () => {
         achievement={recentAchievement} 
         onClose={() => setRecentAchievement(null)} 
       />
+
+      {appUpdate && (
+        <div className="fixed bottom-24 left-4 right-4 md:left-auto md:right-8 md:w-80 z-[150] animate-in slide-in-from-bottom-10 duration-500">
+          <div className="glass-card p-6 border-indigo-500/30 shadow-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-3xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white">
+                <i className="fas fa-cloud-arrow-down"></i>
+              </div>
+              <div>
+                <h4 className="text-sm font-black uppercase italic dark:text-white">Update Available</h4>
+                <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">v{appUpdate.version} is ready</p>
+              </div>
+            </div>
+            <ul className="text-[10px] text-slate-500 dark:text-slate-400 mb-4 space-y-1">
+              {appUpdate.changelog.slice(0, 3).map((item, i) => (
+                <li key={i} className="flex gap-2">
+                  <span className="text-indigo-500">•</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <button 
+              onClick={() => window.location.reload()}
+              className="w-full py-3 bg-indigo-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/20"
+            >
+              Update Now
+            </button>
+            <button 
+              onClick={() => setAppUpdate(null)}
+              className="w-full py-2 mt-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-[9px] font-bold uppercase tracking-widest transition-colors"
+            >
+              Later
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
