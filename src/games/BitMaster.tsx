@@ -26,6 +26,7 @@ const BitMaster: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean 
     }
     setOptions(Array.from(opts).sort(() => Math.random() - 0.5));
     setFeedback(null);
+    setBursts([]);
   }, []);
 
   useEffect(() => {

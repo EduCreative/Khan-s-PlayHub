@@ -55,6 +55,7 @@ const QuickMath: React.FC<{ onGameOver: (s: number, victory?: boolean, metadata?
       if (ans + offset > 0) opts.add(ans + offset);
     }
     setOptions(Array.from(opts).sort(() => Math.random() - 0.5));
+    setBursts([]);
   }, [difficulty]);
 
   useEffect(() => {

@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 interface Particle {
   id: number;
@@ -14,6 +14,9 @@ interface Particle {
 
 const ParticleBurst: React.FC<{ x: number; y: number; color: string; onComplete?: () => void }> = ({ x, y, color, onComplete }) => {
   const [particles, setParticles] = useState<Particle[]>([]);
+
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
     const newParticles = Array.from({ length: 12 }).map((_, i) => ({
@@ -37,15 +40,15 @@ const ParticleBurst: React.FC<{ x: number; y: number; color: string; onComplete?
           life: p.life - 0.05
         })).filter(p => p.life > 0);
         
-        if (next.length === 0 && prev.length > 0 && onComplete) {
-          onComplete();
+        if (next.length === 0 && prev.length > 0 && onCompleteRef.current) {
+          onCompleteRef.current();
         }
         return next;
       });
     }, 30);
 
     return () => clearInterval(interval);
-  }, [x, y, color, onComplete]);
+  }, [x, y, color]); // Removed onComplete from dependencies
 
   return (
     <div className="fixed inset-0 pointer-events-none z-[100]">
