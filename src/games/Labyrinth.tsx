@@ -125,7 +125,7 @@ const Labyrinth: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean;
       if (mazeRef.current[ny][nx] === 2) {
         playSfx('/sfx/win.mp3', sfxVolume);
         triggerHapticFeedback();
-        const diffMult = difficulty === 'Easy' ? 1000 : difficulty === 'Medium' ? 2500 : 5000;
+        const diffMult = difficulty === 'Easy' ? 200 : difficulty === 'Medium' ? 500 : 1000;
         setScore(s => s + diffMult);
         setLevel(l => l + 1);
       }

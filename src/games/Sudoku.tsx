@@ -136,9 +136,10 @@ const Sudoku: React.FC<{
 
     if (isComplete) {
       setIsVictory(true);
-      const bonus = Math.max(0, 1000 - time * 0.5);
+      const difficultyBonus = difficulty === 'Easy' ? 200 : difficulty === 'Medium' ? 500 : 1000;
+      const timeBonus = Math.max(0, 1000 - time);
       setTimeout(() => {
-        onGameOver(bonus + 200, true);
+        onGameOver(difficultyBonus + timeBonus, true);
         clearSavedState();
       }, 1500);
     }

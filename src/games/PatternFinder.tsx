@@ -148,7 +148,7 @@ const PatternFinder: React.FC<{ onGameOver: (s: number) => void; isPlaying: bool
       playSfx('/sfx/correct.mp3', sfxVolume);
       triggerHapticFeedback();
       setFeedback('correct');
-      setScore(s => s + (level * 25));
+      setScore(s => s + 20);
       setLevel(l => l + 1);
       setTimeout(() => { setFeedback(null); generatePattern(); }, 500);
     } else {

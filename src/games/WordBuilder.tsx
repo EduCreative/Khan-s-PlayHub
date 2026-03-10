@@ -290,7 +290,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
       const blocksCount = isBounty ? 10 : Math.floor(word.length / 2);
       setTowerHeight(h => h + blocksCount);
       setStreak(s => s + 1);
-      setScore(s => s + (isBounty ? 500 : word.length * 15) + (streak > 2 ? streak * 5 : 0));
+      setScore(s => s + (isBounty ? 100 : word.length * 5) + (streak > 2 ? streak * 2 : 0));
       
       const { primary } = getThemeColors(themeIndex);
       spawnParticles(window.innerWidth / 2, 0, primary, 30);

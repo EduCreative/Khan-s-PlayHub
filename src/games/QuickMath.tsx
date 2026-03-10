@@ -99,7 +99,7 @@ const QuickMath: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean 
       }]);
 
       const difficultyMult = difficulty === 'Easy' ? 1 : difficulty === 'Medium' ? 1.5 : 2;
-      scoreRef.current += Math.floor((10 + (time > 30 ? 5 : 0)) * difficultyMult);
+      scoreRef.current += Math.floor(5 * difficultyMult);
       scoreRef.current = Math.round(scoreRef.current);
       setScore(scoreRef.current);
       setTime(t => Math.min(60, t + (difficulty === 'Easy' ? 3 : 2)));
