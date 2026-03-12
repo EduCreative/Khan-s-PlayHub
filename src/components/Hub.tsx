@@ -21,12 +21,14 @@ interface HubProps {
   onToggleFavorite: (id: string) => void;
   onOpenAdmin: () => void;
   onOpenSettings: () => void;
+  onOpenPrivacy: () => void;
 }
 
 const Hub: React.FC<HubProps> = ({ 
-  games, onSelectGame, filter, setFilter, highScores, userProfile, isDarkMode, syncStatus, onToggleTheme, onOpenProfile, onToggleFavorite, onOpenAdmin, onOpenSettings
+  games, onSelectGame, filter, setFilter, highScores, userProfile, isDarkMode, syncStatus, onToggleTheme, onOpenProfile, onToggleFavorite, onOpenAdmin, onOpenSettings, onOpenPrivacy
 }) => {
   const [vClickCount, setVClickCount] = useState(0);
+  const [adminClickCount, setAdminClickCount] = useState(0);
 
   const filteredGames = filter === 'All' 
     ? games 
@@ -43,11 +45,22 @@ const Hub: React.FC<HubProps> = ({
   const handleVersionClick = () => {
     const nextCount = vClickCount + 1;
     audioService.playClick();
-    if (nextCount >= 3) {
+    if (nextCount >= 5) {
       onOpenAdmin();
       setVClickCount(0);
     } else {
       setVClickCount(nextCount);
+    }
+  };
+
+  const handleAdminClick = () => {
+    const nextCount = adminClickCount + 1;
+    audioService.playClick();
+    if (nextCount >= 5) {
+      onOpenAdmin();
+      setAdminClickCount(0);
+    } else {
+      setAdminClickCount(nextCount);
     }
   };
 
@@ -235,8 +248,11 @@ const Hub: React.FC<HubProps> = ({
             <span className={`w-1.5 h-1.5 rounded-full animate-ping ${syncStatus === 'synced' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
             Nexus Cloud Protocol Enabled v3.0.1
           </span>
-          <button onClick={onOpenAdmin} className="text-[9px] font-bold text-slate-500/30 hover:text-indigo-500/40 transition-colors uppercase tracking-widest mt-2">
+          <button onClick={handleAdminClick} className="text-[9px] font-bold text-slate-500/60 hover:text-indigo-500 transition-colors uppercase tracking-widest mt-2">
              <i className="fas fa-terminal mr-2"></i> Access Admin Console
+          </button>
+          <button onClick={onOpenPrivacy} className="text-[9px] font-bold text-slate-500/60 hover:text-indigo-500 transition-colors uppercase tracking-widest mt-1">
+             <i className="fas fa-shield-halved mr-2"></i> Privacy Policy
           </button>
         </div>
       </footer>

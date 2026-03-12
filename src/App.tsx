@@ -8,6 +8,7 @@ import ParticleBackground from './components/ParticleBackground';
 import AdminPanel from './components/AdminPanel';
 import ProfileModal from './components/ProfileModal';
 import SettingsModal from './components/SettingsModal';
+import PrivacyPolicy from './components/PrivacyPolicy';
 import AchievementToast from './components/AchievementToast';
 import { cloud } from './services/cloud';
 import { ACHIEVEMENTS } from './achievements';
@@ -35,6 +36,7 @@ const App: React.FC = () => {
   const [showProfileSetup, setShowProfileSetup] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
   const [sfxVolume, setSfxVolume] = useState(0.5);
   const [hapticFeedback, setHapticFeedback] = useState(true);
   const [syncStatus, setSyncStatus] = useState<'synced' | 'pending' | 'offline'>('synced');
@@ -110,6 +112,10 @@ const App: React.FC = () => {
         window.history.pushState({ page: 'hub' }, '');
       } else if (showSettings) {
         setShowSettings(false);
+        audioService.playNav();
+        window.history.pushState({ page: 'hub' }, '');
+      } else if (showPrivacy) {
+        setShowPrivacy(false);
         audioService.playNav();
         window.history.pushState({ page: 'hub' }, '');
       } else {
@@ -299,6 +305,10 @@ const App: React.FC = () => {
               setShowSettings(true);
               audioService.playNav();
             }}
+            onOpenPrivacy={() => {
+              setShowPrivacy(true);
+              audioService.playNav();
+            }}
           />
         )}
       </main>
@@ -340,6 +350,15 @@ const App: React.FC = () => {
             setShowSettings(false);
             audioService.playNav();
           }}
+        />
+      )}
+
+      {showPrivacy && (
+        <PrivacyPolicy 
+          onClose={() => {
+            setShowPrivacy(false);
+            audioService.playNav();
+          }} 
         />
       )}
 
