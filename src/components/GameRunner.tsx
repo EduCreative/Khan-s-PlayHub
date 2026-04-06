@@ -16,6 +16,8 @@ import GrammarGuardian from '../games/GrammarGuardian';
 import ResonanceBreathing from '../games/ResonanceBreathing';
 import ReactionTest from '../games/ReactionTest';
 import Tetris from '../games/Tetris';
+import NeonRacer from '../games/NeonRacer';
+import SkyStrike from '../games/SkyStrike';
 import Logo from './Logo';
 import VictoryEffect from './VictoryEffect';
 
@@ -79,7 +81,7 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
     audioService.playClick();
   };
 
-  const renderGame = (sfxVolume: number, hapticFeedback: boolean) => {
+  const renderGame = () => {
     const commonProps = { onGameOver: handleGameOver, isPlaying, sfxVolume, hapticFeedback };
     
     switch (game.id) {
@@ -97,6 +99,8 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
       case 'resonance-breathing': return <ResonanceBreathing {...commonProps} />;
       case 'reaction-test': return <ReactionTest {...commonProps} />;
       case 'tetris': return <Tetris {...commonProps} onScoreUpdate={handleScoreUpdate} />;
+      case 'neon-racer': return <NeonRacer {...commonProps} />;
+      case 'sky-strike': return <SkyStrike {...commonProps} />;
       default:
         return (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
@@ -117,11 +121,12 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
           </button>
           <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl border border-white/10 backdrop-blur-md shadow-xl">
             <Logo size={24} showGlow={false} />
-            {isPlaying && game.id === 'tetris' ? (
+            {isPlaying ? (
               <div className="flex items-center gap-4">
+                <div className="h-4 w-px bg-white/20" />
                 <div className="flex flex-col">
-                  <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest">Score</span>
-                  <span className="text-sm font-black text-white tabular-nums italic leading-none">{currentScore.toLocaleString()}</span>
+                  <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest leading-none mb-1">Live Score</span>
+                  <span className="text-sm font-black text-white tabular-nums italic leading-none animate-in fade-in slide-in-from-top-1 duration-300">{currentScore.toLocaleString()}</span>
                 </div>
               </div>
             ) : (
@@ -190,7 +195,7 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
             </div>
           </div>
         ) : (
-          <div className="w-full h-full flex items-center justify-center animate-in fade-in zoom-in-95 duration-700">{renderGame(sfxVolume, hapticFeedback)}</div>
+          <div className="w-full h-full flex items-center justify-center animate-in fade-in zoom-in-95 duration-700">{renderGame()}</div>
         )}
       </div>
     </div>

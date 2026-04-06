@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 
 const ResonanceBreathing: React.FC<{ onGameOver: (score: number, victory?: boolean, metadata?: any) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
   const [phase, setPhase] = useState<'inhale' | 'exhale'>('inhale');
@@ -90,63 +89,34 @@ const ResonanceBreathing: React.FC<{ onGameOver: (score: number, victory?: boole
 
       <div className="relative w-64 h-64 flex items-center justify-center">
         {/* Expanding Rings Animation */}
-        <AnimatePresence>
-          {phase === 'inhale' && isActive && (
-            [1, 2, 3].map((i) => (
-              <motion.div
-                key={`ring-${i}`}
-                initial={{ scale: 0.5, opacity: 0.8 }}
-                animate={{ scale: 2.5, opacity: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ 
-                  duration: 4, 
-                  repeat: Infinity, 
-                  delay: i * 1.3,
-                  ease: "easeOut" 
-                }}
-                className="absolute w-32 h-32 border-2 border-indigo-400/30 rounded-full"
-              />
-            ))
-          )}
-        </AnimatePresence>
+        {phase === 'inhale' && isActive && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute w-32 h-32 border-2 border-indigo-400/30 rounded-full animate-ping" style={{ animationDuration: '3s' }} />
+            <div className="absolute w-32 h-32 border-2 border-indigo-400/30 rounded-full animate-ping" style={{ animationDuration: '3s', animationDelay: '1s' }} />
+            <div className="absolute w-32 h-32 border-2 border-indigo-400/30 rounded-full animate-ping" style={{ animationDuration: '3s', animationDelay: '2s' }} />
+          </div>
+        )}
 
         {/* Outer Glow */}
-        <motion.div 
-          animate={{ 
-            scale: phase === 'inhale' ? 1.8 : 1,
-            opacity: phase === 'inhale' ? 0.6 : 0.2,
-            filter: phase === 'inhale' ? 'blur(40px)' : 'blur(20px)'
-          }}
-          transition={{ duration: 5, ease: "easeInOut" }}
-          className="absolute inset-0 bg-indigo-500 rounded-full"
+        <div 
+          className={`absolute inset-0 bg-indigo-500 rounded-full transition-all duration-[5000ms] ease-in-out ${phase === 'inhale' ? 'scale-150 opacity-60 blur-3xl' : 'scale-100 opacity-20 blur-xl'}`}
         />
 
         {/* Lotus Icon with extra pulse */}
-        <motion.div
-          animate={{ 
-            scale: phase === 'inhale' ? 1.4 : 0.8,
-            rotate: phase === 'inhale' ? 90 : 0,
-            color: phase === 'inhale' ? '#818cf8' : '#6366f1'
-          }}
-          transition={{ duration: 5, ease: "easeInOut" }}
-          className="relative z-10 text-8xl drop-shadow-[0_0_30px_rgba(99,102,241,0.8)]"
+        <div
+          className={`relative z-10 text-8xl drop-shadow-[0_0_30px_rgba(99,102,241,0.8)] transition-all duration-[5000ms] ease-in-out ${phase === 'inhale' ? 'scale-125 rotate-90 text-indigo-300' : 'scale-75 rotate-0 text-indigo-500'}`}
         >
           <i className="fas fa-lotus"></i>
-        </motion.div>
+        </div>
 
         {/* Breathing Text */}
         <div className="absolute -bottom-16 left-0 right-0 text-center">
-          <AnimatePresence mode="wait">
-            <motion.p
-              key={phase}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="text-2xl font-black uppercase italic tracking-widest text-white"
-            >
-              {phase === 'inhale' ? 'Breathe In' : 'Breathe Out'}
-            </motion.p>
-          </AnimatePresence>
+          <p
+            className="text-2xl font-black uppercase italic tracking-widest text-white animate-in fade-in slide-in-from-top-2 duration-500"
+            key={phase}
+          >
+            {phase === 'inhale' ? 'Breathe In' : 'Breathe Out'}
+          </p>
           <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mt-2">Coherence Protocol Active</p>
         </div>
       </div>

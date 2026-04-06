@@ -141,5 +141,25 @@ export const GAMES: Game[] = [
     color: 'from-emerald-500 to-teal-700',
     description: 'Repair broken sentences by selecting the correct grammatical form.',
     instructions: ['Read the sentence', 'Identify the error', 'Select the correct word']
+  },
+  {
+    id: 'neon-racer',
+    name: 'Neon Racer',
+    tagline: 'High-Speed Cyber Circuit',
+    category: Category.Arcade,
+    icon: 'fa-car',
+    color: 'from-yellow-400 to-orange-600',
+    description: 'Dodge traffic and collect energy cells in a high-speed neon-drenched race.',
+    instructions: ['Use arrows or touch to steer', 'Avoid other cars', 'Collect yellow energy cells']
+  },
+  {
+    id: 'sky-strike',
+    name: 'Sky Strike',
+    tagline: 'Aerial Combat Protocol',
+    category: Category.Arcade,
+    icon: 'fa-plane',
+    color: 'from-blue-400 to-indigo-600',
+    description: 'Pilot a high-tech jet, dodge incoming missiles, and neutralize enemy threats.',
+    instructions: ['Use arrows or touch to move', 'Tap or Space to fire', 'Avoid enemy fire and collisions']
   }
 ];

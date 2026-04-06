@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { motion } from 'motion/react';
 
 interface PrivacyPolicyProps {
   onClose: () => void;
@@ -8,12 +7,10 @@ interface PrivacyPolicyProps {
 
 const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onClose }) => {
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-6">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-300">
       <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl" onClick={onClose} />
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-[2.5rem] border-2 border-slate-200 dark:border-indigo-500/20 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+      <div 
+        className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-[2.5rem] border-2 border-slate-200 dark:border-indigo-500/20 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 slide-in-from-bottom-10 duration-500"
       >
         <div className="p-6 md:p-8 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-white/5">
           <div>
@@ -82,7 +79,7 @@ const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onClose }) => {
             Got it, Thanks!
           </button>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };

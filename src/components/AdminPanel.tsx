@@ -9,6 +9,8 @@ import {
   PieChart, Pie, Cell, Legend 
 } from 'recharts';
 
+import ConfirmModal from './ConfirmModal';
+
 const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6'];
 
 const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
@@ -17,6 +19,7 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'games' | 'pwa'>('overview');
+  const [confirmDeleteDeviceId, setConfirmDeleteDeviceId] = useState<string | null>(null);
 
   const downloadIcon = (size: number) => {
     const canvas = document.createElement('canvas');
@@ -115,13 +118,12 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   }, []);
 
   const handleDeleteUser = async (deviceId: string) => {
-    if (confirm('Are you sure you want to wipe this operative\'s data?')) {
-      audioService.playError();
-      const success = await cloud.deleteUser(deviceId);
-      if (success) {
-        setUsers(prev => prev.filter(u => u.deviceId !== deviceId));
-      }
+    audioService.playError();
+    const success = await cloud.deleteUser(deviceId);
+    if (success) {
+      setUsers(prev => prev.filter(u => u.deviceId !== deviceId));
     }
+    setConfirmDeleteDeviceId(null);
   };
 
   return (
@@ -406,7 +408,7 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                             <td className="p-8 text-slate-500 text-xs">{new Date(user.joinedAt).toLocaleDateString()}</td>
                             <td className="p-8 text-right">
                               <button 
-                                onClick={() => handleDeleteUser(user.deviceId)}
+                                onClick={() => setConfirmDeleteDeviceId(user.deviceId)}
                                 className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all shadow-lg shadow-rose-500/0 hover:shadow-rose-500/20"
                                 title="Wipe Operative Data"
                               >
@@ -512,6 +514,17 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           </div>
         )}
       </div>
+
+      {confirmDeleteDeviceId && (
+        <ConfirmModal 
+          title="Wipe Operative?"
+          message="This action will permanently erase all neural data and scores for this operative from the Nexus Cloud. This cannot be undone."
+          confirmText="Wipe Data"
+          cancelText="Abort"
+          onConfirm={() => handleDeleteUser(confirmDeleteDeviceId)}
+          onCancel={() => setConfirmDeleteDeviceId(null)}
+        />
+      )}
     </div>
   );
 };

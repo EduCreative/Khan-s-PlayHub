@@ -12,15 +12,14 @@ export function useSavableGameState<T>(key: string, initialState: T): [T, (state
     }
   });
 
+  // Persist state changes in useEffect
+  useEffect(() => {
+    localStorage.setItem(`khans-playhub-game-${key}`, JSON.stringify(state));
+  }, [key, state]);
+
   const updateState = useCallback((newState: T | ((prev: T) => T)) => {
-    setState(prev => {
-      const resolvedState = typeof newState === 'function' 
-        ? (newState as (prev: T) => T)(prev) 
-        : newState;
-      localStorage.setItem(`khans-playhub-game-${key}`, JSON.stringify(resolvedState));
-      return resolvedState;
-    });
-  }, [key]);
+    setState(newState);
+  }, []);
 
   const clearState = useCallback(() => {
     setState(initialState);

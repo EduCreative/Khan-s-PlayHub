@@ -49,7 +49,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const checkUpdates = async () => {
       try {
-        const response = await fetch('/version.json');
+        const response = await fetch(`/version.json?t=${Date.now()}`);
         if (response.ok) {
           const data = await response.json();
           if (data.version !== CURRENT_VERSION) {

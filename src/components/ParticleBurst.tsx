@@ -14,9 +14,12 @@ interface Particle {
 
 const ParticleBurst: React.FC<{ x: number; y: number; color: string; onComplete?: () => void }> = ({ x, y, color, onComplete }) => {
   const [particles, setParticles] = useState<Particle[]>([]);
-
-  const onCompleteRef = useRef(onComplete);
-  onCompleteRef.current = onComplete;
+  const [hasStarted, setHasStarted] = useState(false);
+  const onCompleteRef = useRef<(() => void) | undefined>(onComplete);
+  
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
     const newParticles = Array.from({ length: 12 }).map((_, i) => ({
@@ -30,25 +33,27 @@ const ParticleBurst: React.FC<{ x: number; y: number; color: string; onComplete?
       life: 1.0
     }));
     setParticles(newParticles);
+    setHasStarted(true);
 
     const interval = setInterval(() => {
-      setParticles(prev => {
-        const next = prev.map(p => ({
-          ...p,
-          x: p.x + p.vx,
-          y: p.y + p.vy,
-          life: p.life - 0.05
-        })).filter(p => p.life > 0);
-        
-        if (next.length === 0 && prev.length > 0 && onCompleteRef.current) {
-          onCompleteRef.current();
-        }
-        return next;
-      });
+      setParticles(prev => prev.map(p => ({
+        ...p,
+        x: p.x + p.vx,
+        y: p.y + p.vy,
+        life: p.life - 0.05
+      })).filter(p => p.life > 0));
     }, 30);
 
     return () => clearInterval(interval);
-  }, [x, y, color]); // Removed onComplete from dependencies
+  }, [x, y, color]);
+
+  // Handle completion in a separate effect to avoid side effects during state updates
+  useEffect(() => {
+    if (hasStarted && particles.length === 0 && onCompleteRef.current) {
+      onCompleteRef.current();
+      onCompleteRef.current = undefined; // Fire only once
+    }
+  }, [particles, hasStarted]);
 
   return (
     <div className="fixed inset-0 pointer-events-none z-[100]">

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { Achievement } from '../types';
 
 interface AchievementToastProps {
@@ -14,23 +13,23 @@ const AchievementToast: React.FC<AchievementToastProps> = ({ achievement, onClos
     if (achievement) {
       setVisible(true);
       const timer = setTimeout(() => {
-        setVisible(false);
-        setTimeout(onClose, 500); // Wait for exit animation
+        setVisible(true); // Keep visible for exit animation
+        setTimeout(() => {
+          setVisible(false);
+          onClose();
+        }, 500);
       }, 5000);
       return () => clearTimeout(timer);
     }
   }, [achievement, onClose]);
 
+  if (!achievement || !visible) return null;
+
   return (
-    <AnimatePresence>
-      {visible && achievement && (
-        <motion.div
-          initial={{ y: 100, opacity: 0, scale: 0.8 }}
-          animate={{ y: 0, opacity: 1, scale: 1 }}
-          exit={{ y: -100, opacity: 0, scale: 0.8 }}
-          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] w-full max-w-sm"
-        >
-          <div className="glass-card p-4 rounded-[2rem] border-2 border-amber-500/50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-[0_0_50px_rgba(245,158,11,0.3)] flex items-center gap-4 overflow-hidden relative">
+    <div
+      className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] w-full max-w-sm animate-in slide-in-from-bottom-20 duration-500"
+    >
+      <div className="glass-card p-4 rounded-[2rem] border-2 border-amber-500/50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-[0_0_50px_rgba(245,158,11,0.3)] flex items-center gap-4 overflow-hidden relative">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 animate-pulse" />
             
             <div className={`w-14 h-14 rounded-2xl bg-${achievement.color}-500/20 flex items-center justify-center text-2xl text-amber-500 shadow-inner`}>
@@ -47,9 +46,7 @@ const AchievementToast: React.FC<AchievementToastProps> = ({ achievement, onClos
               <i className={`fas ${achievement.icon}`}></i>
             </div>
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    </div>
   );
 };
 

@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 
 const QUESTIONS = [
   { sentence: "They ____ going to the park yesterday.", options: ["were", "was", "are", "be"], answer: "were", explanation: "'They' is plural, and 'yesterday' indicates past tense, so 'were' is correct." },
@@ -205,13 +204,10 @@ const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: bo
           })}
         </div>
 
-        <AnimatePresence mode="wait">
+        <div className="w-full mt-2">
           {isSubmitted && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className={`w-full p-6 rounded-3xl border-2 ${selectedOption === current.answer ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}`}
+            <div 
+              className={`w-full p-6 rounded-3xl border-2 mb-4 animate-in fade-in slide-in-from-top-2 duration-300 ${selectedOption === current.answer ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}`}
             >
               <div className="flex items-center gap-3 mb-2">
                 <i className={`fas ${selectedOption === current.answer ? 'fa-check-circle text-emerald-500' : 'fa-times-circle text-rose-500'} text-xl`}></i>
@@ -222,11 +218,9 @@ const GrammarGuardian: React.FC<{ onGameOver: (s: number) => void; isPlaying: bo
               <p className="text-sm font-medium text-slate-700 dark:text-slate-300 leading-relaxed">
                 {current.explanation}
               </p>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
 
-        <div className="w-full mt-2">
           {!isSubmitted ? (
             <button 
               onClick={handleSubmit}
