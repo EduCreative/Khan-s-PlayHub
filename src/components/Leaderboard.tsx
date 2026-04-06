@@ -23,8 +23,8 @@ const SCORING_GUIDE = [
   { game: "Memory Matrix", action: "Match / Level", scoring: "10 / 100", note: "Mistake penalty applies" },
   { game: "Binary Dash", action: "Process", scoring: "2 + Streak/2", note: "Integrity penalty on miss" },
   { game: "Resonance Breathing", action: "Breath Cycle", scoring: "10 Juice", note: "6 breaths per minute" },
-  { game: "Neon Racer", action: "Obstacle / Collectible", scoring: "2 / 10", note: "Speed increases over time" },
-  { game: "Sky Strike", action: "Enemy Destroyed", scoring: "10", note: "Auto-fire on touch" }
+  { game: "Neon Racer", action: "Obstacle / Collectible", scoring: "1 / 5", note: "Speed increases over time" },
+  { game: "Sky Strike", action: "Enemy Destroyed", scoring: "10 / 30", note: "Auto-fire on touch" }
 ];
 
 const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({ games, onBack }) => {

@@ -53,16 +53,40 @@ const SkyStrike: React.FC<SkyStrikeProps> = ({ onGameOver, isPlaying, sfxVolume,
     window.addEventListener('keyup', handleKeyUp);
 
     const spawnEnemy = () => {
+      const state = gameState.current;
+      const score = scoreRef.current;
+      
+      // Difficulty scaling
+      const heavyChance = Math.min(0.4, score / 2000);
+      const isHeavy = Math.random() < heavyChance;
+      
       const x = Math.random() * (canvas.width - 40);
-      gameState.current.enemies.push({
-        x,
-        y: -50,
-        width: 40,
-        height: 40,
-        speed: 2 + Math.random() * 2,
-        health: 1,
-        color: '#f43f5e'
-      });
+      
+      if (isHeavy) {
+        state.enemies.push({
+          x,
+          y: -60,
+          width: 50,
+          height: 50,
+          speed: 1.5 + Math.random() * 1,
+          health: 3,
+          maxHealth: 3,
+          color: '#9333ea', // Purple for heavy
+          type: 'heavy'
+        });
+      } else {
+        state.enemies.push({
+          x,
+          y: -50,
+          width: 40,
+          height: 40,
+          speed: 2 + Math.random() * 2,
+          health: 1,
+          maxHealth: 1,
+          color: '#f43f5e', // Red for normal
+          type: 'normal'
+        });
+      }
     };
 
     const fireBullet = () => {
@@ -126,7 +150,8 @@ const SkyStrike: React.FC<SkyStrikeProps> = ({ onGameOver, isPlaying, sfxVolume,
       state.player.y = Math.max(0, Math.min(canvas.height - state.player.height, state.player.y));
 
       // Spawning
-      if (time - state.lastEnemyTime > 1000) {
+      const spawnInterval = Math.max(400, 1000 - Math.floor(scoreRef.current / 100) * 50);
+      if (time - state.lastEnemyTime > spawnInterval) {
         spawnEnemy();
         state.lastEnemyTime = time;
       }
@@ -134,7 +159,10 @@ const SkyStrike: React.FC<SkyStrikeProps> = ({ onGameOver, isPlaying, sfxVolume,
       // Update Bullets
       state.bullets.forEach((bullet, bIdx) => {
         bullet.y -= bullet.speed;
-        if (bullet.y < -20) state.bullets.splice(bIdx, 1);
+        if (bullet.y < -20) {
+          state.bullets.splice(bIdx, 1);
+          return;
+        }
 
         // Bullet-Enemy Collision
         state.enemies.forEach((enemy, eIdx) => {
@@ -145,11 +173,19 @@ const SkyStrike: React.FC<SkyStrikeProps> = ({ onGameOver, isPlaying, sfxVolume,
             bullet.y + bullet.height > enemy.y
           ) {
             state.bullets.splice(bIdx, 1);
-            createParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, enemy.color);
-            state.enemies.splice(eIdx, 1);
-            scoreRef.current += 10;
-            setScore(scoreRef.current);
-            if (hapticFeedback) audioService.vibrate(10);
+            enemy.health -= 1;
+            
+            if (enemy.health <= 0) {
+              createParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, enemy.color);
+              state.enemies.splice(eIdx, 1);
+              scoreRef.current += enemy.type === 'heavy' ? 30 : 10;
+              setScore(scoreRef.current);
+              if (hapticFeedback) audioService.vibrate(20);
+            } else {
+              // Hit effect
+              createParticles(bullet.x, bullet.y, '#fff');
+              if (hapticFeedback) audioService.vibrate(5);
+            }
           }
         });
       });
@@ -277,6 +313,19 @@ const SkyStrike: React.FC<SkyStrikeProps> = ({ onGameOver, isPlaying, sfxVolume,
         ctx.fill();
         
         ctx.restore();
+
+        // Health Bar for Heavy Enemies
+        if (e.type === 'heavy' && e.health < e.maxHealth) {
+          const barWidth = e.width;
+          const barHeight = 4;
+          const healthPercent = e.health / e.maxHealth;
+          
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+          ctx.fillRect(e.x, e.y - 10, barWidth, barHeight);
+          
+          ctx.fillStyle = '#22c55e';
+          ctx.fillRect(e.x, e.y - 10, barWidth * healthPercent, barHeight);
+        }
       });
 
       // Draw Particles

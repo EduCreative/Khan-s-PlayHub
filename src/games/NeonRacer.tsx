@@ -18,6 +18,9 @@ const NeonRacer: React.FC<NeonRacerProps> = ({ onGameOver, isPlaying, sfxVolume,
     obstacles: [] as any[],
     collectibles: [] as any[],
     particles: [] as any[],
+    backgroundStars: [] as any[],
+    cityBuildings: [] as any[],
+    playerTrail: [] as { x: number, y: number, opacity: number }[],
     roadOffset: 0,
     speed: 5,
     laneWidth: 80,
@@ -26,7 +29,8 @@ const NeonRacer: React.FC<NeonRacerProps> = ({ onGameOver, isPlaying, sfxVolume,
     lastCollectibleTime: 0,
     keys: {} as { [key: string]: boolean },
     gameOver: false,
-    frame: 0
+    frame: 0,
+    shake: 0
   });
 
   useEffect(() => {
@@ -36,6 +40,23 @@ const NeonRacer: React.FC<NeonRacerProps> = ({ onGameOver, isPlaying, sfxVolume,
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Initialize parallax background
+    gameState.current.backgroundStars = Array.from({ length: 40 }).map(() => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: Math.random() * 2 + 1,
+      speed: Math.random() * 0.3 + 0.1,
+      opacity: Math.random() * 0.5 + 0.2
+    }));
+
+    gameState.current.cityBuildings = Array.from({ length: 8 }).map((_, i) => ({
+      x: i * 50,
+      width: 30 + Math.random() * 40,
+      height: 50 + Math.random() * 100,
+      speed: 0.5,
+      color: `hsla(220, 40%, ${10 + Math.random() * 10}%, 0.8)`
+    }));
 
     const handleKeyDown = (e: KeyboardEvent) => {
       gameState.current.keys[e.key] = true;
@@ -74,15 +95,18 @@ const NeonRacer: React.FC<NeonRacerProps> = ({ onGameOver, isPlaying, sfxVolume,
       });
     };
 
-    const createParticles = (x: number, y: number, color: string) => {
-      for (let i = 0; i < 10; i++) {
+    const createParticles = (x: number, y: number, color: string, count = 20) => {
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 6 + 2;
         gameState.current.particles.push({
           x,
           y,
-          vx: (Math.random() - 0.5) * 6,
-          vy: (Math.random() - 0.5) * 6,
-          size: Math.random() * 3 + 1,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed + (gameState.current.speed * 0.5),
+          size: Math.random() * 4 + 2,
           life: 1,
+          decay: Math.random() * 0.02 + 0.015,
           color
         });
       }
@@ -95,6 +119,27 @@ const NeonRacer: React.FC<NeonRacerProps> = ({ onGameOver, isPlaying, sfxVolume,
       
       state.frame++;
       
+      // Update background (parallax)
+      state.backgroundStars.forEach(star => {
+        star.y += star.speed;
+        if (star.y > canvas.height) {
+          star.y = -10;
+          star.x = Math.random() * canvas.width;
+        }
+      });
+
+      state.cityBuildings.forEach(b => {
+        b.y = (b.y || 0) + b.speed;
+        if (b.y > canvas.height) b.y = -b.height;
+      });
+
+      // Player Trail
+      if (state.frame % 2 === 0) {
+        state.playerTrail.unshift({ x: state.player.x, y: state.player.y, opacity: 0.5 });
+        if (state.playerTrail.length > 10) state.playerTrail.pop();
+      }
+      state.playerTrail.forEach(t => t.opacity -= 0.05);
+
       // Movement
       if (state.keys['ArrowLeft'] || state.keys['a']) {
         state.player.x -= state.player.speed;
@@ -127,7 +172,7 @@ const NeonRacer: React.FC<NeonRacerProps> = ({ onGameOver, isPlaying, sfxVolume,
         obs.y += state.speed + obs.speed;
         if (obs.y > canvas.height) {
           state.obstacles.splice(index, 1);
-          scoreRef.current += 2;
+          scoreRef.current += 1;
           setScore(scoreRef.current);
         }
 
@@ -139,7 +184,8 @@ const NeonRacer: React.FC<NeonRacerProps> = ({ onGameOver, isPlaying, sfxVolume,
           state.player.y + state.player.height > obs.y
         ) {
           state.gameOver = true;
-          createParticles(state.player.x + state.player.width / 2, state.player.y + state.player.height / 2, '#06b6d4');
+          state.shake = 20;
+          createParticles(state.player.x + state.player.width / 2, state.player.y + state.player.height / 2, '#06b6d4', 40);
           if (hapticFeedback) audioService.vibrate(50);
           onGameOver(scoreRef.current);
         }
@@ -160,10 +206,11 @@ const NeonRacer: React.FC<NeonRacerProps> = ({ onGameOver, isPlaying, sfxVolume,
           state.player.y + state.player.height > col.y
         ) {
           state.collectibles.splice(index, 1);
-          scoreRef.current += 10;
+          scoreRef.current += 5;
+          state.shake = 5;
           setScore(scoreRef.current);
           audioService.playClick();
-          createParticles(col.x + col.width / 2, col.y + col.height / 2, '#fbbf24');
+          createParticles(col.x + col.width / 2, col.y + col.height / 2, '#fbbf24', 25);
           if (hapticFeedback) audioService.vibrate(10);
         }
       });
@@ -172,9 +219,15 @@ const NeonRacer: React.FC<NeonRacerProps> = ({ onGameOver, isPlaying, sfxVolume,
       state.particles.forEach((p, index) => {
         p.x += p.vx;
         p.y += p.vy;
-        p.life -= 0.02;
+        p.vx *= 0.96;
+        p.vy *= 0.96;
+        p.life -= p.decay;
         if (p.life <= 0) state.particles.splice(index, 1);
       });
+
+      // Update shake
+      if (state.shake > 0.1) state.shake *= 0.9;
+      else state.shake = 0;
 
       // Difficulty increase
       state.speed += 0.001;
@@ -187,7 +240,35 @@ const NeonRacer: React.FC<NeonRacerProps> = ({ onGameOver, isPlaying, sfxVolume,
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const state = gameState.current;
 
-      // Draw Road
+      ctx.save();
+      if (state.shake > 0) {
+        ctx.translate((Math.random() - 0.5) * state.shake, (Math.random() - 0.5) * state.shake);
+      }
+
+      // Draw Background (Deep Space)
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Parallax Stars
+      state.backgroundStars.forEach(star => {
+        ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Distant City Silhouettes (Parallax)
+      state.cityBuildings.forEach(b => {
+        ctx.fillStyle = b.color;
+        ctx.fillRect(b.x, b.y || 0, b.width, b.height);
+        // Windows
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+        for(let j=0; j<3; j++) {
+          ctx.fillRect(b.x + 5, (b.y || 0) + 10 + j*20, b.width - 10, 5);
+        }
+      });
+
+      // Draw Road with perspective grid
       const roadGrad = ctx.createLinearGradient(0, 0, canvas.width, 0);
       roadGrad.addColorStop(0, '#0f172a');
       roadGrad.addColorStop(0.5, '#1e293b');
@@ -195,22 +276,33 @@ const NeonRacer: React.FC<NeonRacerProps> = ({ onGameOver, isPlaying, sfxVolume,
       ctx.fillStyle = roadGrad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Side glow
-      ctx.shadowBlur = 20;
+      // Horizontal grid lines (perspective)
+      ctx.strokeStyle = 'rgba(79, 70, 229, 0.15)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 12; i++) {
+        const y = ((i * 50 + state.roadOffset) % canvas.height);
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+
+      // Side glow lines (Neon Rails)
+      ctx.shadowBlur = 25;
       ctx.shadowColor = '#4f46e5';
-      ctx.strokeStyle = '#4f46e5';
-      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#6366f1';
+      ctx.lineWidth = 6;
       ctx.beginPath();
-      ctx.moveTo(2, 0);
-      ctx.lineTo(2, canvas.height);
+      ctx.moveTo(4, 0);
+      ctx.lineTo(4, canvas.height);
       ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(canvas.width - 2, 0);
-      ctx.lineTo(canvas.width - 2, canvas.height);
+      ctx.moveTo(canvas.width - 4, 0);
+      ctx.lineTo(canvas.width - 4, canvas.height);
       ctx.stroke();
 
       // Road markings
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
       ctx.setLineDash([40, 60]);
       ctx.lineDashOffset = -state.roadOffset;
       ctx.lineWidth = 2;
@@ -224,55 +316,83 @@ const NeonRacer: React.FC<NeonRacerProps> = ({ onGameOver, isPlaying, sfxVolume,
       ctx.setLineDash([]);
 
       // Draw Particles
+      ctx.globalCompositeOperation = 'lighter';
       state.particles.forEach(p => {
         ctx.globalAlpha = p.life;
         ctx.fillStyle = p.color;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = p.color;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
       });
       ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
 
-      // Draw Player
-      ctx.shadowBlur = 20;
-      ctx.shadowColor = '#06b6d4';
-      ctx.fillStyle = '#06b6d4';
+      // Draw Player Trail (Motion Blur)
+      state.playerTrail.forEach((t, i) => {
+        if (t.opacity <= 0) return;
+        ctx.globalAlpha = t.opacity * 0.3;
+        ctx.fillStyle = '#06b6d4';
+        ctx.beginPath();
+        ctx.roundRect(t.x, t.y, state.player.width, state.player.height, 8);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+
+      // Draw Player with Bloom
+      const drawGlow = (x: number, y: number, w: number, h: number, color: string, blur: number) => {
+        ctx.shadowBlur = blur;
+        ctx.shadowColor = color;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, h, 8);
+        ctx.fill();
+      };
+
+      // Player Bloom layers
+      drawGlow(state.player.x, state.player.y, state.player.width, state.player.height, 'rgba(6, 182, 212, 0.4)', 40);
+      drawGlow(state.player.x, state.player.y, state.player.width, state.player.height, '#22d3ee', 15);
       
-      // Car body
+      // Car body details
+      ctx.fillStyle = '#0891b2';
       ctx.beginPath();
-      ctx.roundRect(state.player.x, state.player.y, state.player.width, state.player.height, 8);
+      ctx.roundRect(state.player.x + 4, state.player.y + 4, state.player.width - 8, state.player.height - 8, 6);
       ctx.fill();
       
       // Windshield
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
       ctx.fillRect(state.player.x + 8, state.player.y + 12, state.player.width - 16, 12);
 
       // Headlights
-      ctx.fillStyle = '#fff';
+      ctx.shadowBlur = 20;
       ctx.shadowColor = '#fff';
-      ctx.shadowBlur = 10;
-      ctx.fillRect(state.player.x + 5, state.player.y + 2, 8, 4);
-      ctx.fillRect(state.player.x + state.player.width - 13, state.player.y + 2, 8, 4);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(state.player.x + 6, state.player.y + 2, 8, 5);
+      ctx.fillRect(state.player.x + state.player.width - 14, state.player.y + 2, 8, 5);
 
-      // Draw Obstacles
+      // Draw Obstacles with Bloom
       state.obstacles.forEach(obs => {
-        ctx.shadowColor = obs.glow;
-        ctx.shadowBlur = 15;
-        ctx.fillStyle = obs.color;
-        ctx.beginPath();
-        ctx.roundRect(obs.x, obs.y, obs.width, obs.height, 8);
-        ctx.fill();
+        drawGlow(obs.x, obs.y, obs.width, obs.height, obs.glow.replace(')', ', 0.5)').replace('hsl', 'hsla'), 30);
+        drawGlow(obs.x, obs.y, obs.width, obs.height, obs.color, 15);
         
         // Detail
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        ctx.fillRect(obs.x + 5, obs.y + 10, obs.width - 10, 5);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(obs.x + 6, obs.y + 12, obs.width - 12, 8);
+        
+        // Rear lights
+        ctx.fillStyle = 'rgba(255, 50, 50, 0.9)';
+        ctx.shadowColor = 'red';
+        ctx.shadowBlur = 10;
+        ctx.fillRect(obs.x + 4, obs.y + obs.height - 8, 8, 4);
+        ctx.fillRect(obs.x + obs.width - 12, obs.y + obs.height - 8, 8, 4);
       });
 
       // Draw Collectibles
       state.collectibles.forEach(col => {
-        const pulse = Math.sin(state.frame * 0.1) * 5;
+        const pulse = Math.sin(state.frame * 0.2) * 6;
         ctx.shadowColor = '#fbbf24';
-        ctx.shadowBlur = 20 + pulse;
+        ctx.shadowBlur = 30 + pulse * 2;
         ctx.fillStyle = '#fbbf24';
         ctx.beginPath();
         ctx.arc(col.x + col.width / 2, col.y + col.height / 2, col.width / 2 + pulse / 2, 0, Math.PI * 2);
@@ -284,6 +404,13 @@ const NeonRacer: React.FC<NeonRacerProps> = ({ onGameOver, isPlaying, sfxVolume,
         ctx.fill();
       });
 
+      // Scanline Overlay
+      ctx.fillStyle = 'rgba(18, 24, 38, 0.1)';
+      for(let i=0; i<canvas.height; i+=4) {
+        ctx.fillRect(0, i, canvas.width, 1);
+      }
+
+      ctx.restore();
       ctx.shadowBlur = 0;
     };
 
