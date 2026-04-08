@@ -8,6 +8,7 @@ interface GameCardProps {
   index: number;
   onPlay: () => void;
   highScore: number;
+  globalRecord?: number;
   isFavorite: boolean;
   onToggleFavorite: () => void;
 }
@@ -23,7 +24,7 @@ const GameHero: React.FC<{ game: Game }> = ({ game }) => {
   );
 };
 
-const GameCard: React.FC<GameCardProps> = ({ game, onPlay, highScore, index, isFavorite, onToggleFavorite }) => {
+const GameCard: React.FC<GameCardProps> = ({ game, onPlay, highScore, globalRecord, index, isFavorite, onToggleFavorite }) => {
   return (
     <div className="group relative glass-card rounded-[2.5rem] overflow-hidden cursor-pointer transition-all duration-500 hover:-translate-y-4 hover:shadow-3xl hover:shadow-indigo-500/30 active:scale-95 stagger-item" 
       style={{ animationDelay: `${index * 80}ms` }}
@@ -51,8 +52,16 @@ const GameCard: React.FC<GameCardProps> = ({ game, onPlay, highScore, index, isF
 
         <div className="flex items-center justify-between mt-auto">
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Elite Score</span>
-            <span className="text-indigo-600 dark:text-indigo-300 font-black text-xl italic tabular-nums">{highScore.toLocaleString()}</span>
+            <div className="flex flex-col mb-2">
+              <span className="text-[8px] uppercase tracking-widest text-slate-500 font-bold">Personal Best</span>
+              <span className="text-indigo-600 dark:text-indigo-300 font-black text-lg italic tabular-nums leading-none">{highScore.toLocaleString()}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[8px] uppercase tracking-widest text-amber-500 font-bold">Global Record</span>
+              <span className="text-amber-600 dark:text-amber-400 font-black text-xs italic tabular-nums leading-none">
+                {globalRecord !== undefined ? globalRecord.toLocaleString() : '---'}
+              </span>
+            </div>
           </div>
           <button className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center transition-all shadow-lg shadow-indigo-500/30 group-hover:scale-110 active:scale-90 border-2 border-indigo-400/20">
             <i className="fas fa-play"></i>

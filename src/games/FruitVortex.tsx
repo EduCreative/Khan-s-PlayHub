@@ -45,6 +45,7 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
   const [grid, setGrid] = useState<Fruit[][]>([]);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
+  const [difficultyLevel, setDifficultyLevel] = useState(1);
   const [selected, setSelected] = useState<[number, number] | null>(null);
   const [matchingCells, setMatchingCells] = useState<Set<string>>(new Set());
   const [swapping, setSwapping] = useState<[number, number, number, number] | null>(null);
@@ -70,11 +71,17 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
     const colorIndex = Math.floor(Math.random() * COLORS.length);
     const rand = Math.random();
     let type: FruitType = 'normal';
-    if (rand > 0.96) type = 'bomb';
-    else if (rand > 0.92) type = 'row';
+    
+    // Difficulty affects special fruit spawn rate
+    const specialThreshold = Math.max(0.85, 0.96 - (difficultyLevel - 1) * 0.02);
+    const bombThreshold = Math.max(0.92, 0.98 - (difficultyLevel - 1) * 0.01);
+
+    if (rand > bombThreshold) type = 'bomb';
+    else if (rand > specialThreshold) type = 'row';
+    
     const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
     return { color: COLORS[colorIndex], type, id, shapeIndex: colorIndex };
-  }, []);
+  }, [difficultyLevel]);
 
   const initGrid = useCallback((diff: Difficulty) => {
     let newGrid: Fruit[][] = [];
@@ -100,24 +107,37 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
 
     setGrid(newGrid);
     setDifficulty(diff);
+    setDifficultyLevel(1);
     setTimeLeft(diff === 'Easy' ? 90 : 60);
     comboRef.current = 0;
   }, [getRandomFruit]);
 
   useEffect(() => {
-    if (isPlaying) { setDifficulty(null); setScore(0); setMatchingCells(new Set()); }
+    if (isPlaying) { setDifficulty(null); setScore(0); setDifficultyLevel(1); setMatchingCells(new Set()); }
   }, [isPlaying]);
 
   useEffect(() => {
     if (!isPlaying || !difficulty || timeLeft <= 0) return;
+    
+    // Difficulty scaling: timer ticks faster as score increases
+    const tickRate = Math.max(400, 1000 - (difficultyLevel - 1) * 100);
+    
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) { onGameOver(score); return 0; }
         return prev - 1;
       });
-    }, 1000);
+    }, tickRate);
     return () => clearInterval(timer);
-  }, [isPlaying, difficulty, timeLeft, score, onGameOver]);
+  }, [isPlaying, difficulty, timeLeft, score, onGameOver, difficultyLevel]);
+
+  useEffect(() => {
+    const newLevel = Math.floor(score / 1000) + 1;
+    if (newLevel > difficultyLevel) {
+      setDifficultyLevel(newLevel);
+      triggerHapticFeedback();
+    }
+  }, [score, difficultyLevel, triggerHapticFeedback]);
 
   const checkMatchesForGrid = (currentGrid: Fruit[][]) => {
     const matches = new Set<string>();

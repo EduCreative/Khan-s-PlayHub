@@ -44,6 +44,7 @@ const Tetris: React.FC<{
   const [nextPiece, setNextPiece] = useState(randomTetromino());
   const [score, setScore] = useState(0);
   const [level, setLevel] = useState(1);
+  const [difficultyLevel, setDifficultyLevel] = useState(1);
   const [lines, setLines] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   
@@ -53,6 +54,14 @@ const Tetris: React.FC<{
   const triggerHaptic = useCallback(() => {
     if (hapticFeedback && navigator.vibrate) navigator.vibrate(50);
   }, [hapticFeedback]);
+
+  useEffect(() => {
+    const newDiffLevel = Math.floor(score / 1000) + 1;
+    if (newDiffLevel > difficultyLevel) {
+      setDifficultyLevel(newDiffLevel);
+      triggerHaptic();
+    }
+  }, [score, difficultyLevel, triggerHaptic]);
 
   const checkCollision = useCallback((p = piece, g = grid, moveX = 0, moveY = 0) => {
     for (let y = 0; y < p.shape.length; y++) {
@@ -170,12 +179,13 @@ const Tetris: React.FC<{
 
   useEffect(() => {
     if (!isPlaying || isPaused) return;
-    const speed = Math.max(100, 800 - (level - 1) * 100);
+    // Base speed decreases with level, and further decreases with difficultyLevel (every 1000 points)
+    const speed = Math.max(80, 800 - (level - 1) * 80 - (difficultyLevel - 1) * 50);
     gameLoopRef.current = setInterval(drop, speed);
     return () => {
       if (gameLoopRef.current) clearInterval(gameLoopRef.current);
     };
-  }, [isPlaying, isPaused, drop, level]);
+  }, [isPlaying, isPaused, drop, level, difficultyLevel]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

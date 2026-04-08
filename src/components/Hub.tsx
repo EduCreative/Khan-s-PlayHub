@@ -13,19 +13,24 @@ interface HubProps {
   filter: Category | 'All' | 'Favorites' | 'Leaderboard';
   setFilter: (filter: Category | 'All' | 'Favorites' | 'Leaderboard') => void;
   highScores: Record<string, number>;
+  globalRecords: Record<string, number>;
   userProfile: UserProfile;
   isDarkMode: boolean;
   syncStatus: 'synced' | 'pending' | 'offline';
+  onSyncAll: () => void;
   onToggleTheme: () => void;
   onOpenProfile: () => void;
   onToggleFavorite: (id: string) => void;
+  onUpdateGlobalRecord: (gameId: string, score: number) => void;
   onOpenAdmin: () => void;
   onOpenSettings: () => void;
   onOpenPrivacy: () => void;
+  canInstall: boolean;
+  onInstall: () => void;
 }
 
 const Hub: React.FC<HubProps> = ({ 
-  games, onSelectGame, filter, setFilter, highScores, userProfile, isDarkMode, syncStatus, onToggleTheme, onOpenProfile, onToggleFavorite, onOpenAdmin, onOpenSettings, onOpenPrivacy
+  games, onSelectGame, filter, setFilter, highScores, globalRecords, userProfile, isDarkMode, syncStatus, onSyncAll, onToggleTheme, onOpenProfile, onToggleFavorite, onUpdateGlobalRecord, onOpenAdmin, onOpenSettings, onOpenPrivacy, canInstall, onInstall
 }) => {
   const [vClickCount, setVClickCount] = useState(0);
   const [adminClickCount, setAdminClickCount] = useState(0);
@@ -102,11 +107,17 @@ const Hub: React.FC<HubProps> = ({
               <h1 className="text-3xl md:text-5xl font-black italic tracking-tighter uppercase dark:text-white text-slate-900 leading-none">
                 Khan's <span className="text-indigo-600 dark:text-indigo-400">PlayHub</span>
               </h1>
-              <div className={`mt-1 flex items-center justify-center w-3 h-3 rounded-full shadow-[0_0_10px_currentColor] animate-pulse ${
-                syncStatus === 'synced' ? 'text-emerald-500 bg-emerald-500' : 
-                syncStatus === 'pending' ? 'text-amber-500 bg-amber-500' : 
-                'text-rose-500 bg-rose-500 shadow-rose-500/50'
-              }`} title={`Nexus Cloud Status: ${syncStatus.toUpperCase()}`} />
+              <button 
+                onClick={onSyncAll}
+                className={`mt-1 flex items-center justify-center w-4 h-4 rounded-full shadow-[0_0_10px_currentColor] transition-all hover:scale-125 active:rotate-180 ${
+                  syncStatus === 'synced' ? 'text-emerald-500 bg-emerald-500' : 
+                  syncStatus === 'pending' ? 'text-amber-500 bg-amber-500 animate-spin' : 
+                  'text-rose-500 bg-rose-500 shadow-rose-500/50'
+                }`} 
+                title={`Nexus Cloud Status: ${syncStatus.toUpperCase()} - Click to sync all scores`}
+              >
+                {syncStatus === 'pending' && <i className="fas fa-sync-alt text-[6px] text-white"></i>}
+              </button>
             </div>
             <p className="text-[8px] md:text-[11px] font-black bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-1.5 rounded-full uppercase tracking-widest ml-1 mt-2 hidden sm:inline-block border-2 border-indigo-400/30 shadow-[0_0_15px_rgba(79,70,229,0.4)] animate-pulse">
               Free Focus Games & Brain Training: Boost Your Memory & Attention
@@ -136,6 +147,11 @@ const Hub: React.FC<HubProps> = ({
           <button id="share-btn" onClick={handleShare} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all" title="Share this app">
             <i className="fas fa-share-alt text-emerald-500"></i>
           </button>
+          {canInstall && (
+            <button id="install-btn" onClick={onInstall} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all animate-bounce" title="Install App">
+              <i className="fas fa-download text-indigo-500"></i>
+            </button>
+          )}
           <button id="settings-btn" onClick={onOpenSettings} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all" title="App Settings">
             <i className="fas fa-cog text-slate-500"></i>
           </button>
@@ -205,7 +221,7 @@ const Hub: React.FC<HubProps> = ({
       )}
 
       {filter === 'Leaderboard' ? (
-        <Leaderboard games={games} onBack={() => setFilter('All')} />
+        <Leaderboard games={games} onBack={() => setFilter('All')} onUpdateGlobalRecord={onUpdateGlobalRecord} />
       ) : (
         <div id="games-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 min-h-[400px]">
           {filteredGames.map((game: Game, idx: number) => (
@@ -215,6 +231,7 @@ const Hub: React.FC<HubProps> = ({
               index={idx} 
               onPlay={() => onSelectGame(game)} 
               highScore={highScores[game.id] || 0}
+              globalRecord={globalRecords[game.id]}
               isFavorite={userProfile.favorites.includes(game.id)}
               onToggleFavorite={() => onToggleFavorite(game.id)}
             />

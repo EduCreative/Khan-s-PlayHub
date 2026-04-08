@@ -32,9 +32,10 @@ interface GameRunnerProps {
   onViewLeaderboard: () => void;
   sfxVolume: number;
   hapticFeedback: boolean;
+  globalRecord?: number;
 }
 
-const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, highScore, isDarkMode, isAnonymous, onOpenProfile, onViewLeaderboard, sfxVolume, hapticFeedback }) => {
+const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, highScore, isDarkMode, isAnonymous, onOpenProfile, onViewLeaderboard, sfxVolume, hapticFeedback, globalRecord }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showGameOver, setShowGameOver] = useState(false);
   const [isVictory, setIsVictory] = useState(false);
@@ -177,10 +178,23 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
               <i className={`fas ${isVictory ? 'fa-trophy' : 'fa-skull'} text-white`}></i>
             </div>
             <h1 className={`text-5xl font-black mb-2 tracking-tighter italic uppercase ${isVictory ? 'text-emerald-500' : 'text-rose-500'}`}>{isVictory ? 'SUCCESS!' : 'GAME OVER'}</h1>
+            
             <div className="bg-slate-100 dark:bg-white/5 rounded-3xl p-8 border border-slate-200 dark:border-white/5 mb-8 shadow-inner">
               <p className="text-[10px] font-black text-slate-500 tracking-[0.3em] mb-2">Total Score Gained</p>
-              <p className={`text-6xl font-black tabular-nums drop-shadow-sm italic ${isVictory ? 'text-emerald-500' : 'text-indigo-500'}`}>{currentScore.toLocaleString()}</p>
+              <p className={`text-6xl font-black tabular-nums drop-shadow-sm italic mb-4 ${isVictory ? 'text-emerald-500' : 'text-indigo-500'}`}>{currentScore.toLocaleString()}</p>
+              
+              <div className="grid grid-cols-2 gap-4 border-t border-slate-200 dark:border-white/10 pt-4">
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Personal Best</span>
+                  <span className="text-lg font-black text-indigo-500 tabular-nums italic">{Math.max(highScore, currentScore).toLocaleString()}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest">Global Record</span>
+                  <span className="text-lg font-black text-amber-500 tabular-nums italic">{globalRecord !== undefined ? Math.max(globalRecord, currentScore).toLocaleString() : '---'}</span>
+                </div>
+              </div>
             </div>
+
             <div className="flex flex-col gap-3">
               {isAnonymous && currentScore > 0 && (
                 <button onClick={onOpenProfile} className="w-full py-4 bg-emerald-500/20 border-2 border-emerald-500/40 text-emerald-500 rounded-2xl font-black text-sm mb-2 flex items-center justify-center gap-3 animate-pulse">

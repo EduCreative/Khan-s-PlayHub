@@ -11,6 +11,7 @@ interface NeonRacerProps {
 const NeonRacer: React.FC<NeonRacerProps> = ({ onGameOver, isPlaying, sfxVolume, hapticFeedback }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [score, setScore] = useState(0);
+  const [difficultyLevel, setDifficultyLevel] = useState(1);
   const scoreRef = useRef(0);
   const requestRef = useRef<number>(null);
   const gameState = useRef({
@@ -34,12 +35,29 @@ const NeonRacer: React.FC<NeonRacerProps> = ({ onGameOver, isPlaying, sfxVolume,
   });
 
   useEffect(() => {
+    const newLevel = Math.floor(score / 1000) + 1;
+    if (newLevel > difficultyLevel) {
+      setDifficultyLevel(newLevel);
+      if (hapticFeedback) audioService.vibrate([10, 50, 10]);
+    }
+  }, [score, difficultyLevel, hapticFeedback]);
+
+  useEffect(() => {
     if (!isPlaying) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Reset game state on start
+    gameState.current.speed = 5 + (difficultyLevel - 1) * 0.5;
+    gameState.current.obstacles = [];
+    gameState.current.collectibles = [];
+    gameState.current.particles = [];
+    gameState.current.gameOver = false;
+    scoreRef.current = 0;
+    setScore(0);
 
     // Initialize parallax background
     gameState.current.backgroundStars = Array.from({ length: 40 }).map(() => ({
@@ -157,8 +175,9 @@ const NeonRacer: React.FC<NeonRacerProps> = ({ onGameOver, isPlaying, sfxVolume,
       // Road animation
       state.roadOffset = (state.roadOffset + state.speed) % 100;
 
-      // Spawning
-      if (time - state.lastObstacleTime > 1500 / (state.speed / 5)) {
+      // Spawning - interval decreases with difficultyLevel
+      const spawnInterval = Math.max(400, 1500 / (state.speed / 5) - (difficultyLevel - 1) * 100);
+      if (time - state.lastObstacleTime > spawnInterval) {
         spawnObstacle();
         state.lastObstacleTime = time;
       }
@@ -229,8 +248,8 @@ const NeonRacer: React.FC<NeonRacerProps> = ({ onGameOver, isPlaying, sfxVolume,
       if (state.shake > 0.1) state.shake *= 0.9;
       else state.shake = 0;
 
-      // Difficulty increase
-      state.speed += 0.001;
+      // Difficulty increase - baseline speed increases with difficultyLevel
+      state.speed += 0.001 + (difficultyLevel - 1) * 0.0005;
 
       draw();
       requestRef.current = requestAnimationFrame(update);

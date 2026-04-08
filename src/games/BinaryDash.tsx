@@ -13,6 +13,7 @@ const BinaryDash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
   const [score, setScore] = useState(0);
   const [integrity, setIntegrity] = useState(100);
   const [streak, setStreak] = useState(0);
+  const [difficultyLevel, setDifficultyLevel] = useState(1);
 
   const scoreRef = useRef(0);
   const integrityRef = useRef(100);
@@ -27,11 +28,12 @@ const BinaryDash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
       id: Math.random(),
       value: Math.floor(Math.random() * 100),
       y: -0.1,
-      speed: 0.3 + (scoreRef.current / 50000),
+      // Speed increases with score and difficultyLevel
+      speed: 0.3 + (scoreRef.current / 50000) + (difficultyLevel - 1) * 0.05,
     };
     bitsRef.current.push(newBit);
     setBits([...bitsRef.current]);
-  }, []);
+  }, [difficultyLevel]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -42,11 +44,18 @@ const BinaryDash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
       setScore(0);
       setIntegrity(100);
       setStreak(0);
-      setBits([]);
+      setDifficultyLevel(1);
       lastUpdateRef.current = performance.now();
       spawnTimerRef.current = 0;
     }
   }, [isPlaying]);
+
+  useEffect(() => {
+    const newLevel = Math.floor(score / 1000) + 1;
+    if (newLevel > difficultyLevel) {
+      setDifficultyLevel(newLevel);
+    }
+  }, [score, difficultyLevel]);
 
   useEffect(() => {
     if (!isPlaying || integrityRef.current <= 0) return;
@@ -56,7 +65,9 @@ const BinaryDash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
       lastUpdateRef.current = time;
 
       spawnTimerRef.current += dt;
-      if (spawnTimerRef.current > Math.max(0.4, 1.2 - scoreRef.current / 20000)) {
+      // Spawn interval decreases with score and difficultyLevel
+      const spawnInterval = Math.max(0.3, 1.2 - scoreRef.current / 20000 - (difficultyLevel - 1) * 0.1);
+      if (spawnTimerRef.current > spawnInterval) {
         spawnBit();
         spawnTimerRef.current = 0;
       }

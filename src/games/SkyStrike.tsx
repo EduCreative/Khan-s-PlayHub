@@ -11,6 +11,7 @@ interface SkyStrikeProps {
 const SkyStrike: React.FC<SkyStrikeProps> = ({ onGameOver, isPlaying, sfxVolume, hapticFeedback }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [score, setScore] = useState(0);
+  const [difficultyLevel, setDifficultyLevel] = useState(1);
   const scoreRef = useRef(0);
   const requestRef = useRef<number>(null);
   const gameState = useRef({
@@ -27,12 +28,28 @@ const SkyStrike: React.FC<SkyStrikeProps> = ({ onGameOver, isPlaying, sfxVolume,
   });
 
   useEffect(() => {
+    const newLevel = Math.floor(score / 1000) + 1;
+    if (newLevel > difficultyLevel) {
+      setDifficultyLevel(newLevel);
+      if (hapticFeedback) audioService.vibrate([20, 50, 20]);
+    }
+  }, [score, difficultyLevel, hapticFeedback]);
+
+  useEffect(() => {
     if (!isPlaying) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Reset game state
+    gameState.current.enemies = [];
+    gameState.current.bullets = [];
+    gameState.current.particles = [];
+    gameState.current.gameOver = false;
+    scoreRef.current = 0;
+    setScore(0);
 
     // Initialize stars
     gameState.current.stars = Array.from({ length: 50 }).map(() => ({
@@ -56,8 +73,8 @@ const SkyStrike: React.FC<SkyStrikeProps> = ({ onGameOver, isPlaying, sfxVolume,
       const state = gameState.current;
       const score = scoreRef.current;
       
-      // Difficulty scaling
-      const heavyChance = Math.min(0.4, score / 2000);
+      // Difficulty scaling - heavy chance increases with score and difficultyLevel
+      const heavyChance = Math.min(0.6, (score / 2000) + (difficultyLevel - 1) * 0.1);
       const isHeavy = Math.random() < heavyChance;
       
       const x = Math.random() * (canvas.width - 40);
@@ -68,9 +85,10 @@ const SkyStrike: React.FC<SkyStrikeProps> = ({ onGameOver, isPlaying, sfxVolume,
           y: -60,
           width: 50,
           height: 50,
-          speed: 1.5 + Math.random() * 1,
-          health: 3,
-          maxHealth: 3,
+          // Speed increases slightly with difficultyLevel
+          speed: 1.5 + Math.random() * 1 + (difficultyLevel - 1) * 0.2,
+          health: 3 + Math.floor((difficultyLevel - 1) / 2), // Health also increases
+          maxHealth: 3 + Math.floor((difficultyLevel - 1) / 2),
           color: '#9333ea', // Purple for heavy
           type: 'heavy'
         });
@@ -80,7 +98,7 @@ const SkyStrike: React.FC<SkyStrikeProps> = ({ onGameOver, isPlaying, sfxVolume,
           y: -50,
           width: 40,
           height: 40,
-          speed: 2 + Math.random() * 2,
+          speed: 2 + Math.random() * 2 + (difficultyLevel - 1) * 0.3,
           health: 1,
           maxHealth: 1,
           color: '#f43f5e', // Red for normal
@@ -149,8 +167,8 @@ const SkyStrike: React.FC<SkyStrikeProps> = ({ onGameOver, isPlaying, sfxVolume,
       state.player.x = Math.max(0, Math.min(canvas.width - state.player.width, state.player.x));
       state.player.y = Math.max(0, Math.min(canvas.height - state.player.height, state.player.y));
 
-      // Spawning
-      const spawnInterval = Math.max(400, 1000 - Math.floor(scoreRef.current / 100) * 50);
+      // Spawning - interval decreases with score and difficultyLevel
+      const spawnInterval = Math.max(300, 1000 - Math.floor(scoreRef.current / 100) * 50 - (difficultyLevel - 1) * 50);
       if (time - state.lastEnemyTime > spawnInterval) {
         spawnEnemy();
         state.lastEnemyTime = time;

@@ -40,10 +40,59 @@ const App: React.FC = () => {
   const [sfxVolume, setSfxVolume] = useState(0.5);
   const [hapticFeedback, setHapticFeedback] = useState(true);
   const [syncStatus, setSyncStatus] = useState<'synced' | 'pending' | 'offline'>('synced');
+  const [globalRecords, setGlobalRecords] = useState<Record<string, number>>({});
+  const [isSyncing, setIsSyncing] = useState(false);
   const [recentAchievement, setRecentAchievement] = useState<Achievement | null>(null);
   const [appUpdate, setAppUpdate] = useState<{ version: string; changelog: string[] } | null>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [canInstall, setCanInstall] = useState(false);
 
   const CURRENT_VERSION = '3.0.1';
+
+  // PWA Install Prompt
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setCanInstall(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setCanInstall(false);
+    }
+    setDeferredPrompt(null);
+  };
+
+  // Fetch Global Records
+  useEffect(() => {
+    const fetchGlobalRecords = async () => {
+      const records: Record<string, number> = {};
+      // Fetch in parallel to be faster
+      await Promise.all(GAMES.map(async (game) => {
+        try {
+          const scores = await cloud.getGlobalHighScores(game.id);
+          if (scores && scores.length > 0) {
+            records[game.id] = scores[0].score;
+          }
+        } catch (e) {
+          console.warn(`Failed to fetch record for ${game.id}`, e);
+        }
+      }));
+      setGlobalRecords(records);
+    };
+    fetchGlobalRecords();
+  }, []);
 
   // Check for updates
   useEffect(() => {
@@ -138,9 +187,44 @@ const App: React.FC = () => {
     localStorage.setItem('khans-playhub-theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
+  const syncAllScores = React.useCallback(async () => {
+    if (!navigator.onLine || isSyncing) return;
+    
+    setIsSyncing(true);
+    setSyncStatus('pending');
+    
+    try {
+      const gameIds = Object.keys(scores);
+      let allSuccess = true;
+      
+      for (const gameId of gameIds) {
+        const success = await cloud.syncScore(gameId, scores[gameId]);
+        if (!success) allSuccess = false;
+        else {
+          // Update global record if we beat it
+          setGlobalRecords(prev => ({
+            ...prev,
+            [gameId]: Math.max(prev[gameId] || 0, scores[gameId])
+          }));
+        }
+      }
+      
+      setSyncStatus(allSuccess ? 'synced' : 'offline');
+      if (allSuccess) audioService.playSuccess();
+    } catch (e) {
+      setSyncStatus('offline');
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [scores, isSyncing]);
+
   useEffect(() => {
     const updateOnlineStatus = () => {
-      setSyncStatus(navigator.onLine ? 'synced' : 'offline');
+      const isOnline = navigator.onLine;
+      setSyncStatus(isOnline ? 'synced' : 'offline');
+      if (isOnline) {
+        syncAllScores();
+      }
     };
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
@@ -153,7 +237,7 @@ const App: React.FC = () => {
       window.removeEventListener('online', updateOnlineStatus);
       window.removeEventListener('offline', updateOnlineStatus);
     };
-  }, []);
+  }, [syncAllScores]);
 
   const saveProfile = React.useCallback(async (updated: UserProfile) => {
     setUserProfile(updated);
@@ -181,6 +265,13 @@ const App: React.FC = () => {
     });
   }, [saveProfile, hapticFeedback]);
 
+  const updateGlobalRecord = React.useCallback((gameId: string, score: number) => {
+    setGlobalRecords(prev => ({
+      ...prev,
+      [gameId]: Math.max(prev[gameId] || 0, score)
+    }));
+  }, []);
+
   const unlockAchievement = React.useCallback((id: string) => {
     if (userProfile.achievements?.includes(id)) return;
     
@@ -206,25 +297,31 @@ const App: React.FC = () => {
     if (gameId === 'labyrinth' && metadata?.difficulty === 'hard' && metadata?.completed) unlockAchievement('labyrinth_conqueror');
     if (gameId === 'sudoku-lite' && metadata?.difficulty === 'Hard' && metadata?.completed) unlockAchievement('sudoku_master');
 
-    setScores(prev => {
-      const currentHigh = prev[gameId] || 0;
-      if (score > currentHigh) {
-        const next = { ...prev, [gameId]: score };
-        localStorage.setItem('khans-playhub-scores', JSON.stringify(next));
-        
-        // Trigger sync in background
-        (async () => {
-          setSyncStatus('pending');
-          const success = await cloud.syncScore(gameId, score);
-          setSyncStatus(success ? 'synced' : 'offline');
-          if (success) audioService.playSuccess();
-        })();
-        
-        return next;
+    const currentHigh = scores[gameId] || 0;
+    
+    // Update local state if it's a new high score
+    if (score > currentHigh) {
+      const nextScores = { ...scores, [gameId]: score };
+      setScores(nextScores);
+      localStorage.setItem('khans-playhub-scores', JSON.stringify(nextScores));
+    }
+
+    // Always attempt to sync if the score is at least the current high score
+    // This handles cases where local data exists but cloud data is missing or failed previously
+    if (score >= currentHigh && navigator.onLine) {
+      setSyncStatus('pending');
+      const success = await cloud.syncScore(gameId, score);
+      setSyncStatus(success ? 'synced' : 'offline');
+      if (success) {
+        audioService.playSuccess();
+        // Update global record if we beat it
+        setGlobalRecords(prev => ({
+          ...prev,
+          [gameId]: Math.max(prev[gameId] || 0, score)
+        }));
       }
-      return prev;
-    });
-  }, [unlockAchievement]);
+    }
+  }, [scores, unlockAchievement]);
 
   const isAnonymous = userProfile.username === 'New Player' || userProfile.username === 'Operative';
 
@@ -271,6 +368,7 @@ const App: React.FC = () => {
             }}
             sfxVolume={sfxVolume}
             hapticFeedback={hapticFeedback}
+            globalRecord={globalRecords[activeGame.id]}
           />
         ) : (
           <Hub 
@@ -285,6 +383,7 @@ const App: React.FC = () => {
               audioService.playNav();
             }}
             highScores={scores}
+            globalRecords={globalRecords}
             userProfile={userProfile}
             isDarkMode={isDarkMode}
             syncStatus={syncStatus}
@@ -297,10 +396,12 @@ const App: React.FC = () => {
               audioService.playNav();
             }}
             onToggleFavorite={toggleFavorite}
+            onUpdateGlobalRecord={updateGlobalRecord}
             onOpenAdmin={() => {
               setShowAdmin(true);
               audioService.playNav();
             }}
+            onSyncAll={syncAllScores}
             onOpenSettings={() => {
               setShowSettings(true);
               audioService.playNav();
@@ -309,6 +410,8 @@ const App: React.FC = () => {
               setShowPrivacy(true);
               audioService.playNav();
             }}
+            canInstall={canInstall}
+            onInstall={handleInstall}
           />
         )}
       </main>

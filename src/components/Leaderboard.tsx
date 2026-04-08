@@ -6,6 +6,7 @@ import { audioService } from '../services/audioService';
 
 interface LeaderboardProps {
   games: Game[];
+  onUpdateGlobalRecord?: (gameId: string, score: number) => void;
 }
 
 const SCORING_GUIDE = [
@@ -27,7 +28,7 @@ const SCORING_GUIDE = [
   { game: "Sky Strike", action: "Enemy Destroyed", scoring: "10 / 30", note: "Auto-fire on touch" }
 ];
 
-const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({ games, onBack }) => {
+const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({ games, onBack, onUpdateGlobalRecord }) => {
   const [selectedGameId, setSelectedGameId] = useState<string>('all');
   const [scores, setScores] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -39,9 +40,12 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({ gam
       cloud.getGlobalHighScores(selectedGameId).then(data => {
         setScores(data);
         setLoading(false);
+        if (selectedGameId !== 'all' && data && data.length > 0 && onUpdateGlobalRecord) {
+          onUpdateGlobalRecord(selectedGameId, data[0].score);
+        }
       });
     }
-  }, [selectedGameId]);
+  }, [selectedGameId, onUpdateGlobalRecord]);
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
