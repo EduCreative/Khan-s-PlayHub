@@ -40,7 +40,13 @@ const FruitIcon = memo(({ color, shapeIndex, type, isMatching }: { color: string
   );
 });
 
-const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: boolean; sfxVolume: number; hapticFeedback: boolean }> = ({ onGameOver, isPlaying, sfxVolume, hapticFeedback }) => {
+const FruitVortex: React.FC<{ 
+  onGameOver: (score: number) => void; 
+  isPlaying: boolean; 
+  sfxVolume: number; 
+  hapticFeedback: boolean;
+  onScoreUpdate?: (score: number) => void;
+}> = ({ onGameOver, isPlaying, sfxVolume, hapticFeedback, onScoreUpdate }) => {
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [grid, setGrid] = useState<Fruit[][]>([]);
   const [score, setScore] = useState(0);
@@ -189,7 +195,11 @@ const FruitVortex: React.FC<{ onGameOver: (score: number) => void; isPlaying: bo
 
     // Calculate score
     const points = matches.size * 2 * (comboRef.current + 1);
-    setScore(prev => prev + points);
+    setScore(prev => {
+      const next = prev + points;
+      if (onScoreUpdate) onScoreUpdate(next);
+      return next;
+    });
     comboRef.current += 1;
 
     // Refill grid

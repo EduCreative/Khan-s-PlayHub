@@ -8,7 +8,13 @@ interface Bit {
   speed: number;
 }
 
-const BinaryDash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean }> = ({ onGameOver, isPlaying }) => {
+const BinaryDash: React.FC<{ 
+  onGameOver: (s: number) => void; 
+  isPlaying: boolean;
+  sfxVolume: number;
+  hapticFeedback: boolean;
+  onScoreUpdate?: (score: number) => void;
+}> = ({ onGameOver, isPlaying, sfxVolume, hapticFeedback, onScoreUpdate }) => {
   const [bits, setBits] = useState<Bit[]>([]);
   const [score, setScore] = useState(0);
   const [integrity, setIntegrity] = useState(100);
@@ -44,8 +50,9 @@ const BinaryDash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
       setScore(0);
       setIntegrity(100);
       setStreak(0);
+      setBits([]);
       setDifficultyLevel(1);
-      lastUpdateRef.current = performance.now();
+      lastUpdateRef.current = 0; // Reset to 0 to trigger fresh sync in loop
       spawnTimerRef.current = 0;
     }
   }, [isPlaying]);
@@ -61,7 +68,14 @@ const BinaryDash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
     if (!isPlaying || integrityRef.current <= 0) return;
 
     const loop = (time: number) => {
-      const dt = (time - lastUpdateRef.current) / 1000;
+      // Initialize lastUpdate on first frame to avoid massive dt jump
+      if (lastUpdateRef.current === 0) {
+        lastUpdateRef.current = time;
+        animFrameRef.current = requestAnimationFrame(loop);
+        return;
+      }
+
+      const dt = Math.min(0.1, (time - lastUpdateRef.current) / 1000);
       lastUpdateRef.current = time;
 
       spawnTimerRef.current += dt;
@@ -76,7 +90,7 @@ const BinaryDash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
         ...b,
         y: b.y + b.speed * dt
       })).filter(b => {
-        if (b.y > 0.85) {
+        if (b.y > 0.9) { // Increased threshold slightly
           integrityRef.current -= 5;
           streakRef.current = 0;
           setIntegrity(integrityRef.current);
@@ -113,6 +127,7 @@ const BinaryDash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
       const points = 2 + Math.floor(streakRef.current / 2);
       scoreRef.current += points;
       setScore(scoreRef.current);
+      if (onScoreUpdate) onScoreUpdate(scoreRef.current);
       setStreak(streakRef.current);
       bitsRef.current = bitsRef.current.filter(b => b.id !== bitToSort.id);
     } else {
@@ -153,7 +168,7 @@ const BinaryDash: React.FC<{ onGameOver: (s: number) => void; isPlaying: boolean
         {bits.map(bit => (
           <div
             key={bit.id}
-            className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 glass-card rounded-2xl flex items-center justify-center text-2xl font-black text-cyan-400 border-2 border-cyan-500/20 transition-transform duration-75"
+            className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 glass-card rounded-2xl flex items-center justify-center text-2xl font-black text-cyan-400 border-2 border-cyan-500/20 z-10"
             style={{ top: `${bit.y * 100}%` }}
           >
             {bit.value}

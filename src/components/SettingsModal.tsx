@@ -9,16 +9,20 @@ interface SettingsModalProps {
   onUpdateHaptic: (val: boolean) => void;
   onToggleTheme: () => void;
   onClose: () => void;
+  canInstall: boolean;
+  isInstalled: boolean;
+  onInstall: () => void;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ 
-  sfxVolume, hapticFeedback, isDarkMode, onUpdateSfx, onUpdateHaptic, onToggleTheme, onClose 
+  sfxVolume, hapticFeedback, isDarkMode, onUpdateSfx, onUpdateHaptic, onToggleTheme, onClose,
+  canInstall, isInstalled, onInstall
 }) => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-300">
       <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl" onClick={onClose} />
       
-      <div className="relative glass-card w-full max-w-md p-8 rounded-[3rem] border-indigo-500/30 shadow-2xl scale-up-center overflow-hidden">
+      <div className="relative glass-card w-full max-w-md p-8 rounded-[3rem] border-indigo-500/30 shadow-2xl scale-up-center overflow-hidden max-h-[90vh] overflow-y-auto">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
         
         <div className="flex justify-between items-center mb-8">
@@ -30,6 +34,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
         <div className="space-y-8">
           <div className="space-y-4">
+            {/* Theme Toggle */}
             <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
@@ -48,6 +53,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               </button>
             </div>
 
+            {/* Audio Feedback */}
             <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
@@ -69,6 +75,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               />
             </div>
 
+            {/* Haptic Pulse */}
             <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
@@ -86,6 +93,43 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-sm transition-all ${hapticFeedback ? 'left-7' : 'left-1'}`} />
               </button>
             </div>
+          </div>
+
+          {/* PWA Section */}
+          <div className="p-6 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                <i className="fas fa-download"></i>
+              </div>
+              <div>
+                <p className="font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">App Installation</p>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">PWA Status</p>
+              </div>
+            </div>
+            
+            {isInstalled ? (
+              <div className="flex items-center gap-2 text-emerald-500 font-black uppercase italic text-sm">
+                <i className="fas fa-check-circle"></i>
+                <span>Nexus App Mode Active</span>
+              </div>
+            ) : canInstall ? (
+              <button 
+                onClick={onInstall}
+                className="w-full py-3 bg-emerald-500 text-white rounded-xl font-black uppercase italic tracking-tighter hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20"
+              >
+                Install Nexus Now
+              </button>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                  To install PlayHub, open this app in a <span className="text-indigo-500 font-bold">New Tab</span> outside the preview frame.
+                </p>
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-left">
+                  <p className="text-[9px] font-black text-slate-400 uppercase mb-1">iOS Instructions:</p>
+                  <p className="text-[9px] text-slate-500">Tap <i className="fas fa-share-square mx-1"></i> then "Add to Home Screen"</p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="p-6 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-center">

@@ -8,7 +8,7 @@ interface NeonRacerProps {
   hapticFeedback: boolean;
 }
 
-const NeonRacer: React.FC<NeonRacerProps> = ({ onGameOver, isPlaying, sfxVolume, hapticFeedback }) => {
+const NeonRacer: React.FC<NeonRacerProps & { onScoreUpdate?: (score: number) => void }> = ({ onGameOver, isPlaying, sfxVolume, hapticFeedback, onScoreUpdate }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [score, setScore] = useState(0);
   const [difficultyLevel, setDifficultyLevel] = useState(1);
@@ -193,6 +193,7 @@ const NeonRacer: React.FC<NeonRacerProps> = ({ onGameOver, isPlaying, sfxVolume,
           state.obstacles.splice(index, 1);
           scoreRef.current += 1;
           setScore(scoreRef.current);
+          if (onScoreUpdate) onScoreUpdate(scoreRef.current);
         }
 
         // Collision
@@ -228,6 +229,7 @@ const NeonRacer: React.FC<NeonRacerProps> = ({ onGameOver, isPlaying, sfxVolume,
           scoreRef.current += 5;
           state.shake = 5;
           setScore(scoreRef.current);
+          if (onScoreUpdate) onScoreUpdate(scoreRef.current);
           audioService.playClick();
           createParticles(col.x + col.width / 2, col.y + col.height / 2, '#fbbf24', 25);
           if (hapticFeedback) audioService.vibrate(10);

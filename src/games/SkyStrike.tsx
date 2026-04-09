@@ -8,7 +8,7 @@ interface SkyStrikeProps {
   hapticFeedback: boolean;
 }
 
-const SkyStrike: React.FC<SkyStrikeProps> = ({ onGameOver, isPlaying, sfxVolume, hapticFeedback }) => {
+const SkyStrike: React.FC<SkyStrikeProps & { onScoreUpdate?: (score: number) => void }> = ({ onGameOver, isPlaying, sfxVolume, hapticFeedback, onScoreUpdate }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [score, setScore] = useState(0);
   const [difficultyLevel, setDifficultyLevel] = useState(1);
@@ -198,6 +198,7 @@ const SkyStrike: React.FC<SkyStrikeProps> = ({ onGameOver, isPlaying, sfxVolume,
               state.enemies.splice(eIdx, 1);
               scoreRef.current += enemy.type === 'heavy' ? 30 : 10;
               setScore(scoreRef.current);
+              if (onScoreUpdate) onScoreUpdate(scoreRef.current);
               if (hapticFeedback) audioService.vibrate(20);
             } else {
               // Hit effect

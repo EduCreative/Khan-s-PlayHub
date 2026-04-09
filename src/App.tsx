@@ -46,11 +46,17 @@ const App: React.FC = () => {
   const [appUpdate, setAppUpdate] = useState<{ version: string; changelog: string[] } | null>(null);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [canInstall, setCanInstall] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
 
   const CURRENT_VERSION = '3.0.1';
 
   // PWA Install Prompt
   useEffect(() => {
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true) {
+      setIsInstalled(true);
+    }
+
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -411,6 +417,7 @@ const App: React.FC = () => {
               audioService.playNav();
             }}
             canInstall={canInstall}
+            isInstalled={isInstalled}
             onInstall={handleInstall}
           />
         )}
@@ -453,6 +460,9 @@ const App: React.FC = () => {
             setShowSettings(false);
             audioService.playNav();
           }}
+          canInstall={canInstall}
+          isInstalled={isInstalled}
+          onInstall={handleInstall}
         />
       )}
 

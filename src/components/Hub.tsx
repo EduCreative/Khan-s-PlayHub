@@ -26,11 +26,12 @@ interface HubProps {
   onOpenSettings: () => void;
   onOpenPrivacy: () => void;
   canInstall: boolean;
+  isInstalled: boolean;
   onInstall: () => void;
 }
 
 const Hub: React.FC<HubProps> = ({ 
-  games, onSelectGame, filter, setFilter, highScores, globalRecords, userProfile, isDarkMode, syncStatus, onSyncAll, onToggleTheme, onOpenProfile, onToggleFavorite, onUpdateGlobalRecord, onOpenAdmin, onOpenSettings, onOpenPrivacy, canInstall, onInstall
+  games, onSelectGame, filter, setFilter, highScores, globalRecords, userProfile, isDarkMode, syncStatus, onSyncAll, onToggleTheme, onOpenProfile, onToggleFavorite, onUpdateGlobalRecord, onOpenAdmin, onOpenSettings, onOpenPrivacy, canInstall, isInstalled, onInstall
 }) => {
   const [vClickCount, setVClickCount] = useState(0);
   const [adminClickCount, setAdminClickCount] = useState(0);
@@ -150,6 +151,15 @@ const Hub: React.FC<HubProps> = ({
           {canInstall && (
             <button id="install-btn" onClick={onInstall} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all animate-bounce" title="Install App">
               <i className="fas fa-download text-indigo-500"></i>
+            </button>
+          )}
+          {window.self !== window.top && (
+            <button 
+              onClick={() => window.open(window.location.href, '_blank')}
+              className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all"
+              title="Open in New Tab to Install"
+            >
+              <i className="fas fa-external-link-alt text-indigo-500"></i>
             </button>
           )}
           <button id="settings-btn" onClick={onOpenSettings} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all" title="App Settings">

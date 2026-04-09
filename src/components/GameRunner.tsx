@@ -42,9 +42,10 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
   const [currentScore, setCurrentScore] = useState(0);
   const [isClosing, setIsClosing] = useState(false);
 
-  const handleScoreUpdate = React.useCallback((score: number) => {
+  const handleScoreUpdate = React.useCallback((score: number, metadata?: any) => {
     setCurrentScore(score);
-  }, []);
+    onSaveScore(score, metadata);
+  }, [onSaveScore]);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -83,7 +84,13 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
   };
 
   const renderGame = () => {
-    const commonProps = { onGameOver: handleGameOver, isPlaying, sfxVolume, hapticFeedback };
+    const commonProps = { 
+      onGameOver: handleGameOver, 
+      isPlaying, 
+      sfxVolume, 
+      hapticFeedback,
+      onScoreUpdate: handleScoreUpdate 
+    };
     
     switch (game.id) {
       case 'fruit-vortex': return <FruitVortex {...commonProps} />;
@@ -99,7 +106,7 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
       case 'grammar-guardian': return <GrammarGuardian {...commonProps} />;
       case 'resonance-breathing': return <ResonanceBreathing {...commonProps} />;
       case 'reaction-test': return <ReactionTest {...commonProps} />;
-      case 'tetris': return <Tetris {...commonProps} onScoreUpdate={handleScoreUpdate} />;
+      case 'tetris': return <Tetris {...commonProps} />;
       case 'neon-racer': return <NeonRacer {...commonProps} />;
       case 'sky-strike': return <SkyStrike {...commonProps} />;
       default:

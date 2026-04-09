@@ -3,7 +3,13 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 type Difficulty = 'Easy' | 'Medium' | 'Hard';
 
-const Labyrinth: React.FC<{ onGameOver: (s: number, victory?: boolean, metadata?: any) => void; isPlaying: boolean; sfxVolume: number; hapticFeedback: boolean }> = ({ onGameOver, isPlaying, sfxVolume, hapticFeedback }) => {
+const Labyrinth: React.FC<{ 
+  onGameOver: (s: number, victory?: boolean, metadata?: any) => void; 
+  isPlaying: boolean; 
+  sfxVolume: number; 
+  hapticFeedback: boolean;
+  onScoreUpdate?: (score: number, metadata?: any) => void;
+}> = ({ onGameOver, isPlaying, sfxVolume, hapticFeedback, onScoreUpdate }) => {
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [score, setScore] = useState(0);
   const [level, setLevel] = useState(1);
@@ -125,15 +131,22 @@ const Labyrinth: React.FC<{ onGameOver: (s: number, victory?: boolean, metadata?
       if (mazeRef.current[ny][nx] === 2) {
         playSfx('/sfx/win.mp3', sfxVolume);
         triggerHapticFeedback();
-        const diffMult = difficulty === 'Easy' ? 200 : difficulty === 'Medium' ? 500 : 1000;
-        const newScore = score + diffMult;
-        setScore(newScore);
-        setLevel(l => l + 1);
         
-        // Report progress for achievements
-        if (difficulty === 'Hard') {
-          onGameOver(newScore, true, { difficulty: 'hard', completed: true, level: level });
+        // Level-based scoring: difficulty multiplier * current level
+        const diffMult = difficulty === 'Easy' ? 200 : difficulty === 'Medium' ? 500 : 1000;
+        const points = diffMult * level;
+        const newScore = score + points;
+        
+        setScore(newScore);
+        if (onScoreUpdate) {
+          onScoreUpdate(newScore, { 
+            difficulty: difficulty.toLowerCase(), 
+            level: level,
+            completed: true 
+          });
         }
+        
+        setLevel(l => l + 1);
       }
       draw();
     }
@@ -191,9 +204,17 @@ const Labyrinth: React.FC<{ onGameOver: (s: number, victory?: boolean, metadata?
           <p className="text-[10px] text-slate-500 uppercase font-black">Lvl {level}</p>
           <p className="text-2xl font-black text-orange-500 tabular-nums transition-colors uppercase italic">{difficulty}</p>
         </div>
-        <div className="text-right">
-          <p className="text-[10px] text-slate-500 uppercase font-black">XP Gained</p>
-          <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums transition-colors">{score.toLocaleString()}</p>
+        <div className="text-right flex flex-col items-end gap-2">
+          <div>
+            <p className="text-[10px] text-slate-500 uppercase font-black">XP Gained</p>
+            <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums transition-colors">{score.toLocaleString()}</p>
+          </div>
+          <button 
+            onClick={() => onGameOver(score, true, { difficulty: difficulty.toLowerCase(), level, completed: true })}
+            className="px-3 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 text-[8px] font-black uppercase tracking-widest rounded-lg border border-rose-500/20 transition-all"
+          >
+            Finish Session
+          </button>
         </div>
       </div>
       <canvas 
