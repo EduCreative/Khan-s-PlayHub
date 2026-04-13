@@ -21,7 +21,7 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'games' | 'pwa' | 'migration'>('overview');
   const [confirmDeleteDeviceId, setConfirmDeleteDeviceId] = useState<string | null>(null);
-  const [workerUrl, setWorkerUrl] = useState('');
+  const [workerUrl, setWorkerUrl] = useState(cloud.getWorkerUrl());
   const [migrationStatus, setMigrationStatus] = useState<{ loading: boolean, result: any | null, error: string | null }>({
     loading: false,
     result: null,
@@ -230,6 +230,45 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             
             {activeTab === 'overview' && (
               <>
+                {/* Data Sources Status */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                  <div className="glass-card p-6 rounded-3xl border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-orange-500 flex items-center justify-center text-white shadow-lg">
+                        <i className="fas fa-fire"></i>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase">Firebase Firestore</h4>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Primary Identity & Fallback</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                      <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Connected</span>
+                    </div>
+                  </div>
+
+                  <div className="glass-card p-6 rounded-3xl border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-500 flex items-center justify-center text-white shadow-lg">
+                        <i className="fas fa-cloud"></i>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase">Cloudflare D1</h4>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                          {cloud.getDataProvider() === 'firebase' ? 'Inactive' : cloud.getWorkerUrl() ? 'Active Testing' : 'URL Missing'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${cloud.getDataProvider() !== 'firebase' && cloud.getWorkerUrl() ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></div>
+                      <span className={`text-[10px] font-black uppercase tracking-widest ${cloud.getDataProvider() !== 'firebase' && cloud.getWorkerUrl() ? 'text-emerald-500' : 'text-slate-500'}`}>
+                        {cloud.getDataProvider() !== 'firebase' && cloud.getWorkerUrl() ? 'Active' : 'Standby'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Summary Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {[
@@ -355,7 +394,7 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   <div className="flex items-center justify-between mb-8">
                     <div>
                       <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Temporal Activity</h3>
-                      <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Nexus Load by Hour</p>
+                      <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">System Load by Hour</p>
                     </div>
                   </div>
                   <div className="h-[200px] w-full">
@@ -419,7 +458,7 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     <tbody className="text-sm">
                       {users.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="p-20 text-center text-slate-500 font-medium italic">No operatives found in the Nexus registry.</td>
+                          <td colSpan={6} className="p-20 text-center text-slate-500 font-medium italic">No players found in the registry.</td>
                         </tr>
                       ) : (
                         users.map((user) => (
@@ -553,7 +592,7 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                       <i className="fas fa-file-import"></i>
                     </div>
                     <div>
-                      <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase italic">Nexus Data Migration</h3>
+                      <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase italic">Data Migration</h3>
                       <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Cloudflare Worker {'->'} Firebase Firestore</p>
                     </div>
                   </div>
@@ -644,7 +683,7 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       {confirmDeleteDeviceId && (
         <ConfirmModal 
           title="Wipe Player?"
-          message="This action will permanently erase all neural data and scores for this operative from the Nexus Cloud. This cannot be undone."
+          message="This action will permanently erase all data and scores for this player from the Cloud. This cannot be undone."
           confirmText="Wipe Data"
           cancelText="Abort"
           onConfirm={() => handleDeleteUser(confirmDeleteDeviceId)}

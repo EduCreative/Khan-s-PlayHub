@@ -240,12 +240,12 @@ const Sudoku: React.FC<{
               }}
               className="text-[8px] font-black text-slate-500 uppercase tracking-widest hover:text-rose-500 transition-colors"
             >
-              [ Reset Nexus ]
+              [ Reset Grid ]
             </button>
           </div>
           <div className="text-right flex flex-col">
             <span className="text-[10px] font-black text-slate-500 uppercase">Target</span>
-            <span className="text-2xl font-black text-slate-400 italic">Nexus Clear</span>
+            <span className="text-2xl font-black text-slate-400 italic">Grid Clear</span>
           </div>
         </div>
 

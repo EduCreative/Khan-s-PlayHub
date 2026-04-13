@@ -61,7 +61,7 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({ gam
           )}
           <div>
             <h2 className="text-2xl font-black uppercase italic text-slate-900 dark:text-white">Global Leaderboard</h2>
-            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Nexus Neural Rankings</p>
+            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Global Player Rankings</p>
           </div>
         </div>
         
@@ -97,7 +97,7 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({ gam
           <div className="bg-white dark:bg-slate-900 w-full max-w-2xl max-h-[80vh] rounded-[2.5rem] border-2 border-indigo-500/20 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in duration-300">
             <div className="p-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-black uppercase italic text-slate-900 dark:text-white">Nexus Scoring Protocol</h3>
+                <h3 className="text-xl font-black uppercase italic text-slate-900 dark:text-white">Scoring Protocol</h3>
                 <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Neural Reward Calibration v2.3</p>
               </div>
               <button onClick={() => {
@@ -167,7 +167,7 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({ gam
                   <td colSpan={3} className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Syncing with Nexus Cloud...</p>
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Syncing with Cloud...</p>
                     </div>
                   </td>
                 </tr>

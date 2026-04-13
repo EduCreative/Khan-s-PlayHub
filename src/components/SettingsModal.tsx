@@ -5,8 +5,12 @@ interface SettingsModalProps {
   sfxVolume: number;
   hapticFeedback: boolean;
   isDarkMode: boolean;
+  dataProvider: 'firebase' | 'cloudflare' | 'hybrid';
+  workerUrl: string;
   onUpdateSfx: (val: number) => void;
   onUpdateHaptic: (val: boolean) => void;
+  onUpdateDataProvider: (val: 'firebase' | 'cloudflare' | 'hybrid') => void;
+  onUpdateWorkerUrl: (val: string) => void;
   onToggleTheme: () => void;
   onClose: () => void;
   canInstall: boolean;
@@ -15,8 +19,9 @@ interface SettingsModalProps {
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ 
-  sfxVolume, hapticFeedback, isDarkMode, onUpdateSfx, onUpdateHaptic, onToggleTheme, onClose,
-  canInstall, isInstalled, onInstall
+  sfxVolume, hapticFeedback, isDarkMode, dataProvider, workerUrl,
+  onUpdateSfx, onUpdateHaptic, onUpdateDataProvider, onUpdateWorkerUrl,
+  onToggleTheme, onClose, canInstall, isInstalled, onInstall
 }) => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-300">
@@ -26,7 +31,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
         
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-black italic tracking-tighter uppercase text-slate-900 dark:text-white">Nexus Settings</h2>
+          <h2 className="text-3xl font-black italic tracking-tighter uppercase text-slate-900 dark:text-white">Settings</h2>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
             <i className="fas fa-times text-xl"></i>
           </button>
@@ -41,7 +46,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   <i className={`fas ${isDarkMode ? 'fa-moon' : 'fa-sun'}`}></i>
                 </div>
                 <div>
-                  <p className="font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">Dark Protocol</p>
+                  <p className="font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">Dark Mode</p>
                   <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Theme Mode</p>
                 </div>
               </div>
@@ -95,6 +100,56 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
+          {/* Data Provider Section */}
+          <div className="p-6 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                <i className="fas fa-database"></i>
+              </div>
+              <div>
+                <p className="font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">Data Provider</p>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Storage Engine</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {(['firebase', 'cloudflare', 'hybrid'] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => onUpdateDataProvider(p)}
+                  className={`py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                    dataProvider === p 
+                      ? 'bg-indigo-600 border-indigo-600 text-white' 
+                      : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500'
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+
+            {(dataProvider === 'cloudflare' || dataProvider === 'hybrid') && (
+              <div className="space-y-2">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Worker URL</p>
+                <input 
+                  type="text" 
+                  value={workerUrl}
+                  onChange={(e) => onUpdateWorkerUrl(e.target.value)}
+                  placeholder="https://your-worker.workers.dev"
+                  className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all"
+                />
+              </div>
+            )}
+            
+            <p className="text-[9px] text-slate-500 font-medium italic">
+              {dataProvider === 'hybrid' 
+                ? 'Hybrid mode writes to both Firestore and D1, and reads from Cloudflare if available.' 
+                : dataProvider === 'cloudflare' 
+                ? 'Cloudflare mode uses D1 for all operations. Requires a valid Worker URL.'
+                : 'Firebase mode uses Firestore for all operations.'}
+            </p>
+          </div>
+
           {/* PWA Section */}
           <div className="p-6 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
             <div className="flex items-center gap-4 mb-4">
@@ -110,31 +165,27 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             {isInstalled ? (
               <div className="flex items-center gap-2 text-emerald-500 font-black uppercase italic text-sm">
                 <i className="fas fa-check-circle"></i>
-                <span>Nexus App Mode Active</span>
+                <span>PlayHub App Mode Active</span>
               </div>
             ) : canInstall ? (
               <button 
                 onClick={onInstall}
                 className="w-full py-3 bg-emerald-500 text-white rounded-xl font-black uppercase italic tracking-tighter hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20"
               >
-                Install Nexus Now
+                Install Now
               </button>
             ) : (
               <div className="space-y-3">
                 <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
                   To install PlayHub, open this app in a <span className="text-indigo-500 font-bold">New Tab</span> outside the preview frame.
                 </p>
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-left">
-                  <p className="text-[9px] font-black text-slate-400 uppercase mb-1">iOS Instructions:</p>
-                  <p className="text-[9px] text-slate-500">Tap <i className="fas fa-share-square mx-1"></i> then "Add to Home Screen"</p>
-                </div>
               </div>
             )}
           </div>
 
           <div className="p-6 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-center">
-            <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em] mb-2">Nexus Cloud Sync</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">Your settings are automatically synchronized across all authorized devices in the Nexus network.</p>
+            <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em] mb-2">Cloud Sync</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">Your settings are automatically synchronized across all authorized devices.</p>
           </div>
 
           <button 

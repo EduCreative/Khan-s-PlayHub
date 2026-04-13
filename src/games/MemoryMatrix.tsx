@@ -282,7 +282,7 @@ const MemoryMatrix: React.FC<{ onGameOver: (s: number) => void; isPlaying: boole
               <div className="absolute inset-0 backface-hidden flex items-center justify-center bg-slate-800 rounded-2xl border-2 border-white/10 shadow-lg group overflow-hidden">
                 <div className="absolute inset-0 bg-grid-white/[0.02]" />
                 <div className="w-8 h-8 rounded-full bg-white/5 animate-pulse" />
-                <div className="absolute bottom-1 right-2 text-[8px] font-black text-white/5 italic">Nexus-9</div>
+                <div className="absolute bottom-1 right-2 text-[8px] font-black text-white/5 italic">PlayHub-9</div>
               </div>
               
               <div 

@@ -116,6 +116,15 @@ export default {
         return new Response(JSON.stringify(users.results), { headers: corsHeaders });
       }
 
+      if (url.pathname === '/admin/all-scores' && method === 'GET') {
+        const scores = await env.PLAYHUB_DB.prepare(`
+          SELECT s.*, p.username, p.avatar 
+          FROM scores s
+          LEFT JOIN profiles p ON s.deviceId = p.deviceId
+        `).all();
+        return new Response(JSON.stringify(scores.results), { headers: corsHeaders });
+      }
+
       if (url.pathname.startsWith('/admin/user/') && method === 'DELETE') {
         const deviceId = url.pathname.split('/').pop();
         await env.PLAYHUB_DB.prepare("DELETE FROM profiles WHERE deviceId = ?").bind(deviceId).run();
@@ -123,7 +132,7 @@ export default {
         return new Response(JSON.stringify({ status: 'wiped' }), { headers: corsHeaders });
       }
 
-      return new Response("Nexus API Endpoint", { status: 404, headers: corsHeaders });
+      return new Response("PlayHub API Endpoint", { status: 404, headers: corsHeaders });
     } catch (err) {
       return new Response(err.message, { status: 500, headers: corsHeaders });
     }

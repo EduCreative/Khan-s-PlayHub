@@ -1,11 +1,11 @@
 
-# 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Nexus
+# 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
 **Version:** 3.0.0 "Player Identity"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
-Khan's PlayHub is a high-performance, mobile-first Progressive Web App (PWA) that synchronizes your elite scores and profile across the Cloudflare Nexus.
+Khan's PlayHub is a high-performance, mobile-first Progressive Web App (PWA) that synchronizes your elite scores and profile across the Cloudflare network.
 
 ---
 

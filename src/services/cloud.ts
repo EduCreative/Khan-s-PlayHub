@@ -77,8 +77,25 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 }
 
 class CloudService {
+  private provider: 'firebase' | 'cloudflare' | 'hybrid' = 'firebase';
+  private workerUrl: string = '';
+
   constructor() {
     this.testConnection();
+  }
+
+  configure(provider: 'firebase' | 'cloudflare' | 'hybrid', workerUrl: string) {
+    this.provider = provider;
+    this.workerUrl = workerUrl;
+    console.log(`CloudService configured: ${provider} | ${workerUrl}`);
+  }
+
+  getDataProvider() {
+    return this.provider;
+  }
+
+  getWorkerUrl() {
+    return this.workerUrl;
   }
 
   private async testConnection() {
@@ -94,46 +111,66 @@ class CloudService {
   async syncScore(gameId: string, score: number, userProfile: UserProfile): Promise<boolean> {
     if (!auth.currentUser) return false;
     const uid = auth.currentUser.uid;
-    const path = `scores/${gameId}_${uid}`;
     
-    try {
-      await setDoc(doc(db, 'scores', `${gameId}_${uid}`), {
-        deviceId: uid,
-        gameId,
-        score,
-        timestamp: Date.now(),
-        username: userProfile.username,
-        avatar: userProfile.avatar
-      }, { merge: true });
-      return true;
-    } catch (e) {
-      handleFirestoreError(e, OperationType.WRITE, path);
-      return false;
+    let firebaseSuccess = false;
+    let cloudflareSuccess = false;
+
+    // Firebase Sync
+    if (this.provider === 'firebase' || this.provider === 'hybrid') {
+      try {
+        await setDoc(doc(db, 'scores', `${gameId}_${uid}`), {
+          deviceId: uid,
+          gameId,
+          score,
+          timestamp: Date.now(),
+          username: userProfile.username,
+          avatar: userProfile.avatar
+        }, { merge: true });
+        firebaseSuccess = true;
+      } catch (e) {
+        handleFirestoreError(e, OperationType.WRITE, `scores/${gameId}_${uid}`);
+      }
     }
+
+    // Cloudflare Sync
+    if ((this.provider === 'cloudflare' || this.provider === 'hybrid') && this.workerUrl) {
+      try {
+        const baseUrl = this.workerUrl.endsWith('/') ? this.workerUrl.slice(0, -1) : this.workerUrl;
+        const res = await fetch(`${baseUrl}/scores`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deviceId: uid, gameId, score, timestamp: Date.now() })
+        });
+        cloudflareSuccess = res.ok;
+      } catch (e) {
+        console.error('Cloudflare Sync Failed:', e);
+      }
+    }
+
+    return this.provider === 'hybrid' ? (firebaseSuccess && cloudflareSuccess) : (firebaseSuccess || cloudflareSuccess);
   }
 
   async getGlobalHighScores(gameId: string): Promise<any[]> {
+    if (this.provider === 'cloudflare' && this.workerUrl) {
+      try {
+        const baseUrl = this.workerUrl.endsWith('/') ? this.workerUrl.slice(0, -1) : this.workerUrl;
+        const endpoint = gameId === 'all' ? '/leaderboard-total' : `/leaderboard/${gameId}`;
+        const res = await fetch(`${baseUrl}${endpoint}`);
+        if (res.ok) return await res.json();
+      } catch (e) {
+        console.error('Cloudflare Fetch Failed:', e);
+      }
+    }
+
+    // Fallback to Firebase
     const path = 'scores';
     try {
       let q;
       if (gameId === 'all') {
-        // For 'all', we might need a different aggregation or just show top overall scores
-        // The previous worker had a special endpoint for this.
-        // In Firestore, we'll just query all scores and sort by score.
-        q = query(
-          collection(db, 'scores'),
-          orderBy('score', 'desc'),
-          limit(10)
-        );
+        q = query(collection(db, 'scores'), orderBy('score', 'desc'), limit(10));
       } else {
-        q = query(
-          collection(db, 'scores'),
-          where('gameId', '==', gameId),
-          orderBy('score', 'desc'),
-          limit(10)
-        );
+        q = query(collection(db, 'scores'), where('gameId', '==', gameId), orderBy('score', 'desc'), limit(10));
       }
-      
       const snapshot = await getDocs(q);
       return snapshot.docs.map(doc => doc.data());
     } catch (e) {
@@ -145,30 +182,54 @@ class CloudService {
   async syncProfile(profile: UserProfile): Promise<boolean> {
     if (!auth.currentUser) return false;
     const uid = auth.currentUser.uid;
-    const path = `profiles/${uid}`;
     
-    try {
-      await setDoc(doc(db, 'profiles', uid), {
-        ...profile,
-        joinedAt: profile.joinedAt || Date.now()
-      }, { merge: true });
-      return true;
-    } catch (e) {
-      handleFirestoreError(e, OperationType.WRITE, path);
-      return false;
+    let firebaseSuccess = false;
+    let cloudflareSuccess = false;
+
+    if (this.provider === 'firebase' || this.provider === 'hybrid') {
+      try {
+        await setDoc(doc(db, 'profiles', uid), {
+          ...profile,
+          joinedAt: profile.joinedAt || Date.now()
+        }, { merge: true });
+        firebaseSuccess = true;
+      } catch (e) {
+        handleFirestoreError(e, OperationType.WRITE, `profiles/${uid}`);
+      }
     }
+
+    if ((this.provider === 'cloudflare' || this.provider === 'hybrid') && this.workerUrl) {
+      try {
+        const baseUrl = this.workerUrl.endsWith('/') ? this.workerUrl.slice(0, -1) : this.workerUrl;
+        const res = await fetch(`${baseUrl}/profile`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...profile, deviceId: uid })
+        });
+        cloudflareSuccess = res.ok;
+      } catch (e) {
+        console.error('Cloudflare Profile Sync Failed:', e);
+      }
+    }
+
+    return this.provider === 'hybrid' ? (firebaseSuccess && cloudflareSuccess) : (firebaseSuccess || cloudflareSuccess);
   }
 
   async getProfile(): Promise<UserProfile | null> {
     if (!auth.currentUser) return null;
     const uid = auth.currentUser.uid;
-    const path = `profiles/${uid}`;
-    
+
+    if (this.provider === 'cloudflare' && this.workerUrl) {
+      // Note: Worker doesn't have a single profile GET endpoint in the current script, 
+      // but we could add one or fallback to Firebase.
+      // For now, let's fallback to Firebase as it's the primary identity store.
+    }
+
     try {
       const snapshot = await getDoc(doc(db, 'profiles', uid));
       return snapshot.exists() ? snapshot.data() as UserProfile : null;
     } catch (e) {
-      handleFirestoreError(e, OperationType.GET, path);
+      handleFirestoreError(e, OperationType.GET, `profiles/${uid}`);
       return null;
     }
   }
@@ -223,8 +284,9 @@ class CloudService {
 
   async migrateFromWorker(workerUrl: string): Promise<{ success: number, failed: number, total: number }> {
     try {
-      const response = await fetch(`${workerUrl}/api/scores`);
-      if (!response.ok) throw new Error(`Worker responded with ${response.status}`);
+      const baseUrl = workerUrl.endsWith('/') ? workerUrl.slice(0, -1) : workerUrl;
+      const response = await fetch(`${baseUrl}/admin/all-scores`);
+      if (!response.ok) throw new Error(`Worker responded with ${response.status}. Please ensure you have deployed the latest cloudflare-worker.js code to your Cloudflare account.`);
       
       const scores = await response.json();
       if (!Array.isArray(scores)) throw new Error('Invalid data format from worker');

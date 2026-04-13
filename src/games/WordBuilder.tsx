@@ -422,7 +422,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ onGameOver, isPlaying, isDark
         <div className="absolute top-4 left-4 z-10">
            <div className="flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase transition-colors bg-white/5 border border-white/10" style={{ color: activeColors.primary }}>
               <i className="fas fa-check-circle"></i>
-              Nexus Lexicon Active
+              Lexicon Active
            </div>
         </div>
 

@@ -32,6 +32,8 @@ export interface AppSettings {
   sfxVolume: number;
   haptics: boolean;
   reducedMotion: boolean;
+  dataProvider: 'firebase' | 'cloudflare' | 'hybrid';
+  workerUrl: string;
 }
 
 export interface Game {

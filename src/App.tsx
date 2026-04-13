@@ -41,6 +41,8 @@ const App: React.FC = () => {
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [sfxVolume, setSfxVolume] = useState(0.5);
   const [hapticFeedback, setHapticFeedback] = useState(true);
+  const [dataProvider, setDataProvider] = useState<'firebase' | 'cloudflare' | 'hybrid'>('firebase');
+  const [workerUrl, setWorkerUrl] = useState('');
   const [syncStatus, setSyncStatus] = useState<'synced' | 'pending' | 'offline'>('synced');
   const [globalRecords, setGlobalRecords] = useState<Record<string, number>>({});
   const [isSyncing, setIsSyncing] = useState(false);
@@ -157,6 +159,8 @@ const App: React.FC = () => {
         const parsed = JSON.parse(savedSettings);
         setSfxVolume(parsed.sfxVolume ?? 0.5);
         setHapticFeedback(parsed.hapticFeedback ?? true);
+        setDataProvider(parsed.dataProvider ?? 'firebase');
+        setWorkerUrl(parsed.workerUrl ?? '');
       }
     } catch (e) { console.error('Failed to parse settings', e); }
   }, []);
@@ -192,8 +196,14 @@ const App: React.FC = () => {
   }, [activeGame, showAdmin, showSettings]);
 
   useEffect(() => {
-    localStorage.setItem('khans-playhub-settings', JSON.stringify({ sfxVolume, hapticFeedback }));
-  }, [sfxVolume, hapticFeedback]);
+    localStorage.setItem('khans-playhub-settings', JSON.stringify({ 
+      sfxVolume, 
+      hapticFeedback,
+      dataProvider,
+      workerUrl
+    }));
+    cloud.configure(dataProvider, workerUrl);
+  }, [sfxVolume, hapticFeedback, dataProvider, workerUrl]);
 
   useEffect(() => {
     if (isDarkMode) document.documentElement.classList.add('dark');
@@ -510,6 +520,8 @@ const App: React.FC = () => {
           sfxVolume={sfxVolume}
           hapticFeedback={hapticFeedback}
           isDarkMode={isDarkMode}
+          dataProvider={dataProvider}
+          workerUrl={workerUrl}
           onUpdateSfx={(vol) => {
             setSfxVolume(vol);
             // Volume change feedback
@@ -519,6 +531,13 @@ const App: React.FC = () => {
           onUpdateHaptic={(h) => {
             setHapticFeedback(h);
             audioService.playToggle(h);
+          }}
+          onUpdateDataProvider={(p) => {
+            setDataProvider(p);
+            audioService.playToggle(true);
+          }}
+          onUpdateWorkerUrl={(url) => {
+            setWorkerUrl(url);
           }}
           onToggleTheme={() => {
             setIsDarkMode(!isDarkMode);
