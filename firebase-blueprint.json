@@ -1,0 +1,43 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information and preferences",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string", "description": "Display name" },
+        "email": { "type": "string", "format": "email", "description": "User email" },
+        "avatar": { "type": "string", "description": "Avatar icon class" },
+        "bio": { "type": "string", "description": "User biography" },
+        "favorites": { "type": "array", "items": { "type": "string" }, "description": "List of favorite game IDs" },
+        "joinedAt": { "type": "number", "description": "Timestamp when user joined" },
+        "achievements": { "type": "array", "items": { "type": "string" }, "description": "List of unlocked achievement IDs" }
+      },
+      "required": ["username", "avatar", "joinedAt"]
+    },
+    "GameScore": {
+      "title": "GameScore",
+      "description": "High score for a specific game and user",
+      "type": "object",
+      "properties": {
+        "deviceId": { "type": "string", "description": "Unique device identifier" },
+        "gameId": { "type": "string", "description": "ID of the game" },
+        "score": { "type": "number", "description": "High score value" },
+        "timestamp": { "type": "number", "description": "When the score was achieved" },
+        "username": { "type": "string", "description": "Username at time of score (for leaderboard)" },
+        "avatar": { "type": "string", "description": "Avatar at time of score (for leaderboard)" }
+      },
+      "required": ["deviceId", "gameId", "score", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/profiles/{deviceId}": {
+      "schema": "UserProfile",
+      "description": "User profile data keyed by device ID"
+    },
+    "/scores/{scoreId}": {
+      "schema": "GameScore",
+      "description": "High scores keyed by gameId_deviceId"
+    }
+  }
+}

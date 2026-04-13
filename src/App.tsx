@@ -14,6 +14,8 @@ import { cloud } from './services/cloud';
 import { ACHIEVEMENTS } from './achievements';
 import { Achievement } from './types';
 import { audioService } from './services/audioService';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
+import { auth } from './firebase';
 
 const DEFAULT_PROFILE: UserProfile = {
   username: 'New Player',
@@ -47,6 +49,10 @@ const App: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [canInstall, setCanInstall] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
+
+  const isAdminUser = user?.email?.toLowerCase() === 'kmasroor50@gmail.com'.toLowerCase() || userProfile.role === 'admin';
 
   const CURRENT_VERSION = '3.0.1';
 
@@ -194,7 +200,7 @@ const App: React.FC = () => {
   }, [isDarkMode]);
 
   const syncAllScores = React.useCallback(async () => {
-    if (!navigator.onLine || isSyncing) return;
+    if (!navigator.onLine || isSyncing || !auth.currentUser) return;
     
     setIsSyncing(true);
     setSyncStatus('pending');
@@ -204,7 +210,7 @@ const App: React.FC = () => {
       let allSuccess = true;
       
       for (const gameId of gameIds) {
-        const success = await cloud.syncScore(gameId, scores[gameId]);
+        const success = await cloud.syncScore(gameId, scores[gameId], userProfile);
         if (!success) allSuccess = false;
         else {
           // Update global record if we beat it
@@ -222,7 +228,51 @@ const App: React.FC = () => {
     } finally {
       setIsSyncing(false);
     }
-  }, [scores, isSyncing]);
+  }, [scores, isSyncing, userProfile]);
+
+  // Auth Listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setUser(firebaseUser);
+      setIsAuthReady(true);
+      
+      if (firebaseUser) {
+        // Fetch profile from Firestore
+        const cloudProfile = await cloud.getProfile();
+        if (cloudProfile) {
+          setUserProfile(cloudProfile);
+          localStorage.setItem('khans-playhub-profile', JSON.stringify(cloudProfile));
+        } else {
+          // Create initial profile in Firestore if it doesn't exist
+          const initialProfile = { ...userProfile, email: firebaseUser.email || '' };
+          await cloud.syncProfile(initialProfile);
+        }
+        syncAllScores();
+      }
+    });
+    return () => unsubscribe();
+  }, [syncAllScores]);
+
+  const handleLogin = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      audioService.playSuccess();
+    } catch (e) {
+      console.error('Login Failed:', e);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setUserProfile(DEFAULT_PROFILE);
+      setScores({});
+      audioService.playNav();
+    } catch (e) {
+      console.error('Logout Failed:', e);
+    }
+  };
 
   useEffect(() => {
     const updateOnlineStatus = () => {
@@ -316,7 +366,7 @@ const App: React.FC = () => {
     // This handles cases where local data exists but cloud data is missing or failed previously
     if (score >= currentHigh && navigator.onLine) {
       setSyncStatus('pending');
-      const success = await cloud.syncScore(gameId, score);
+      const success = await cloud.syncScore(gameId, score, userProfile);
       setSyncStatus(success ? 'synced' : 'offline');
       if (success) {
         audioService.playSuccess();
@@ -327,7 +377,7 @@ const App: React.FC = () => {
         }));
       }
     }
-  }, [scores, unlockAchievement]);
+  }, [scores, unlockAchievement, userProfile]);
 
   const isAnonymous = userProfile.username === 'New Player' || userProfile.username === 'Operative';
 
@@ -347,7 +397,7 @@ const App: React.FC = () => {
       <ParticleBackground isDarkMode={isDarkMode} />
       
       <main className="relative z-10 w-full min-h-screen">
-        {showAdmin ? (
+        {showAdmin && isAuthReady && isAdminUser ? (
           <AdminPanel onClose={() => {
             setShowAdmin(false);
             audioService.playNav();
@@ -419,6 +469,10 @@ const App: React.FC = () => {
             canInstall={canInstall}
             isInstalled={isInstalled}
             onInstall={handleInstall}
+            user={user}
+            onLogin={handleLogin}
+            onLogout={handleLogout}
+            isAuthReady={isAuthReady}
           />
         )}
       </main>

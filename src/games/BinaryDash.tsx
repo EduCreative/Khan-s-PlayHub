@@ -25,9 +25,16 @@ const BinaryDash: React.FC<{
   const integrityRef = useRef(100);
   const streakRef = useRef(0);
   const bitsRef = useRef<Bit[]>([]);
+  const onGameOverRef = useRef(onGameOver);
+  const onScoreUpdateRef = useRef(onScoreUpdate);
   const animFrameRef = useRef<number | null>(null);
   const lastUpdateRef = useRef(0);
   const spawnTimerRef = useRef(0);
+
+  useEffect(() => {
+    onGameOverRef.current = onGameOver;
+    onScoreUpdateRef.current = onScoreUpdate;
+  }, [onGameOver, onScoreUpdate]);
 
   const spawnBit = useCallback(() => {
     const newBit: Bit = {
@@ -103,7 +110,7 @@ const BinaryDash: React.FC<{
       setBits([...bitsRef.current]);
 
       if (integrityRef.current <= 0) {
-        onGameOver(scoreRef.current);
+        onGameOverRef.current(scoreRef.current);
         return;
       }
 
@@ -112,7 +119,7 @@ const BinaryDash: React.FC<{
 
     animFrameRef.current = requestAnimationFrame(loop);
     return () => { if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current); };
-  }, [isPlaying, spawnBit, onGameOver]);
+  }, [isPlaying, spawnBit]);
 
   const sort = (direction: 'LEFT' | 'RIGHT') => {
     if (!isPlaying || integrityRef.current <= 0 || bitsRef.current.length === 0) return;
@@ -127,7 +134,7 @@ const BinaryDash: React.FC<{
       const points = 2 + Math.floor(streakRef.current / 2);
       scoreRef.current += points;
       setScore(scoreRef.current);
-      if (onScoreUpdate) onScoreUpdate(scoreRef.current);
+      if (onScoreUpdateRef.current) onScoreUpdateRef.current(scoreRef.current);
       setStreak(streakRef.current);
       bitsRef.current = bitsRef.current.filter(b => b.id !== bitToSort.id);
     } else {

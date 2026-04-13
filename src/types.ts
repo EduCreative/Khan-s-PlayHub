@@ -25,6 +25,7 @@ export interface UserProfile {
   favorites: string[];
   joinedAt: number;
   achievements: string[]; // IDs of unlocked achievements
+  role?: 'admin' | 'user';
 }
 
 export interface AppSettings {

@@ -1,0 +1,119 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: profiles
+// Document ID: {userId}
+// Fields:
+//   - username: string (required, 1-50 chars)
+//   - email: string (optional, email format)
+//   - avatar: string (required)
+//   - bio: string (optional, max 200 chars)
+//   - favorites: list (required, max 50 items)
+//   - joinedAt: number (required)
+//   - achievements: list (required, max 100 items)
+//
+// Collection: scores
+// Document ID: {gameId}_{userId}
+// Fields:
+//   - deviceId: string (required, matches userId)
+//   - gameId: string (required)
+//   - score: number (required, positive)
+//   - timestamp: number (required)
+//   - username: string (required, for leaderboard)
+//   - avatar: string (required, for leaderboard)
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return request.auth != null &&
+        (request.auth.token.email.lower() == "kmasroor50@gmail.com".lower() ||
+         (exists(/databases/$(database)/documents/profiles/$(request.auth.uid)) && 
+          get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == 'admin'));
+    }
+    
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidProfile(data) {
+      return data.keys().hasAll(['username', 'avatar', 'joinedAt']) &&
+             data.username is string && data.username.size() >= 1 && data.username.size() <= 50 &&
+             data.avatar is string &&
+             data.joinedAt is number &&
+             (!('email' in data) || (data.email == null || isValidEmail(data.email))) &&
+             (!('bio' in data) || (data.bio is string && data.bio.size() <= 200)) &&
+             (!('favorites' in data) || (data.favorites is list && data.favorites.size() <= 50)) &&
+             (!('achievements' in data) || (data.achievements is list && data.achievements.size() <= 100));
+    }
+
+    function isValidScore(data) {
+      return data.keys().hasAll(['deviceId', 'gameId', 'score', 'timestamp', 'username', 'avatar']) &&
+             data.deviceId == request.auth.uid &&
+             data.gameId is string &&
+             data.score is number && data.score >= 0 &&
+             data.timestamp is number &&
+             data.username is string &&
+             data.avatar is string;
+    }
+
+    match /profiles {
+      // Allow listing profiles for admins
+      allow list: if isAdmin();
+      
+      match /{userId} {
+        // Only owner or admin can read full profiles (contains email/PII)
+        allow get: if isOwner(userId) || isAdmin();
+        
+        // Only owner can create/update their own profile
+        allow create: if isOwner(userId) && isValidProfile(request.resource.data);
+        allow update: if (isOwner(userId) || isAdmin()) && isValidProfile(request.resource.data) &&
+                        (isAdmin() || request.resource.data.joinedAt == resource.data.joinedAt) &&
+                        (isAdmin() || !('role' in request.resource.data) || request.resource.data.role == resource.data.role);
+        
+        allow delete: if isAdmin();
+      }
+    }
+
+    match /scores/{scoreId} {
+      // Allow public read for leaderboards
+      allow read: if true;
+      
+      // Only owner can write their own scores
+      // scoreId is expected to be {gameId}_{userId}
+      allow create: if isAuthenticated() && 
+                      request.resource.data.deviceId == request.auth.uid &&
+                      isValidScore(request.resource.data);
+                      
+      allow update: if isAuthenticated() && 
+                      resource.data.deviceId == request.auth.uid &&
+                      request.resource.data.deviceId == request.auth.uid &&
+                      request.resource.data.gameId == resource.data.gameId &&
+                      isValidScore(request.resource.data) &&
+                      request.resource.data.score >= resource.data.score; // Only allow higher scores
+                      
+      allow delete: if false;
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

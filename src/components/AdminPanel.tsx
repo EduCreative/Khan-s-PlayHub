@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { cloud } from '../services/cloud';
+import { auth } from '../firebase';
 import { GAMES } from '../constants';
 import { audioService } from '../services/audioService';
 import { 
@@ -18,8 +19,14 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'games' | 'pwa'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'games' | 'pwa' | 'migration'>('overview');
   const [confirmDeleteDeviceId, setConfirmDeleteDeviceId] = useState<string | null>(null);
+  const [workerUrl, setWorkerUrl] = useState('');
+  const [migrationStatus, setMigrationStatus] = useState<{ loading: boolean, result: any | null, error: string | null }>({
+    loading: false,
+    result: null,
+    error: null
+  });
 
   const downloadIcon = (size: number) => {
     const canvas = document.createElement('canvas');
@@ -69,16 +76,20 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       setLoading(true);
       setError(null);
       try {
-        const [s, u] = await Promise.all([
-          cloud.getAdminSummary(),
-          cloud.getAdminUsers()
-        ]);
+        const s = await cloud.getAdminSummary();
+        setSummary(s);
         
-        if (!s) {
-          setError("Failed to connect to Nexus Cloud. Check Worker logs or D1 bindings.");
-        } else {
-          setSummary(s);
+        try {
+          const u = await cloud.getAdminUsers();
           setUsers(u);
+        } catch (uErr: any) {
+          console.error("Failed to fetch admin users:", uErr);
+          // If it's a permission error, show a specific message
+          if (uErr.message.includes('permission')) {
+            setError("Permission Denied: Your account does not have authorization to list the operative registry.");
+          } else {
+            setError(uErr.message || "Failed to retrieve operative data.");
+          }
         }
       } catch (e) {
         setError("A critical connection error occurred.");
@@ -126,6 +137,25 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setConfirmDeleteDeviceId(null);
   };
 
+  const handleMigration = async () => {
+    if (!workerUrl) return;
+    setMigrationStatus({ loading: true, result: null, error: null });
+    audioService.playClick();
+    
+    try {
+      const result = await cloud.migrateFromWorker(workerUrl);
+      setMigrationStatus({ loading: false, result, error: null });
+      audioService.playSuccess();
+    } catch (e) {
+      setMigrationStatus({ 
+        loading: false, 
+        result: null, 
+        error: e instanceof Error ? e.message : 'Unknown migration error' 
+      });
+      audioService.playError();
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-50 dark:bg-slate-950 flex flex-col p-4 md:p-8 animate-in fade-in duration-500 overflow-y-auto">
       <div className="max-w-7xl mx-auto w-full">
@@ -146,7 +176,7 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           
           <div className="flex items-center gap-4">
             <div className="flex bg-slate-200 dark:bg-white/5 p-1 rounded-xl border border-slate-300 dark:border-white/10">
-              {(['overview', 'users', 'games', 'pwa'] as const).map(tab => (
+              {(['overview', 'users', 'games', 'pwa', 'migration'] as const).map(tab => (
                 <button
                   key={tab}
                   onClick={() => {
@@ -184,7 +214,10 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               <i className="fas fa-exclamation-triangle"></i>
             </div>
             <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase italic mb-4 tracking-tighter">Connection Interrupted</h3>
-            <p className="text-slate-500 max-w-md mb-10 leading-relaxed text-sm">{error}</p>
+            <p className="text-slate-500 max-w-md mb-2 leading-relaxed text-sm">{error}</p>
+            <p className="text-indigo-500 text-[10px] font-black uppercase tracking-widest mb-10">
+              Authenticated as: {auth.currentUser?.email || 'Anonymous'} ({auth.currentUser?.uid})
+            </p>
             <button 
               onClick={() => window.location.reload()}
               className="px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase italic tracking-tighter hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-600/40"
@@ -508,6 +541,99 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                       </div>
                     ))}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'migration' && (
+              <div className="max-w-2xl mx-auto space-y-8">
+                <div className="glass-card p-8 rounded-[2.5rem] border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-500 flex items-center justify-center text-white shadow-lg">
+                      <i className="fas fa-file-import"></i>
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase italic">Nexus Data Migration</h3>
+                      <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Cloudflare Worker {'->'} Firebase Firestore</p>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-slate-500 mb-8 leading-relaxed">
+                    Retrieve legacy scores from your Cloudflare Worker backend. This protocol will fetch all neural data from the specified worker endpoint and inject it into the new Firestore database.
+                  </p>
+
+                  <div className="space-y-6">
+                    <div>
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Worker Base URL</label>
+                      <input 
+                        type="url" 
+                        value={workerUrl}
+                        onChange={(e) => setWorkerUrl(e.target.value)}
+                        placeholder="https://khans-playhub-worker.yourname.workers.dev"
+                        className="w-full bg-slate-100 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 rounded-2xl px-6 py-4 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all font-mono"
+                      />
+                    </div>
+
+                    <button 
+                      onClick={handleMigration}
+                      disabled={migrationStatus.loading || !workerUrl}
+                      className={`w-full py-4 rounded-2xl font-black uppercase italic tracking-tighter transition-all shadow-xl ${
+                        migrationStatus.loading || !workerUrl
+                          ? 'bg-slate-200 dark:bg-white/5 text-slate-400 cursor-not-allowed'
+                          : 'bg-indigo-600 text-white hover:scale-[1.02] active:scale-95 shadow-indigo-600/40'
+                      }`}
+                    >
+                      {migrationStatus.loading ? (
+                        <span className="flex items-center justify-center gap-3">
+                          <i className="fas fa-circle-notch animate-spin"></i>
+                          Initiating Data Transfer...
+                        </span>
+                      ) : (
+                        'Execute Migration Protocol'
+                      )}
+                    </button>
+                  </div>
+
+                  {migrationStatus.error && (
+                    <div className="mt-8 p-6 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center gap-4 text-rose-500 animate-in fade-in slide-in-from-top-2">
+                      <i className="fas fa-exclamation-circle text-xl"></i>
+                      <div className="flex-1">
+                        <p className="text-xs font-black uppercase tracking-widest">Protocol Failure</p>
+                        <p className="text-[10px] font-bold opacity-80">{migrationStatus.error}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {migrationStatus.result && (
+                    <div className="mt-8 p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-4 text-emerald-500 animate-in fade-in slide-in-from-top-2">
+                      <i className="fas fa-check-circle text-xl"></i>
+                      <div className="flex-1">
+                        <p className="text-xs font-black uppercase tracking-widest">Migration Successful</p>
+                        <div className="flex gap-4 mt-1">
+                          <span className="text-[10px] font-bold uppercase tracking-widest">Total: {migrationStatus.result.total}</span>
+                          <span className="text-[10px] font-bold uppercase tracking-widest">Success: {migrationStatus.result.success}</span>
+                          <span className="text-[10px] font-bold uppercase tracking-widest">Failed: {migrationStatus.result.failed}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="glass-card p-8 rounded-[2.5rem] border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5">
+                  <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4">Security Notice</h4>
+                  <ul className="space-y-3">
+                    {[
+                      'Ensure the worker is still active and accessible.',
+                      'The worker must have CORS enabled for this domain.',
+                      'Migration will merge data; existing Firestore scores will be preserved unless the ID matches.',
+                      'This protocol only migrates scores. Profiles must be re-synced individually by users.'
+                    ].map((note, i) => (
+                      <li key={i} className="flex items-start gap-3 text-[10px] text-slate-500 font-bold uppercase leading-relaxed">
+                        <i className="fas fa-shield-alt mt-0.5 text-indigo-500"></i>
+                        {note}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             )}

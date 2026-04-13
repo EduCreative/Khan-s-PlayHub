@@ -4,6 +4,7 @@ import { Game, Category, UserProfile } from '../types';
 import GameCard from './GameCard';
 import Logo from './Logo';
 import Leaderboard from './Leaderboard';
+import { User } from 'firebase/auth';
 
 import { audioService } from '../services/audioService';
 
@@ -28,10 +29,15 @@ interface HubProps {
   canInstall: boolean;
   isInstalled: boolean;
   onInstall: () => void;
+  user: User | null;
+  onLogin: () => void;
+  onLogout: () => void;
+  isAuthReady: boolean;
 }
 
 const Hub: React.FC<HubProps> = ({ 
-  games, onSelectGame, filter, setFilter, highScores, globalRecords, userProfile, isDarkMode, syncStatus, onSyncAll, onToggleTheme, onOpenProfile, onToggleFavorite, onUpdateGlobalRecord, onOpenAdmin, onOpenSettings, onOpenPrivacy, canInstall, isInstalled, onInstall
+  games, onSelectGame, filter, setFilter, highScores, globalRecords, userProfile, isDarkMode, syncStatus, onSyncAll, onToggleTheme, onOpenProfile, onToggleFavorite, onUpdateGlobalRecord, onOpenAdmin, onOpenSettings, onOpenPrivacy, canInstall, isInstalled, onInstall,
+  user, onLogin, onLogout, isAuthReady
 }) => {
   const [vClickCount, setVClickCount] = useState(0);
   const [adminClickCount, setAdminClickCount] = useState(0);
@@ -148,6 +154,27 @@ const Hub: React.FC<HubProps> = ({
           <button id="share-btn" onClick={handleShare} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all" title="Share this app">
             <i className="fas fa-share-alt text-emerald-500"></i>
           </button>
+          
+          {isAuthReady && !user && (
+            <button 
+              onClick={onLogin}
+              className="px-6 h-12 md:h-14 rounded-2xl bg-indigo-600 text-white font-black uppercase italic tracking-tighter shadow-xl hover:bg-indigo-500 transition-all flex items-center gap-2"
+            >
+              <i className="fab fa-google"></i>
+              <span className="hidden sm:inline">Sign In</span>
+            </button>
+          )}
+
+          {user && (
+            <button 
+              onClick={onLogout}
+              className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all"
+              title="Sign Out"
+            >
+              <i className="fas fa-sign-out-alt text-rose-500"></i>
+            </button>
+          )}
+
           {canInstall && (
             <button id="install-btn" onClick={onInstall} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all animate-bounce" title="Install App">
               <i className="fas fa-download text-indigo-500"></i>

@@ -13,7 +13,18 @@ const SkyStrike: React.FC<SkyStrikeProps & { onScoreUpdate?: (score: number) => 
   const [score, setScore] = useState(0);
   const [difficultyLevel, setDifficultyLevel] = useState(1);
   const scoreRef = useRef(0);
+  const difficultyLevelRef = useRef(1);
+  const onGameOverRef = useRef(onGameOver);
+  const onScoreUpdateRef = useRef(onScoreUpdate);
+  const hapticFeedbackRef = useRef(hapticFeedback);
   const requestRef = useRef<number>(null);
+
+  useEffect(() => {
+    onGameOverRef.current = onGameOver;
+    onScoreUpdateRef.current = onScoreUpdate;
+    hapticFeedbackRef.current = hapticFeedback;
+  }, [onGameOver, onScoreUpdate, hapticFeedback]);
+
   const gameState = useRef({
     player: { x: 150, y: 400, width: 40, height: 40, speed: 5 },
     bullets: [] as any[],
@@ -28,15 +39,13 @@ const SkyStrike: React.FC<SkyStrikeProps & { onScoreUpdate?: (score: number) => 
   });
 
   useEffect(() => {
-    const newLevel = Math.floor(score / 1000) + 1;
-    if (newLevel > difficultyLevel) {
-      setDifficultyLevel(newLevel);
-      if (hapticFeedback) audioService.vibrate([20, 50, 20]);
+    if (!isPlaying) {
+      setScore(0);
+      scoreRef.current = 0;
+      setDifficultyLevel(1);
+      difficultyLevelRef.current = 1;
+      return;
     }
-  }, [score, difficultyLevel, hapticFeedback]);
-
-  useEffect(() => {
-    if (!isPlaying) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -48,8 +57,12 @@ const SkyStrike: React.FC<SkyStrikeProps & { onScoreUpdate?: (score: number) => 
     gameState.current.bullets = [];
     gameState.current.particles = [];
     gameState.current.gameOver = false;
+    gameState.current.lastEnemyTime = performance.now();
+    gameState.current.lastFireTime = performance.now();
     scoreRef.current = 0;
+    difficultyLevelRef.current = 1;
     setScore(0);
+    setDifficultyLevel(1);
 
     // Initialize stars
     gameState.current.stars = Array.from({ length: 50 }).map(() => ({
@@ -72,9 +85,10 @@ const SkyStrike: React.FC<SkyStrikeProps & { onScoreUpdate?: (score: number) => 
     const spawnEnemy = () => {
       const state = gameState.current;
       const score = scoreRef.current;
+      const diff = difficultyLevelRef.current;
       
       // Difficulty scaling - heavy chance increases with score and difficultyLevel
-      const heavyChance = Math.min(0.6, (score / 2000) + (difficultyLevel - 1) * 0.1);
+      const heavyChance = Math.min(0.6, (score / 2000) + (diff - 1) * 0.1);
       const isHeavy = Math.random() < heavyChance;
       
       const x = Math.random() * (canvas.width - 40);
@@ -86,9 +100,9 @@ const SkyStrike: React.FC<SkyStrikeProps & { onScoreUpdate?: (score: number) => 
           width: 50,
           height: 50,
           // Speed increases slightly with difficultyLevel
-          speed: 1.5 + Math.random() * 1 + (difficultyLevel - 1) * 0.2,
-          health: 3 + Math.floor((difficultyLevel - 1) / 2), // Health also increases
-          maxHealth: 3 + Math.floor((difficultyLevel - 1) / 2),
+          speed: 1.5 + Math.random() * 1 + (diff - 1) * 0.2,
+          health: 3 + Math.floor((diff - 1) / 2), // Health also increases
+          maxHealth: 3 + Math.floor((diff - 1) / 2),
           color: '#9333ea', // Purple for heavy
           type: 'heavy'
         });
@@ -98,7 +112,7 @@ const SkyStrike: React.FC<SkyStrikeProps & { onScoreUpdate?: (score: number) => 
           y: -50,
           width: 40,
           height: 40,
-          speed: 2 + Math.random() * 2 + (difficultyLevel - 1) * 0.3,
+          speed: 2 + Math.random() * 2 + (diff - 1) * 0.3,
           health: 1,
           maxHealth: 1,
           color: '#f43f5e', // Red for normal
@@ -114,10 +128,10 @@ const SkyStrike: React.FC<SkyStrikeProps & { onScoreUpdate?: (score: number) => 
         y: state.player.y,
         width: 4,
         height: 15,
-        speed: 8
+        speed: 12 // Increased bullet speed
       });
       audioService.playClick();
-      if (hapticFeedback) audioService.vibrate(5);
+      if (hapticFeedbackRef.current) audioService.vibrate(5);
     };
 
     const createParticles = (x: number, y: number, color: string) => {
@@ -168,51 +182,73 @@ const SkyStrike: React.FC<SkyStrikeProps & { onScoreUpdate?: (score: number) => 
       state.player.y = Math.max(0, Math.min(canvas.height - state.player.height, state.player.y));
 
       // Spawning - interval decreases with score and difficultyLevel
-      const spawnInterval = Math.max(300, 1000 - Math.floor(scoreRef.current / 100) * 50 - (difficultyLevel - 1) * 50);
+      const spawnInterval = Math.max(300, 1000 - Math.floor(scoreRef.current / 100) * 50 - (difficultyLevelRef.current - 1) * 50);
       if (time - state.lastEnemyTime > spawnInterval) {
         spawnEnemy();
         state.lastEnemyTime = time;
       }
 
       // Update Bullets
-      state.bullets.forEach((bullet, bIdx) => {
+      for (let i = state.bullets.length - 1; i >= 0; i--) {
+        const bullet = state.bullets[i];
         bullet.y -= bullet.speed;
-        if (bullet.y < -20) {
-          state.bullets.splice(bIdx, 1);
-          return;
+        
+        if (bullet.y < -50 || bullet.y > canvas.height + 50) {
+          state.bullets.splice(i, 1);
+          continue;
         }
 
         // Bullet-Enemy Collision
-        state.enemies.forEach((enemy, eIdx) => {
+        let bulletHit = false;
+        for (let j = state.enemies.length - 1; j >= 0; j--) {
+          const enemy = state.enemies[j];
           if (
             bullet.x < enemy.x + enemy.width &&
             bullet.x + bullet.width > enemy.x &&
             bullet.y < enemy.y + enemy.height &&
             bullet.y + bullet.height > enemy.y
           ) {
-            state.bullets.splice(bIdx, 1);
+            bulletHit = true;
             enemy.health -= 1;
             
             if (enemy.health <= 0) {
               createParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, enemy.color);
-              state.enemies.splice(eIdx, 1);
+              state.enemies.splice(j, 1);
               scoreRef.current += enemy.type === 'heavy' ? 30 : 10;
               setScore(scoreRef.current);
-              if (onScoreUpdate) onScoreUpdate(scoreRef.current);
-              if (hapticFeedback) audioService.vibrate(20);
+              if (onScoreUpdateRef.current) onScoreUpdateRef.current(scoreRef.current);
+              
+              // Difficulty scaling check
+              const newLevel = Math.floor(scoreRef.current / 1000) + 1;
+              if (newLevel > difficultyLevelRef.current) {
+                difficultyLevelRef.current = newLevel;
+                setDifficultyLevel(newLevel);
+                if (hapticFeedbackRef.current) audioService.vibrate([20, 50, 20]);
+              }
+              
+              if (hapticFeedbackRef.current) audioService.vibrate(20);
             } else {
               // Hit effect
               createParticles(bullet.x, bullet.y, '#fff');
-              if (hapticFeedback) audioService.vibrate(5);
+              if (hapticFeedbackRef.current) audioService.vibrate(5);
             }
+            break;
           }
-        });
-      });
+        }
+        if (bulletHit) {
+          state.bullets.splice(i, 1);
+        }
+      }
 
       // Update Enemies
-      state.enemies.forEach((enemy, eIdx) => {
+      for (let i = state.enemies.length - 1; i >= 0; i--) {
+        const enemy = state.enemies[i];
         enemy.y += enemy.speed;
-        if (enemy.y > canvas.height) state.enemies.splice(eIdx, 1);
+        
+        if (enemy.y > canvas.height + 50) {
+          state.enemies.splice(i, 1);
+          continue;
+        }
 
         // Player-Enemy Collision
         if (
@@ -222,18 +258,19 @@ const SkyStrike: React.FC<SkyStrikeProps & { onScoreUpdate?: (score: number) => 
           state.player.y + state.player.height > enemy.y
         ) {
           state.gameOver = true;
-          if (hapticFeedback) audioService.vibrate(100);
-          onGameOver(scoreRef.current);
+          if (hapticFeedbackRef.current) audioService.vibrate(100);
+          onGameOverRef.current(scoreRef.current);
         }
-      });
+      }
 
       // Update Particles
-      state.particles.forEach((p, pIdx) => {
+      for (let i = state.particles.length - 1; i >= 0; i--) {
+        const p = state.particles[i];
         p.x += p.vx;
         p.y += p.vy;
         p.life -= 0.02;
-        if (p.life <= 0) state.particles.splice(pIdx, 1);
-      });
+        if (p.life <= 0) state.particles.splice(i, 1);
+      }
 
       draw();
       requestRef.current = requestAnimationFrame(update);
@@ -368,20 +405,39 @@ const SkyStrike: React.FC<SkyStrikeProps & { onScoreUpdate?: (score: number) => 
       window.removeEventListener('keyup', handleKeyUp);
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
-  }, [isPlaying, onGameOver, hapticFeedback]);
+  }, [isPlaying]);
 
   const handleTouch = (e: React.TouchEvent) => {
     if (!isPlaying) return;
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (!rect) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
     const touch = e.touches[0];
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
     
-    // Smooth follow with offset to avoid finger obscuring the jet
-    gameState.current.player.x = x - gameState.current.player.width / 2;
-    gameState.current.player.y = y - gameState.current.player.height - 20;
-
+    // Scale touch coordinates to internal canvas resolution (300x500)
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    const x = (touch.clientX - rect.left) * scaleX;
+    const y = (touch.clientY - rect.top) * scaleY;
+    
+    const targetX = x - gameState.current.player.width / 2;
+    const targetY = y - gameState.current.player.height - 40;
+    
+    // Smooth follow with easing, but cap movement speed to prevent bullet-lag
+    const dx = targetX - gameState.current.player.x;
+    const dy = targetY - gameState.current.player.y;
+    
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > 0) {
+      const maxMove = gameState.current.player.speed * 2.5; // Cap speed
+      const moveX = (dx / dist) * Math.min(dist, maxMove);
+      const moveY = (dy / dist) * Math.min(dist, maxMove);
+      
+      gameState.current.player.x += moveX;
+      gameState.current.player.y += moveY;
+    }
+    
     // Auto-fire on touch handled in update loop for consistency
     gameState.current.keys[' '] = true;
   };

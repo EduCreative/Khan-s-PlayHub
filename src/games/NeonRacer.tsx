@@ -13,7 +13,17 @@ const NeonRacer: React.FC<NeonRacerProps & { onScoreUpdate?: (score: number) => 
   const [score, setScore] = useState(0);
   const [difficultyLevel, setDifficultyLevel] = useState(1);
   const scoreRef = useRef(0);
+  const onGameOverRef = useRef(onGameOver);
+  const onScoreUpdateRef = useRef(onScoreUpdate);
+  const hapticFeedbackRef = useRef(hapticFeedback);
   const requestRef = useRef<number>(null);
+
+  useEffect(() => {
+    onGameOverRef.current = onGameOver;
+    onScoreUpdateRef.current = onScoreUpdate;
+    hapticFeedbackRef.current = hapticFeedback;
+  }, [onGameOver, onScoreUpdate, hapticFeedback]);
+
   const gameState = useRef({
     player: { x: 150, y: 400, width: 40, height: 70, speed: 5 },
     obstacles: [] as any[],
@@ -35,15 +45,12 @@ const NeonRacer: React.FC<NeonRacerProps & { onScoreUpdate?: (score: number) => 
   });
 
   useEffect(() => {
-    const newLevel = Math.floor(score / 1000) + 1;
-    if (newLevel > difficultyLevel) {
-      setDifficultyLevel(newLevel);
-      if (hapticFeedback) audioService.vibrate([10, 50, 10]);
+    if (!isPlaying) {
+      setScore(0);
+      scoreRef.current = 0;
+      setDifficultyLevel(1);
+      return;
     }
-  }, [score, difficultyLevel, hapticFeedback]);
-
-  useEffect(() => {
-    if (!isPlaying) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -51,13 +58,18 @@ const NeonRacer: React.FC<NeonRacerProps & { onScoreUpdate?: (score: number) => 
     if (!ctx) return;
 
     // Reset game state on start
-    gameState.current.speed = 5 + (difficultyLevel - 1) * 0.5;
+    gameState.current.speed = 5;
     gameState.current.obstacles = [];
     gameState.current.collectibles = [];
     gameState.current.particles = [];
+    gameState.current.playerTrail = [];
     gameState.current.gameOver = false;
+    gameState.current.lastObstacleTime = performance.now();
+    gameState.current.lastCollectibleTime = performance.now();
+    gameState.current.player.x = 130;
     scoreRef.current = 0;
     setScore(0);
+    setDifficultyLevel(1);
 
     // Initialize parallax background
     gameState.current.backgroundStars = Array.from({ length: 40 }).map(() => ({
@@ -187,13 +199,22 @@ const NeonRacer: React.FC<NeonRacerProps & { onScoreUpdate?: (score: number) => 
       }
 
       // Update obstacles
-      state.obstacles.forEach((obs, index) => {
+      for (let i = state.obstacles.length - 1; i >= 0; i--) {
+        const obs = state.obstacles[i];
         obs.y += state.speed + obs.speed;
-        if (obs.y > canvas.height) {
-          state.obstacles.splice(index, 1);
+        if (obs.y > canvas.height + 100) {
+          state.obstacles.splice(i, 1);
           scoreRef.current += 1;
           setScore(scoreRef.current);
-          if (onScoreUpdate) onScoreUpdate(scoreRef.current);
+          if (onScoreUpdateRef.current) onScoreUpdateRef.current(scoreRef.current);
+          
+          // Difficulty scaling
+          const newLevel = Math.floor(scoreRef.current / 1000) + 1;
+          if (newLevel > difficultyLevel) {
+            setDifficultyLevel(newLevel);
+            if (hapticFeedbackRef.current) audioService.vibrate([10, 50, 10]);
+          }
+          continue;
         }
 
         // Collision
@@ -206,16 +227,18 @@ const NeonRacer: React.FC<NeonRacerProps & { onScoreUpdate?: (score: number) => 
           state.gameOver = true;
           state.shake = 20;
           createParticles(state.player.x + state.player.width / 2, state.player.y + state.player.height / 2, '#06b6d4', 40);
-          if (hapticFeedback) audioService.vibrate(50);
-          onGameOver(scoreRef.current);
+          if (hapticFeedbackRef.current) audioService.vibrate(50);
+          onGameOverRef.current(scoreRef.current);
         }
-      });
+      }
 
       // Update collectibles
-      state.collectibles.forEach((col, index) => {
+      for (let i = state.collectibles.length - 1; i >= 0; i--) {
+        const col = state.collectibles[i];
         col.y += state.speed;
-        if (col.y > canvas.height) {
-          state.collectibles.splice(index, 1);
+        if (col.y > canvas.height + 50) {
+          state.collectibles.splice(i, 1);
+          continue;
         }
 
         // Collection
@@ -225,26 +248,27 @@ const NeonRacer: React.FC<NeonRacerProps & { onScoreUpdate?: (score: number) => 
           state.player.y < col.y + col.height &&
           state.player.y + state.player.height > col.y
         ) {
-          state.collectibles.splice(index, 1);
+          state.collectibles.splice(i, 1);
           scoreRef.current += 5;
           state.shake = 5;
           setScore(scoreRef.current);
-          if (onScoreUpdate) onScoreUpdate(scoreRef.current);
+          if (onScoreUpdateRef.current) onScoreUpdateRef.current(scoreRef.current);
           audioService.playClick();
           createParticles(col.x + col.width / 2, col.y + col.height / 2, '#fbbf24', 25);
-          if (hapticFeedback) audioService.vibrate(10);
+          if (hapticFeedbackRef.current) audioService.vibrate(10);
         }
-      });
+      }
 
       // Update particles
-      state.particles.forEach((p, index) => {
+      for (let i = state.particles.length - 1; i >= 0; i--) {
+        const p = state.particles[i];
         p.x += p.vx;
         p.y += p.vy;
         p.vx *= 0.96;
         p.vy *= 0.96;
         p.life -= p.decay;
-        if (p.life <= 0) state.particles.splice(index, 1);
-      });
+        if (p.life <= 0) state.particles.splice(i, 1);
+      }
 
       // Update shake
       if (state.shake > 0.1) state.shake *= 0.9;
@@ -442,18 +466,23 @@ const NeonRacer: React.FC<NeonRacerProps & { onScoreUpdate?: (score: number) => 
       window.removeEventListener('keyup', handleKeyUp);
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
-  }, [isPlaying, onGameOver, hapticFeedback]);
+  }, [isPlaying]);
 
-  const handleTouch = (lane: number) => {
+  const handleTouch = (lane: number, isMove = false) => {
     if (!isPlaying) return;
     const targetX = (lane * gameState.current.laneWidth) + (gameState.current.laneWidth / 2) - 20;
     
-    // Smooth transition to lane instead of instant snap
-    const currentX = gameState.current.player.x;
-    const diff = targetX - currentX;
-    gameState.current.player.x += diff * 0.3; // Simple easing
+    if (isMove) {
+      // Smooth follow on drag
+      const currentX = gameState.current.player.x;
+      const diff = targetX - currentX;
+      gameState.current.player.x += diff * 0.4;
+    } else {
+      // Snap closer on initial tap
+      gameState.current.player.x = targetX;
+    }
     
-    if (hapticFeedback) audioService.vibrate(5);
+    if (hapticFeedbackRef.current) audioService.vibrate(5);
   };
 
   return (
@@ -467,9 +496,9 @@ const NeonRacer: React.FC<NeonRacerProps & { onScoreUpdate?: (score: number) => 
       
       {/* Mobile Controls Overlay */}
       <div className="absolute inset-0 grid grid-cols-3 pointer-events-auto md:hidden">
-        <div onTouchStart={() => handleTouch(0)} onTouchMove={() => handleTouch(0)} className="h-full active:bg-white/5 transition-colors" />
-        <div onTouchStart={() => handleTouch(1)} onTouchMove={() => handleTouch(1)} className="h-full active:bg-white/5 transition-colors" />
-        <div onTouchStart={() => handleTouch(2)} onTouchMove={() => handleTouch(2)} className="h-full active:bg-white/5 transition-colors" />
+        <div onTouchStart={() => handleTouch(0)} onTouchMove={() => handleTouch(0, true)} className="h-full active:bg-white/5 transition-colors" />
+        <div onTouchStart={() => handleTouch(1)} onTouchMove={() => handleTouch(1, true)} className="h-full active:bg-white/5 transition-colors" />
+        <div onTouchStart={() => handleTouch(2)} onTouchMove={() => handleTouch(2, true)} className="h-full active:bg-white/5 transition-colors" />
       </div>
 
       <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 shadow-[0_0_15px_rgba(6,182,212,0.5)]">

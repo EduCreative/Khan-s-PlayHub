@@ -13,9 +13,18 @@ const Labyrinth: React.FC<{
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [score, setScore] = useState(0);
   const [level, setLevel] = useState(1);
+  const scoreRef = useRef(0);
+  const levelRef = useRef(1);
+  const onGameOverRef = useRef(onGameOver);
+  const onScoreUpdateRef = useRef(onScoreUpdate);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const playerRef = useRef({ x: 1, y: 1 });
   const mazeRef = useRef<number[][]>([]);
+
+  useEffect(() => {
+    onGameOverRef.current = onGameOver;
+    onScoreUpdateRef.current = onScoreUpdate;
+  }, [onGameOver, onScoreUpdate]);
 
   const playSfx = useCallback((src: string, volume: number) => {
     if (volume > 0) {
@@ -109,6 +118,10 @@ const Labyrinth: React.FC<{
     if (isPlaying) {
       if (!difficulty) {
         setDifficulty(null);
+        scoreRef.current = 0;
+        levelRef.current = 1;
+        setScore(0);
+        setLevel(1);
       } else {
         const size = getGridSize(difficulty);
         mazeRef.current = generateMaze(size, size);
@@ -118,7 +131,7 @@ const Labyrinth: React.FC<{
     }
   }, [isPlaying, level, difficulty, generateMaze, draw]);
 
-  const movePlayer = (dx: number, dy: number) => {
+  const movePlayer = useCallback((dx: number, dy: number) => {
     if (!isPlaying || !difficulty) return;
     const { x, y } = playerRef.current;
     const nx = x + dx;
@@ -134,23 +147,25 @@ const Labyrinth: React.FC<{
         
         // Level-based scoring: difficulty multiplier * current level
         const diffMult = difficulty === 'Easy' ? 200 : difficulty === 'Medium' ? 500 : 1000;
-        const points = diffMult * level;
-        const newScore = score + points;
+        const points = diffMult * levelRef.current;
+        scoreRef.current += points;
+        const newScore = scoreRef.current;
         
         setScore(newScore);
-        if (onScoreUpdate) {
-          onScoreUpdate(newScore, { 
+        if (onScoreUpdateRef.current) {
+          onScoreUpdateRef.current(newScore, { 
             difficulty: difficulty.toLowerCase(), 
-            level: level,
+            level: levelRef.current,
             completed: true 
           });
         }
         
-        setLevel(l => l + 1);
+        levelRef.current += 1;
+        setLevel(levelRef.current);
       }
       draw();
     }
-  };
+  }, [isPlaying, difficulty, sfxVolume, playSfx, triggerHapticFeedback, draw]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -161,7 +176,7 @@ const Labyrinth: React.FC<{
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [difficulty]);
+  }, [movePlayer]);
 
   if (!difficulty) {
     return (
