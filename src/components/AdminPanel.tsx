@@ -14,12 +14,18 @@ import ConfirmModal from './ConfirmModal';
 
 const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6'];
 
-const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+interface AdminPanelProps {
+  onClose: () => void;
+  dataProvider: 'firebase' | 'cloudflare' | 'hybrid';
+  onUpdateDataProvider: (val: 'firebase' | 'cloudflare' | 'hybrid') => void;
+}
+
+const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdateDataProvider }) => {
   const [summary, setSummary] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'games' | 'pwa' | 'migration'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'games' | 'pwa' | 'migration' | 'system'>('overview');
   const [confirmDeleteDeviceId, setConfirmDeleteDeviceId] = useState<string | null>(null);
   const [workerUrl, setWorkerUrl] = useState(cloud.getWorkerUrl());
   const [migrationStatus, setMigrationStatus] = useState<{ loading: boolean, result: any | null, error: string | null }>({
@@ -203,7 +209,7 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           
           <div className="flex items-center gap-4">
             <div className="flex bg-slate-200 dark:bg-white/5 p-1 rounded-xl border border-slate-300 dark:border-white/10">
-              {(['overview', 'users', 'games', 'pwa', 'migration'] as const).map(tab => (
+              {(['overview', 'users', 'games', 'pwa', 'migration', 'system'] as const).map(tab => (
                 <button
                   key={tab}
                   onClick={() => {
@@ -628,6 +634,63 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         </span>
                       </div>
                     ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'system' && (
+              <div className="max-w-2xl mx-auto space-y-8">
+                <div className="glass-card p-8 rounded-[2.5rem] border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5">
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg">
+                      <i className="fas fa-server"></i>
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase italic">System Configuration</h3>
+                      <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Data Protocol & Storage Engine</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-8">
+                    <div className="p-6 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Active Data Provider</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {(['firebase', 'cloudflare', 'hybrid'] as const).map((p) => (
+                          <button
+                            key={p}
+                            onClick={() => {
+                              onUpdateDataProvider(p);
+                              audioService.playToggle(true);
+                            }}
+                            className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 ${
+                              dataProvider === p 
+                                ? 'bg-indigo-600 border-indigo-400 text-white shadow-xl scale-105' 
+                                : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 hover:border-indigo-500/30'
+                            }`}
+                          >
+                            <i className={`fas ${p === 'firebase' ? 'fa-fire' : p === 'cloudflare' ? 'fa-cloud' : 'fa-layer-group'} text-xl`}></i>
+                            <span className="text-xs font-black uppercase tracking-widest">{p}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="p-6 rounded-2xl bg-indigo-500/10 border border-indigo-500/20">
+                      <h4 className="text-sm font-black text-indigo-600 dark:text-indigo-400 uppercase italic mb-2">Protocol Details</h4>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                        {dataProvider === 'hybrid' 
+                          ? 'Hybrid mode utilizes both Firebase Firestore and Cloudflare D1. Writes are mirrored to both systems, ensuring maximum redundancy and testing capabilities.' 
+                          : dataProvider === 'cloudflare' 
+                          ? 'Cloudflare mode switches all operations to the D1 database via your configured Worker. This is ideal for testing edge performance.'
+                          : 'Firebase mode uses the standard Firestore backend for all identity and score operations.'}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+                      <i className="fas fa-circle-info"></i>
+                      <p className="text-[10px] font-black uppercase tracking-widest">Changes are applied instantly across all active sessions.</p>
+                    </div>
                   </div>
                 </div>
               </div>

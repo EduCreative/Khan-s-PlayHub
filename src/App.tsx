@@ -54,11 +54,12 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
 
-  const isAdminUser = user?.email?.toLowerCase() === 'kmasroor50@gmail.com'.toLowerCase() || 
-                     user?.uid === 'v2swNDzVnegsJNo5eNEiLYv6ZYi2' ||
-                     userProfile.role === 'admin';
+  const isAdminUser = (user?.email?.toLowerCase() === 'kmasroor50@gmail.com'.toLowerCase()) || 
+                     (auth.currentUser?.email?.toLowerCase() === 'kmasroor50@gmail.com'.toLowerCase()) ||
+                     (user?.uid === 'v2swNDzVnegsJNo5eNEiLYv6ZYi2') ||
+                     (userProfile.role === 'admin');
 
-  const CURRENT_VERSION = '3.0.1';
+  const CURRENT_VERSION = '3.0.2';
 
   // PWA Install Prompt
   useEffect(() => {
@@ -422,10 +423,14 @@ const App: React.FC = () => {
       
       <main className="relative z-10 w-full min-h-screen">
         {showAdmin && isAuthReady && isAdminUser ? (
-          <AdminPanel onClose={() => {
-            setShowAdmin(false);
-            audioService.playNav();
-          }} />
+          <AdminPanel 
+            onClose={() => {
+              setShowAdmin(false);
+              audioService.playNav();
+            }} 
+            dataProvider={dataProvider}
+            onUpdateDataProvider={setDataProvider}
+          />
         ) : activeGame ? (
           <GameRunner 
             game={activeGame} 

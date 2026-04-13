@@ -115,6 +115,15 @@ const Hub: React.FC<HubProps> = ({
               <h1 className="text-3xl md:text-5xl font-black italic tracking-tighter uppercase dark:text-white text-slate-900 leading-none">
                 Khan's <span className="text-indigo-600 dark:text-indigo-400">PlayHub</span>
               </h1>
+              {(isAdmin || user?.email?.toLowerCase() === 'kmasroor50@gmail.com'.toLowerCase()) && (
+                <button 
+                  onClick={onOpenAdmin}
+                  className="ml-4 px-4 py-2 rounded-xl bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg hover:bg-rose-500 transition-all flex items-center gap-2 animate-pulse"
+                >
+                  <i className="fas fa-terminal"></i>
+                  Admin Console
+                </button>
+              )}
               <button 
                 onClick={onSyncAll}
                 className={`mt-1 flex items-center justify-center w-4 h-4 rounded-full shadow-[0_0_10px_currentColor] transition-all hover:scale-125 active:rotate-180 ${
@@ -197,17 +206,27 @@ const Hub: React.FC<HubProps> = ({
              <i className={`fas ${isDarkMode ? 'fa-sun text-amber-400' : 'fa-moon text-indigo-600'}`}></i>
           </button>
 
-          {isAdmin && (
+          {(isAdmin || user?.email?.toLowerCase() === 'kmasroor50@gmail.com'.toLowerCase()) && (
             <button 
               onClick={onOpenAdmin}
-              className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-lg shadow-xl border-2 border-indigo-400/20 hover:bg-indigo-500 transition-all animate-in zoom-in duration-500"
+              className="px-4 h-12 md:h-14 rounded-2xl bg-rose-600 text-white flex items-center gap-3 shadow-xl border-2 border-white/20 hover:bg-rose-500 transition-all animate-in zoom-in duration-500"
               title="Open Admin Console"
             >
               <i className="fas fa-terminal"></i>
+              <span className="font-black uppercase italic tracking-tighter text-xs">Admin</span>
             </button>
           )}
         </div>
       </header>
+
+      {(isAdmin || user?.email?.toLowerCase() === 'kmasroor50@gmail.com'.toLowerCase()) && (
+        <div className="fixed bottom-6 left-6 z-[100] pointer-events-none">
+          <div className="bg-rose-600 text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl border-2 border-white/20 flex items-center gap-3 animate-in slide-in-from-left duration-700">
+            <div className="w-2 h-2 rounded-full bg-white animate-ping" />
+            Admin Mode Active
+          </div>
+        </div>
+      )}
 
       <div id="category-filters" className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
         {categories.map((cat) => (
@@ -311,7 +330,7 @@ const Hub: React.FC<HubProps> = ({
             className="px-6 py-2 glass-card border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 cursor-pointer hover:bg-indigo-500/5 transition-all select-none"
           >
             <span className={`w-1.5 h-1.5 rounded-full animate-ping ${syncStatus === 'synced' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-            PlayHub Cloud Protocol Enabled v3.0.1
+            PlayHub Cloud Protocol Enabled v3.0.2
           </span>
           <button onClick={handleAdminClick} className="text-[9px] font-bold text-slate-500/60 hover:text-indigo-500 transition-colors uppercase tracking-widest mt-2">
              <i className="fas fa-terminal mr-2"></i> Access Admin Console

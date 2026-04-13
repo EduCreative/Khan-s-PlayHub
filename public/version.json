@@ -1,10 +1,9 @@
 {
-  "version": "3.0.1",
+  "version": "3.0.2",
   "changelog": [
-    "Improved category organization",
-    "Fixed share button behavior on PC",
-    "Simplified Admin Console access (3 clicks)",
-    "Added background update checking",
-    "Clarified Total Juice calculation"
+    "Added Hybrid Model visibility in Admin Panel",
+    "Direct Admin Console access for administrators",
+    "Improved Cloudflare Worker connection testing",
+    "Fixed migration 404 error handling"
   ]
 }
