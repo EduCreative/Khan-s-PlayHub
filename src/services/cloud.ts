@@ -244,7 +244,17 @@ class CloudService {
   // --- Admin Methods (Simplified for Firebase) ---
 
   async getAdminSummary(): Promise<any> {
-    // Note: Firestore doesn't provide easy counts without extensions or extra docs
+    if ((this.provider === 'cloudflare' || this.provider === 'hybrid') && this.workerUrl) {
+      try {
+        const baseUrl = this.workerUrl.endsWith('/') ? this.workerUrl.slice(0, -1) : this.workerUrl;
+        const res = await fetch(`${baseUrl}/admin/summary`);
+        if (res.ok) return await res.json();
+      } catch (e) {
+        console.error('Cloudflare Admin Summary Failed:', e);
+      }
+    }
+
+    // Fallback/Default for Firebase (Firestore doesn't provide easy counts)
     return {
       totalUsers: 'N/A',
       totalSessions: 'N/A',
@@ -259,6 +269,16 @@ class CloudService {
       return [];
     }
     
+    if ((this.provider === 'cloudflare' || this.provider === 'hybrid') && this.workerUrl) {
+      try {
+        const baseUrl = this.workerUrl.endsWith('/') ? this.workerUrl.slice(0, -1) : this.workerUrl;
+        const res = await fetch(`${baseUrl}/admin/users`);
+        if (res.ok) return await res.json();
+      } catch (e) {
+        console.error('Cloudflare Admin Users Failed:', e);
+      }
+    }
+
     console.log(`Attempting getAdminUsers as: ${auth.currentUser.email} (${auth.currentUser.uid})`);
     const path = 'profiles';
     try {

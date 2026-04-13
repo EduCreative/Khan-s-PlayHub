@@ -24,6 +24,7 @@ interface HubProps {
   onToggleFavorite: (id: string) => void;
   onUpdateGlobalRecord: (gameId: string, score: number) => void;
   onOpenAdmin: () => void;
+  isAdmin: boolean;
   onOpenSettings: () => void;
   onOpenPrivacy: () => void;
   canInstall: boolean;
@@ -36,7 +37,7 @@ interface HubProps {
 }
 
 const Hub: React.FC<HubProps> = ({ 
-  games, onSelectGame, filter, setFilter, highScores, globalRecords, userProfile, isDarkMode, syncStatus, onSyncAll, onToggleTheme, onOpenProfile, onToggleFavorite, onUpdateGlobalRecord, onOpenAdmin, onOpenSettings, onOpenPrivacy, canInstall, isInstalled, onInstall,
+  games, onSelectGame, filter, setFilter, highScores, globalRecords, userProfile, isDarkMode, syncStatus, onSyncAll, onToggleTheme, onOpenProfile, onToggleFavorite, onUpdateGlobalRecord, onOpenAdmin, isAdmin, onOpenSettings, onOpenPrivacy, canInstall, isInstalled, onInstall,
   user, onLogin, onLogout, isAuthReady
 }) => {
   const [vClickCount, setVClickCount] = useState(0);
@@ -195,6 +196,16 @@ const Hub: React.FC<HubProps> = ({
           <button id="theme-toggle" onClick={onToggleTheme} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700" title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
              <i className={`fas ${isDarkMode ? 'fa-sun text-amber-400' : 'fa-moon text-indigo-600'}`}></i>
           </button>
+
+          {isAdmin && (
+            <button 
+              onClick={onOpenAdmin}
+              className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-lg shadow-xl border-2 border-indigo-400/20 hover:bg-indigo-500 transition-all animate-in zoom-in duration-500"
+              title="Open Admin Console"
+            >
+              <i className="fas fa-terminal"></i>
+            </button>
+          )}
         </div>
       </header>
 

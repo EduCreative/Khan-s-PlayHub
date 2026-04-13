@@ -481,6 +481,7 @@ const App: React.FC = () => {
               setShowAdmin(true);
               audioService.playNav();
             }}
+            isAdmin={isAdminUser}
             onSyncAll={syncAllScores}
             onOpenSettings={() => {
               setShowSettings(true);

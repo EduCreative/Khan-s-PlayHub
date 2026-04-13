@@ -65,7 +65,7 @@ CREATE TABLE profiles (
 
 ## 🎮 The Onboarding Flow
 
-1. **Instant Play**: New users are never blocked by profile setup. They can play immediately as an "Anonymous Operative".
+1. **Instant Play**: New users are never blocked by profile setup. They can play immediately as an "Anonymous Player".
 2. **Post-Game Motivation**: Upon scoring, the Game Over screen prompts the user to save their progress to a persistent profile.
 3. **Identity Sync**: Profiles support custom avatars, bios, and secure email links.
 

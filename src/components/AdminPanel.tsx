@@ -27,6 +27,11 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     result: null,
     error: null
   });
+  const [testStatus, setTestStatus] = useState<{ loading: boolean, success: boolean | null, error: string | null }>({
+    loading: false,
+    success: null,
+    error: null
+  });
 
   const downloadIcon = (size: number) => {
     const canvas = document.createElement('canvas');
@@ -156,6 +161,28 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     }
   };
 
+  const handleTestConnection = async () => {
+    if (!workerUrl) return;
+    setTestStatus({ loading: true, success: null, error: null });
+    try {
+      const baseUrl = workerUrl.endsWith('/') ? workerUrl.slice(0, -1) : workerUrl;
+      const res = await fetch(`${baseUrl}/admin/summary`);
+      if (res.ok) {
+        setTestStatus({ loading: false, success: true, error: null });
+        audioService.playSuccess();
+      } else {
+        throw new Error(`Worker returned ${res.status}. Route /admin/summary not found.`);
+      }
+    } catch (e) {
+      setTestStatus({ 
+        loading: false, 
+        success: false, 
+        error: e instanceof Error ? e.message : 'Connection failed' 
+      });
+      audioService.playError();
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-50 dark:bg-slate-950 flex flex-col p-4 md:p-8 animate-in fade-in duration-500 overflow-y-auto">
       <div className="max-w-7xl mx-auto w-full">
@@ -230,43 +257,65 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             
             {activeTab === 'overview' && (
               <>
-                {/* Data Sources Status */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                  <div className="glass-card p-6 rounded-3xl border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-orange-500 flex items-center justify-center text-white shadow-lg">
-                        <i className="fas fa-fire"></i>
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-10">
+                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                    <div className="glass-card p-6 rounded-3xl border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-orange-500 flex items-center justify-center text-white shadow-lg">
+                          <i className="fas fa-fire"></i>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase">Firebase Firestore</h4>
+                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Primary Identity & Fallback</p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase">Firebase Firestore</h4>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Primary Identity & Fallback</p>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Connected</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                      <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Connected</span>
+
+                    <div className="glass-card p-6 rounded-3xl border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-blue-500 flex items-center justify-center text-white shadow-lg">
+                          <i className="fas fa-cloud"></i>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase">Cloudflare D1</h4>
+                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                            {cloud.getDataProvider() === 'firebase' ? 'Inactive' : cloud.getWorkerUrl() ? 'Active Testing' : 'URL Missing'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${cloud.getDataProvider() !== 'firebase' && cloud.getWorkerUrl() ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></div>
+                        <span className={`text-[10px] font-black uppercase tracking-widest ${cloud.getDataProvider() !== 'firebase' && cloud.getWorkerUrl() ? 'text-emerald-500' : 'text-slate-500'}`}>
+                          {cloud.getDataProvider() !== 'firebase' && cloud.getWorkerUrl() ? 'Active' : 'Standby'}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="glass-card p-6 rounded-3xl border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-blue-500 flex items-center justify-center text-white shadow-lg">
-                        <i className="fas fa-cloud"></i>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase">Cloudflare D1</h4>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-                          {cloud.getDataProvider() === 'firebase' ? 'Inactive' : cloud.getWorkerUrl() ? 'Active Testing' : 'URL Missing'}
-                        </p>
-                      </div>
+                  {cloud.getDataProvider() === 'hybrid' && (
+                    <div className="w-full md:w-auto px-8 py-6 bg-indigo-600 rounded-3xl flex flex-col items-center justify-center text-white shadow-xl shadow-indigo-600/20 animate-pulse">
+                      <i className="fas fa-layer-group text-2xl mb-2"></i>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em]">Hybrid Active</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${cloud.getDataProvider() !== 'firebase' && cloud.getWorkerUrl() ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></div>
-                      <span className={`text-[10px] font-black uppercase tracking-widest ${cloud.getDataProvider() !== 'firebase' && cloud.getWorkerUrl() ? 'text-emerald-500' : 'text-slate-500'}`}>
-                        {cloud.getDataProvider() !== 'firebase' && cloud.getWorkerUrl() ? 'Active' : 'Standby'}
-                      </span>
-                    </div>
-                  </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3 mb-8 p-4 bg-slate-100 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10">
+                  <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Current Data Protocol:</span>
+                  <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border shadow-sm ${
+                    cloud.getDataProvider() === 'firebase' 
+                      ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' 
+                      : cloud.getDataProvider() === 'cloudflare'
+                        ? 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                        : 'bg-indigo-600 text-white border-indigo-500'
+                  }`}>
+                    {cloud.getDataProvider() === 'hybrid' ? 'Hybrid (D1 + Firestore)' : cloud.getDataProvider().toUpperCase()}
+                  </span>
                 </div>
 
                 {/* Summary Grid */}
@@ -602,16 +651,42 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   </p>
 
                   <div className="space-y-6">
-                    <div>
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Worker Base URL</label>
-                      <input 
-                        type="url" 
-                        value={workerUrl}
-                        onChange={(e) => setWorkerUrl(e.target.value)}
-                        placeholder="https://khans-playhub-worker.yourname.workers.dev"
-                        className="w-full bg-slate-100 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 rounded-2xl px-6 py-4 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all font-mono"
-                      />
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="flex-1">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Worker Base URL</label>
+                        <input 
+                          type="url" 
+                          value={workerUrl}
+                          onChange={(e) => setWorkerUrl(e.target.value)}
+                          placeholder="https://khans-playhub-worker.yourname.workers.dev"
+                          className="w-full bg-slate-100 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 rounded-2xl px-6 py-4 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all font-mono"
+                        />
+                      </div>
+                      <button 
+                        onClick={handleTestConnection}
+                        disabled={testStatus.loading || !workerUrl}
+                        className="md:mt-6 px-6 py-4 rounded-2xl bg-slate-200 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-black uppercase text-[10px] tracking-widest hover:bg-slate-300 dark:hover:bg-white/10 transition-all"
+                      >
+                        {testStatus.loading ? <i className="fas fa-circle-notch animate-spin"></i> : 'Test Link'}
+                      </button>
                     </div>
+
+                    {testStatus.success === true && (
+                      <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-3">
+                        <i className="fas fa-check-circle"></i>
+                        Worker Connection Verified
+                      </div>
+                    )}
+
+                    {testStatus.success === false && (
+                      <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[10px] font-black uppercase tracking-widest flex flex-col gap-1">
+                        <div className="flex items-center gap-3">
+                          <i className="fas fa-times-circle"></i>
+                          Connection Failed
+                        </div>
+                        <p className="opacity-70 normal-case font-medium">{testStatus.error}</p>
+                      </div>
+                    )}
 
                     <button 
                       onClick={handleMigration}
