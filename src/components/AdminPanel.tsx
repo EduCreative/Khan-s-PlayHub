@@ -166,7 +166,7 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               <i className="fas fa-terminal text-xl"></i>
             </div>
             <div>
-              <h2 className="text-4xl font-black text-slate-900 dark:text-white italic uppercase tracking-tighter">Nexus Admin Console</h2>
+              <h2 className="text-4xl font-black text-slate-900 dark:text-white italic uppercase tracking-tighter">PlayHub Admin Console</h2>
               <div className="flex items-center gap-3">
                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Direct D1 Database Access</span>
                 <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 text-[8px] font-bold uppercase tracking-widest border border-emerald-500/20">System Online</span>
@@ -206,7 +206,7 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               <div className="absolute inset-4 border-4 border-purple-500/10 rounded-full" />
               <div className="absolute inset-4 border-4 border-purple-500 border-b-transparent rounded-full animate-spin-slow" />
             </div>
-            <p className="text-indigo-500 font-black uppercase tracking-[0.5em] text-xs animate-pulse">Decrypting Nexus Stream...</p>
+            <p className="text-indigo-500 font-black uppercase tracking-[0.5em] text-xs animate-pulse">Connecting to PlayHub Cloud...</p>
           </div>
         ) : error ? (
           <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">

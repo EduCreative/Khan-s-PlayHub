@@ -256,10 +256,22 @@ const App: React.FC = () => {
   const handleLogin = async () => {
     try {
       const provider = new GoogleAuthProvider();
+      // Add custom parameters to force account selection if needed
+      provider.setCustomParameters({ prompt: 'select_account' });
+      
       await signInWithPopup(auth, provider);
       audioService.playSuccess();
-    } catch (e) {
+    } catch (e: any) {
       console.error('Login Failed:', e);
+      audioService.playError();
+      
+      if (e.code === 'auth/unauthorized-domain') {
+        alert(`Authentication Error: This domain (${window.location.hostname}) is not authorized in your Firebase Console. \n\nPlease add it to: \nFirebase Console > Authentication > Settings > Authorized domains`);
+      } else if (e.code === 'auth/popup-blocked') {
+        alert('Login Popup Blocked: Please allow popups for this site to sign in.');
+      } else {
+        alert(`Login Failed: ${e.message}`);
+      }
     }
   };
 
@@ -534,7 +546,7 @@ const App: React.FC = () => {
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl" onClick={() => setShowExitConfirm(false)} />
           <div className="relative glass-card w-full max-sm p-8 text-center border-indigo-500/30 shadow-2xl scale-up-center">
             <div className="w-16 h-16 bg-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-2xl mb-6 text-white"><i className="fas fa-power-off"></i></div>
-            <h2 className="text-3xl font-black mb-2 italic tracking-tighter uppercase text-white">Exit Nexus?</h2>
+            <h2 className="text-3xl font-black mb-2 italic tracking-tighter uppercase text-white">Exit PlayHub?</h2>
             <div className="flex flex-col gap-3">
               <button onClick={() => setShowExitConfirm(false)} className="w-full py-4 bg-indigo-600 text-white rounded-xl font-black uppercase text-xs tracking-widest">Stay</button>
               <button onClick={() => window.location.href = "about:blank"} className="w-full py-4 bg-white/5 border border-white/10 text-slate-400 rounded-xl font-black uppercase text-xs tracking-widest hover:text-rose-400 transition-all">Terminate</button>

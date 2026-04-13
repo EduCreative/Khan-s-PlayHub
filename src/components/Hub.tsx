@@ -121,7 +121,7 @@ const Hub: React.FC<HubProps> = ({
                   syncStatus === 'pending' ? 'text-amber-500 bg-amber-500 animate-spin' : 
                   'text-rose-500 bg-rose-500 shadow-rose-500/50'
                 }`} 
-                title={`Nexus Cloud Status: ${syncStatus.toUpperCase()} - Click to sync all scores`}
+                title={`Cloud Status: ${syncStatus.toUpperCase()} - Click to sync all scores`}
               >
                 {syncStatus === 'pending' && <i className="fas fa-sync-alt text-[6px] text-white"></i>}
               </button>
@@ -280,7 +280,7 @@ const Hub: React.FC<HubProps> = ({
         <div className="w-full max-w-2xl glass-card p-6 md:p-8 rounded-[2.5rem] border-2 border-slate-200 dark:border-indigo-500/10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="text-center md:text-left">
             <h3 className="text-lg font-black uppercase italic text-slate-900 dark:text-white">Contact Developer</h3>
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Nexus Support & Feedback</p>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Support & Feedback</p>
           </div>
           <div className="flex flex-wrap justify-center gap-4">
             <a href="mailto:kmasroor50@gmail.com" className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 hover:border-indigo-500 transition-all group">
@@ -300,7 +300,7 @@ const Hub: React.FC<HubProps> = ({
             className="px-6 py-2 glass-card border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 cursor-pointer hover:bg-indigo-500/5 transition-all select-none"
           >
             <span className={`w-1.5 h-1.5 rounded-full animate-ping ${syncStatus === 'synced' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-            Nexus Cloud Protocol Enabled v3.0.1
+            PlayHub Cloud Protocol Enabled v3.0.1
           </span>
           <button onClick={handleAdminClick} className="text-[9px] font-bold text-slate-500/60 hover:text-indigo-500 transition-colors uppercase tracking-widest mt-2">
              <i className="fas fa-terminal mr-2"></i> Access Admin Console
