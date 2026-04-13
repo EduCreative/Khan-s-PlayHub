@@ -70,22 +70,19 @@ service cloud.firestore {
              data.avatar is string;
     }
 
-    match /profiles {
-      // Allow the specific admin UID to list and get any profile
-      allow read: if request.auth != null && request.auth.uid == "v2swNDzVnegsJNo5eNEiLYv6ZYi2";
+    match /profiles/{userId} {
+      // Admins can read (get/list) any profile. Owners can read their own.
+      allow read: if isAdmin() || isOwner(userId);
       
-      match /{userId} {
-        // Owners can read their own profile
-        allow get: if isOwner(userId);
-        
-        // Only owner can create/update their own profile
-        allow create: if isOwner(userId) && isValidProfile(request.resource.data);
-        allow update: if (isOwner(userId) || isAdmin()) && isValidProfile(request.resource.data) &&
-                        (isAdmin() || request.resource.data.joinedAt == resource.data.joinedAt) &&
-                        (isAdmin() || !('role' in request.resource.data) || request.resource.data.role == resource.data.role);
-        
-        allow delete: if isAdmin();
-      }
+      // Only owner can create their own profile
+      allow create: if isOwner(userId) && isValidProfile(request.resource.data);
+      
+      // Owner or Admin can update
+      allow update: if (isOwner(userId) || isAdmin()) && isValidProfile(request.resource.data) &&
+                      (isAdmin() || request.resource.data.joinedAt == resource.data.joinedAt) &&
+                      (isAdmin() || !('role' in request.resource.data) || request.resource.data.role == resource.data.role);
+      
+      allow delete: if isAdmin();
     }
 
     match /scores/{scoreId} {
