@@ -174,8 +174,10 @@ class CloudService {
   }
 
   isAdmin(): boolean {
-    if (!auth.currentUser || !auth.currentUser.email) return false;
-    return auth.currentUser.email.toLowerCase() === 'kmasroor50@gmail.com'.toLowerCase();
+    if (!auth.currentUser) return false;
+    const isEmailAdmin = auth.currentUser.email?.toLowerCase() === 'kmasroor50@gmail.com'.toLowerCase();
+    const isUidAdmin = auth.currentUser.uid === 'v2swNDzVnegsJNo5eNEiLYv6ZYi2';
+    return isEmailAdmin || isUidAdmin;
   }
 
   // --- Admin Methods (Simplified for Firebase) ---

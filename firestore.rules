@@ -42,10 +42,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return request.auth != null &&
-        (request.auth.token.email.lower() == "kmasroor50@gmail.com".lower() ||
-         (exists(/databases/$(database)/documents/profiles/$(request.auth.uid)) && 
-          get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == 'admin'));
+      return request.auth != null && request.auth.uid == "v2swNDzVnegsJNo5eNEiLYv6ZYi2";
     }
     
     function isValidEmail(email) {
@@ -74,12 +71,12 @@ service cloud.firestore {
     }
 
     match /profiles {
-      // Allow listing profiles for admins
-      allow list: if isAdmin();
+      // Allow the specific admin UID to list and get any profile
+      allow read: if request.auth != null && request.auth.uid == "v2swNDzVnegsJNo5eNEiLYv6ZYi2";
       
       match /{userId} {
-        // Only owner or admin can read full profiles (contains email/PII)
-        allow get: if isOwner(userId) || isAdmin();
+        // Owners can read their own profile
+        allow get: if isOwner(userId);
         
         // Only owner can create/update their own profile
         allow create: if isOwner(userId) && isValidProfile(request.resource.data);

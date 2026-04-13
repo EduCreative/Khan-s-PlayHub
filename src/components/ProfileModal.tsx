@@ -16,7 +16,7 @@ const AVATARS = [
 ];
 
 const ProfileModal: React.FC<ProfileModalProps> = ({ userProfile, onSave, onClose }) => {
-  const isFirstTime = userProfile.username === 'New Player' || userProfile.username === 'Operative';
+  const isFirstTime = userProfile.username === 'New Player' || userProfile.username === 'Player';
   const [username, setUsername] = useState(isFirstTime ? '' : userProfile.username);
   const [email, setEmail] = useState(userProfile.email || '');
   const [avatar, setAvatar] = useState(userProfile.avatar);

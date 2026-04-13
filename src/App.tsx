@@ -52,7 +52,9 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
 
-  const isAdminUser = user?.email?.toLowerCase() === 'kmasroor50@gmail.com'.toLowerCase() || userProfile.role === 'admin';
+  const isAdminUser = user?.email?.toLowerCase() === 'kmasroor50@gmail.com'.toLowerCase() || 
+                     user?.uid === 'v2swNDzVnegsJNo5eNEiLYv6ZYi2' ||
+                     userProfile.role === 'admin';
 
   const CURRENT_VERSION = '3.0.1';
 
@@ -391,7 +393,7 @@ const App: React.FC = () => {
     }
   }, [scores, unlockAchievement, userProfile]);
 
-  const isAnonymous = userProfile.username === 'New Player' || userProfile.username === 'Operative';
+  const isAnonymous = userProfile.username === 'New Player' || userProfile.username === 'Player';
 
   useEffect(() => {
     if (isAnonymous && !showTutorial) {

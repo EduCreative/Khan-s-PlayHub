@@ -233,7 +233,7 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 {/* Summary Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {[
-                    { label: 'Total Operatives', value: summary?.totalUsers || 0, icon: 'fa-users', color: 'from-blue-500 to-indigo-600', trend: '+12%' },
+                    { label: 'Total Players', value: summary?.totalUsers || 0, icon: 'fa-users', color: 'from-blue-500 to-indigo-600', trend: '+12%' },
                     { label: 'Neural Sessions', value: summary?.totalSessions || 0, icon: 'fa-brain', color: 'from-purple-500 to-fuchsia-600', trend: '+24%' },
                     { label: 'Active Sector', value: summary?.popularGame?.gameId || 'N/A', icon: 'fa-gamepad', color: 'from-emerald-500 to-teal-600', trend: 'STABLE' },
                     { label: 'Avg. Sync Time', value: '42ms', icon: 'fa-bolt', color: 'from-amber-500 to-orange-600', trend: '-5ms' }
@@ -261,7 +261,7 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     <div className="flex items-center justify-between mb-8">
                       <div>
                         <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Growth Analytics</h3>
-                        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Operative Onboarding & Sessions</p>
+                        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Player Onboarding & Sessions</p>
                       </div>
                       <div className="flex gap-4">
                         <div className="flex items-center gap-2">
@@ -392,14 +392,14 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               <div className="glass-card rounded-[2.5rem] border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5 overflow-hidden">
                 <div className="p-8 border-b border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
-                    <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Operative Registry</h3>
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Player Database</h3>
                     <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Persistent Identity Matrix</p>
                   </div>
                   <div className="relative">
                     <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
                     <input 
                       type="text" 
-                      placeholder="Filter Operatives..." 
+                      placeholder="Filter Players..." 
                       className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all w-full md:w-64"
                     />
                   </div>
@@ -408,7 +408,7 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   <table className="w-full text-left">
                     <thead>
                       <tr className="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200 dark:border-white/5">
-                        <th className="p-8">Operative</th>
+                        <th className="p-8">Player</th>
                         <th className="p-8">Device ID</th>
                         <th className="p-8">Games</th>
                         <th className="p-8">Total Score</th>
@@ -443,7 +443,7 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                               <button 
                                 onClick={() => setConfirmDeleteDeviceId(user.deviceId)}
                                 className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all shadow-lg shadow-rose-500/0 hover:shadow-rose-500/20"
-                                title="Wipe Operative Data"
+                                title="Wipe Player Data"
                               >
                                 <i className="fas fa-trash-alt text-xs"></i>
                               </button>
@@ -643,7 +643,7 @@ const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
       {confirmDeleteDeviceId && (
         <ConfirmModal 
-          title="Wipe Operative?"
+          title="Wipe Player?"
           message="This action will permanently erase all neural data and scores for this operative from the Nexus Cloud. This cannot be undone."
           confirmText="Wipe Data"
           cancelText="Abort"
