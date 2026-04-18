@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { GAMES } from './constants';
 import { Game, Category, UserProfile } from './types';
 import Hub from './components/Hub';
@@ -28,6 +28,36 @@ const DEFAULT_PROFILE: UserProfile = {
 };
 
 const App: React.FC = () => {
+  console.log("App Rendering...");
+  
+  const [quotaExceeded, setQuotaExceeded] = useState(false);
+  const lastSyncRef = useRef<Record<string, any>>({});
+  const gameStartTimeRef = useRef<number | null>(null);
+
+  const isLocalStorageAvailable = React.useMemo(() => {
+    try {
+      localStorage.setItem('ls_test', '1');
+      localStorage.removeItem('ls_test');
+      return true;
+    } catch (e) {
+      console.warn("LocalStorage not available", e);
+      return false;
+    }
+  }, []);
+
+  const [renderError, setRenderError] = useState<string | null>(null);
+
+  // Catch render errors
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error("Global Error Caught:", event.error);
+      // We don't necessarily want to show a crash screen for every error, 
+      // but if it's a blank screen, this might help.
+    };
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
+
   const [activeGame, setActiveGame] = useState<Game | null>(null);
   const [filter, setFilter] = useState<Category | 'All' | 'Favorites' | 'Leaderboard'>('All');
   const [scores, setScores] = useState<Record<string, number>>({});
@@ -55,11 +85,10 @@ const App: React.FC = () => {
   const [isAuthReady, setIsAuthReady] = useState(false);
 
   const isAdminUser = (user?.email?.toLowerCase() === 'kmasroor50@gmail.com'.toLowerCase()) || 
-                     (auth.currentUser?.email?.toLowerCase() === 'kmasroor50@gmail.com'.toLowerCase()) ||
                      (user?.uid === 'v2swNDzVnegsJNo5eNEiLYv6ZYi2') ||
                      (userProfile.role === 'admin');
 
-  const CURRENT_VERSION = '3.0.2';
+  const CURRENT_VERSION = '3.0.3';
 
   // PWA Install Prompt
   useEffect(() => {
@@ -139,6 +168,7 @@ const App: React.FC = () => {
 
   // Initialize state from localStorage - ONLY ONCE
   useEffect(() => {
+    if (!isLocalStorageAvailable) return;
     try {
       const savedScores = localStorage.getItem('khans-playhub-scores');
       if (savedScores) setScores(JSON.parse(savedScores));
@@ -213,7 +243,7 @@ const App: React.FC = () => {
   }, [isDarkMode]);
 
   const syncAllScores = React.useCallback(async () => {
-    if (!navigator.onLine || isSyncing || !auth.currentUser) return;
+    if (!navigator.onLine || isSyncing || !auth.currentUser || quotaExceeded) return;
     
     setIsSyncing(true);
     setSyncStatus('pending');
@@ -236,12 +266,16 @@ const App: React.FC = () => {
       
       setSyncStatus(allSuccess ? 'synced' : 'offline');
       if (allSuccess) audioService.playSuccess();
-    } catch (e) {
+    } catch (e: any) {
+      console.error('Sync All Failed:', e);
+      if (e.message.includes('resource-exhausted') || e.message.includes('Quota exceeded')) {
+        setQuotaExceeded(true);
+      }
       setSyncStatus('offline');
     } finally {
       setIsSyncing(false);
     }
-  }, [scores, isSyncing, userProfile]);
+  }, [scores, isSyncing, userProfile, quotaExceeded]);
 
   // Auth Listener
   useEffect(() => {
@@ -251,20 +285,37 @@ const App: React.FC = () => {
       
       if (firebaseUser) {
         // Fetch profile from Firestore
-        const cloudProfile = await cloud.getProfile();
-        if (cloudProfile) {
-          setUserProfile(cloudProfile);
-          localStorage.setItem('khans-playhub-profile', JSON.stringify(cloudProfile));
-        } else {
-          // Create initial profile in Firestore if it doesn't exist
-          const initialProfile = { ...userProfile, email: firebaseUser.email || '' };
-          await cloud.syncProfile(initialProfile);
+        try {
+          const cloudProfile = await cloud.getProfile();
+          if (cloudProfile) {
+            // Ensure arrays exist to prevent crashes in Hub
+            const sanitizedProfile = {
+              ...DEFAULT_PROFILE,
+              ...cloudProfile,
+              favorites: Array.isArray(cloudProfile.favorites) ? cloudProfile.favorites : [],
+              achievements: Array.isArray(cloudProfile.achievements) ? cloudProfile.achievements : []
+            };
+            setUserProfile(sanitizedProfile);
+            localStorage.setItem('khans-playhub-profile', JSON.stringify(sanitizedProfile));
+          } else {
+            // Create initial profile in Firestore if it doesn't exist
+            const initialProfile = { ...userProfile, email: firebaseUser.email || '' };
+            await cloud.syncProfile(initialProfile);
+          }
+          // We call syncAllScores here. Since it's inside the callback, 
+          // we don't necessarily need it in the dependency array of useEffect
+          // if we're okay with it being the version from the first render 
+          // or we can use a ref.
+          syncAllScores();
+        } catch (err) {
+          console.error("Auth callback error:", err);
         }
-        syncAllScores();
       }
     });
     return () => unsubscribe();
-  }, [syncAllScores]);
+    // Removed syncAllScores from dependencies to prevent infinite loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleLogin = async () => {
     try {
@@ -323,21 +374,69 @@ const App: React.FC = () => {
   const saveProfile = React.useCallback(async (updated: UserProfile) => {
     setUserProfile(updated);
     localStorage.setItem('khans-playhub-profile', JSON.stringify(updated));
+    
+    if (quotaExceeded) return;
+
     setSyncStatus('pending');
-    const success = await cloud.syncProfile(updated);
-    setSyncStatus(success ? 'synced' : 'offline');
-    if (success) {
-      audioService.playSuccess();
-      if (hapticFeedback) audioService.vibrate([10, 50, 10]);
+    try {
+      const success = await cloud.syncProfile(updated);
+      setSyncStatus(success ? 'synced' : 'offline');
+      if (success) {
+        audioService.playSuccess();
+        if (hapticFeedback) audioService.vibrate([10, 50, 10]);
+      }
+    } catch (e: any) {
+      console.error('Profile Sync Failed:', e);
+      if (e.message.includes('resource-exhausted') || e.message.includes('Quota exceeded')) {
+        setQuotaExceeded(true);
+      }
+      setSyncStatus('offline');
     }
-  }, [hapticFeedback]);
+  }, [hapticFeedback, quotaExceeded]);
+
+  // Gameplay Time Tracking
+  useEffect(() => {
+    if (activeGame) {
+      gameStartTimeRef.current = Date.now();
+    } else if (gameStartTimeRef.current) {
+      const endTime = Date.now();
+      const durationSeconds = Math.floor((endTime - gameStartTimeRef.current) / 1000);
+      gameStartTimeRef.current = null;
+
+      if (durationSeconds > 1 && lastSyncRef.current['lastGameId']) {
+        const gameId = lastSyncRef.current['lastGameId'];
+        setUserProfile(prev => {
+          const stats = prev.gameStats || {};
+          const gameStat = stats[gameId] || { timeSpent: 0, sessions: 0, lastPlayed: 0, highScore: 0 };
+          
+          const updated = {
+            ...prev,
+            playTime: (prev.playTime || 0) + durationSeconds,
+            gameStats: {
+              ...stats,
+              [gameId]: {
+                ...gameStat,
+                timeSpent: gameStat.timeSpent + durationSeconds,
+                sessions: gameStat.sessions + 1,
+                lastPlayed: endTime,
+                highScore: Math.max(gameStat.highScore, scores[gameId] || 0)
+              }
+            }
+          };
+          saveProfile(updated);
+          return updated;
+        });
+      }
+    }
+  }, [activeGame, saveProfile, scores]);
 
   const toggleFavorite = React.useCallback((gameId: string) => {
     setUserProfile(prev => {
-      const isFav = prev.favorites.includes(gameId);
+      const favorites = prev.favorites || [];
+      const isFav = favorites.includes(gameId);
       const newFavorites = isFav
-        ? prev.favorites.filter((id: string) => id !== gameId)
-        : [...prev.favorites, gameId];
+        ? favorites.filter((id: string) => id !== gameId)
+        : [...favorites, gameId];
       const updated = { ...prev, favorites: newFavorites };
       saveProfile(updated);
       audioService.playToggle(!isFav);
@@ -370,6 +469,7 @@ const App: React.FC = () => {
   }, [userProfile, saveProfile, hapticFeedback]);
 
   const saveScore = React.useCallback(async (gameId: string, score: number, metadata?: any) => {
+    lastSyncRef.current['lastGameId'] = gameId;
     // Achievement Checks
     if (gameId === 'word-builder' && metadata?.level >= 10) unlockAchievement('tower_master');
     if (gameId === 'reaction-test' && metadata?.best > 0 && metadata?.best <= 200) unlockAchievement('speed_demon');
@@ -389,20 +489,33 @@ const App: React.FC = () => {
 
     // Always attempt to sync if the score is at least the current high score
     // This handles cases where local data exists but cloud data is missing or failed previously
-    if (score >= currentHigh && navigator.onLine) {
+    const now = Date.now();
+    const lastSync = lastSyncRef.current[gameId] || 0;
+    const shouldSync = metadata?.final || (now - lastSync > 30000); // Sync on game over or every 30s
+
+    if (shouldSync && score >= currentHigh && navigator.onLine && !quotaExceeded) {
       setSyncStatus('pending');
-      const success = await cloud.syncScore(gameId, score, userProfile);
-      setSyncStatus(success ? 'synced' : 'offline');
-      if (success) {
-        audioService.playSuccess();
-        // Update global record if we beat it
-        setGlobalRecords(prev => ({
-          ...prev,
-          [gameId]: Math.max(prev[gameId] || 0, score)
-        }));
+      try {
+        const success = await cloud.syncScore(gameId, score, userProfile);
+        setSyncStatus(success ? 'synced' : 'offline');
+        if (success) {
+          lastSyncRef.current[gameId] = now;
+          audioService.playSuccess();
+          // Update global record if we beat it
+          setGlobalRecords(prev => ({
+            ...prev,
+            [gameId]: Math.max(prev[gameId] || 0, score)
+          }));
+        }
+      } catch (e: any) {
+        console.error('Sync failed', e);
+        if (e.message.includes('resource-exhausted') || e.message.includes('Quota exceeded')) {
+          setQuotaExceeded(true);
+        }
+        setSyncStatus('offline');
       }
     }
-  }, [scores, unlockAchievement, userProfile]);
+  }, [scores, unlockAchievement, userProfile, quotaExceeded]);
 
   const isAnonymous = userProfile.username === 'New Player' || userProfile.username === 'Player';
 
@@ -419,9 +532,27 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen relative overflow-hidden bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-white selection:bg-indigo-500 selection:text-white transition-colors duration-500">
       <div className="fixed inset-0 bg-grid-pattern opacity-100 pointer-events-none" />
-      <ParticleBackground isDarkMode={isDarkMode} />
+      {/* <ParticleBackground isDarkMode={isDarkMode} /> */}
       
       <main className="relative z-10 w-full min-h-screen">
+        {/* Quota Warning */}
+        {quotaExceeded && (
+          <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-md animate-in slide-in-from-bottom-10">
+            <div className="bg-rose-500 text-white p-4 rounded-2xl shadow-2xl flex items-center gap-4 border-2 border-rose-400">
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                <i className="fas fa-exclamation-triangle"></i>
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-black uppercase italic tracking-tighter leading-none mb-1">Cloud Quota Exceeded</p>
+                <p className="text-[10px] font-bold opacity-90 leading-tight">Daily write limit reached. Scores will be saved locally and synced tomorrow.</p>
+              </div>
+              <button onClick={() => setQuotaExceeded(false)} className="text-white/60 hover:text-white">
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        )}
+
         {showAdmin && isAuthReady && isAdminUser ? (
           <AdminPanel 
             onClose={() => {
@@ -608,7 +739,16 @@ const App: React.FC = () => {
               ))}
             </ul>
             <button 
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                const reload = () => window.location.reload();
+                if ('caches' in window) {
+                  caches.keys().then(names => {
+                    Promise.all(names.map(name => caches.delete(name))).then(reload).catch(reload);
+                  }).catch(reload);
+                } else {
+                  reload();
+                }
+              }}
               className="w-full py-3 bg-indigo-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/20"
             >
               Update Now

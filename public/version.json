@@ -1,9 +1,9 @@
 {
-  "version": "3.0.2",
+  "version": "3.0.3",
   "changelog": [
+    "Fixed Service Worker caching issue (Update Fix)",
     "Added Hybrid Model visibility in Admin Panel",
     "Direct Admin Console access for administrators",
-    "Improved Cloudflare Worker connection testing",
-    "Fixed migration 404 error handling"
+    "Improved Cloudflare Worker connection testing"
   ]
 }

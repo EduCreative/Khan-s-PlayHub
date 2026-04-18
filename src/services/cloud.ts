@@ -290,6 +290,34 @@ class CloudService {
     }
   }
 
+  async getAdminUserScores(uid: string): Promise<any[]> {
+    if (!auth.currentUser) return [];
+    
+    if ((this.provider === 'cloudflare' || this.provider === 'hybrid') && this.workerUrl) {
+      // In D1, we can just query the scores table for this user
+      try {
+        const baseUrl = this.workerUrl.endsWith('/') ? this.workerUrl.slice(0, -1) : this.workerUrl;
+        const res = await fetch(`${baseUrl}/admin/all-scores`); // This is sub-optimal but works if we don't have a user specific endpoint
+        if (res.ok) {
+          const allScores = await res.json();
+          return allScores.filter((s: any) => s.deviceId === uid);
+        }
+      } catch (e) {
+        console.error('Cloudflare Admin User Scores Failed:', e);
+      }
+    }
+
+    // Firebase
+    try {
+      const q = query(collection(db, 'scores'), where('deviceId', '==', uid), orderBy('timestamp', 'desc'));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => doc.data());
+    } catch (e) {
+      handleFirestoreError(e, OperationType.LIST, `scores where deviceId == ${uid}`);
+      return [];
+    }
+  }
+
   async deleteUser(uid: string): Promise<boolean> {
     const path = `profiles/${uid}`;
     try {
@@ -302,9 +330,47 @@ class CloudService {
     }
   }
 
-  async migrateFromWorker(workerUrl: string): Promise<{ success: number, failed: number, total: number }> {
+  async migrateFromWorker(workerUrl: string): Promise<{ success: number, failed: number, total: number, usersSuccess: number }> {
     try {
       const baseUrl = workerUrl.endsWith('/') ? workerUrl.slice(0, -1) : workerUrl;
+      
+      // 1. Migrate Users
+      let usersSuccess = 0;
+      try {
+        const usersResponse = await fetch(`${baseUrl}/admin/users`);
+        if (usersResponse.ok) {
+          const users = await usersResponse.json();
+          if (Array.isArray(users)) {
+            for (const u of users) {
+              try {
+                // Prepare favorites (Worker stores as string in D1)
+                let favorites = [];
+                if (typeof u.favorites === 'string') {
+                  try { favorites = JSON.parse(u.favorites); } catch (e) { favorites = []; }
+                } else if (Array.isArray(u.favorites)) {
+                  favorites = u.favorites;
+                }
+
+                await setDoc(doc(db, 'profiles', u.deviceId), {
+                  username: u.username || 'Anonymous',
+                  email: u.email || null,
+                  avatar: u.avatar || 'fa-user',
+                  bio: u.bio || '',
+                  favorites: favorites,
+                  joinedAt: u.joinedAt || Date.now()
+                }, { merge: true });
+                usersSuccess++;
+              } catch (err) {
+                console.error(`Failed to migrate profile for ${u.deviceId}`, err);
+              }
+            }
+          }
+        }
+      } catch (userErr) {
+        console.error('Failed to migrate users from worker:', userErr);
+      }
+
+      // 2. Migrate Scores
       const response = await fetch(`${baseUrl}/admin/all-scores`);
       if (!response.ok) throw new Error(`Worker responded with ${response.status}. Please ensure you have deployed the latest cloudflare-worker.js code to your Cloudflare account.`);
       
@@ -314,13 +380,8 @@ class CloudService {
       let successCount = 0;
       let failedCount = 0;
 
-      // Firestore batch limit is 500, but we'll do them sequentially for simplicity and error tracking
-      // or we can use a loop with chunks. Let's do a simple loop for now.
       for (const s of scores) {
         try {
-          // Map worker fields to Firestore fields if necessary
-          // Worker: { gameId, score, username, avatar, deviceId, timestamp }
-          // Firestore: { gameId, score, username, avatar, deviceId, timestamp }
           const scoreId = `${s.gameId}_${s.deviceId}`;
           await setDoc(doc(db, 'scores', scoreId), {
             deviceId: s.deviceId,
@@ -337,7 +398,7 @@ class CloudService {
         }
       }
 
-      return { success: successCount, failed: failedCount, total: scores.length };
+      return { success: successCount, failed: failedCount, total: scores.length, usersSuccess };
     } catch (e) {
       console.error('Migration failed:', e);
       throw e;

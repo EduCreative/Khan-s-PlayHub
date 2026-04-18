@@ -67,7 +67,7 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
 
   const handleGameOver = React.useCallback((finalScore: number, victory: boolean = false, metadata?: any) => {
     setCurrentScore(finalScore);
-    onSaveScore(finalScore, metadata);
+    onSaveScore(finalScore, { ...metadata, final: true });
     setIsVictory(victory);
     setIsPlaying(false);
     setShowGameOver(true);

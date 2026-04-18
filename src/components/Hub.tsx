@@ -43,10 +43,19 @@ const Hub: React.FC<HubProps> = ({
   const [vClickCount, setVClickCount] = useState(0);
   const [adminClickCount, setAdminClickCount] = useState(0);
 
+  const [logoSize, setLogoSize] = useState(80);
+
+  React.useEffect(() => {
+    const handleResize = () => setLogoSize(window.innerWidth < 768 ? 60 : 80);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const filteredGames = filter === 'All' 
     ? games 
     : filter === 'Favorites'
-    ? games.filter(g => userProfile.favorites.includes(g.id))
+    ? games.filter(g => (userProfile.favorites || []).includes(g.id))
     : filter === 'Leaderboard'
     ? []
     : games.filter(g => g.category === filter);
@@ -109,7 +118,7 @@ const Hub: React.FC<HubProps> = ({
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-12 flex flex-col gap-6 md:gap-12 animate-in fade-in duration-700">
       <header id="hub-header" className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white/40 dark:bg-slate-900/50 p-6 md:p-8 rounded-[2.5rem] border-2 border-slate-200 dark:border-indigo-500/20 backdrop-blur-xl shadow-2xl transition-all">
         <div className="flex items-center gap-4 md:gap-6">
-          <Logo size={window.innerWidth < 768 ? 60 : 80} />
+          <Logo size={logoSize} />
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <h1 className="text-3xl md:text-5xl font-black italic tracking-tighter uppercase dark:text-white text-slate-900 leading-none">
@@ -206,7 +215,7 @@ const Hub: React.FC<HubProps> = ({
              <i className={`fas ${isDarkMode ? 'fa-sun text-amber-400' : 'fa-moon text-indigo-600'}`}></i>
           </button>
 
-          {(isAdmin || user?.email?.toLowerCase() === 'kmasroor50@gmail.com'.toLowerCase()) && (
+          {isAdmin && (
             <button 
               onClick={onOpenAdmin}
               className="px-4 h-12 md:h-14 rounded-2xl bg-rose-600 text-white flex items-center gap-3 shadow-xl border-2 border-white/20 hover:bg-rose-500 transition-all animate-in zoom-in duration-500"
@@ -219,7 +228,7 @@ const Hub: React.FC<HubProps> = ({
         </div>
       </header>
 
-      {(isAdmin || user?.email?.toLowerCase() === 'kmasroor50@gmail.com'.toLowerCase()) && (
+      {isAdmin && (
         <div className="fixed bottom-6 left-6 z-[100] pointer-events-none">
           <div className="bg-rose-600 text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl border-2 border-white/20 flex items-center gap-3 animate-in slide-in-from-left duration-700">
             <div className="w-2 h-2 rounded-full bg-white animate-ping" />
@@ -299,7 +308,7 @@ const Hub: React.FC<HubProps> = ({
               onPlay={() => onSelectGame(game)} 
               highScore={highScores[game.id] || 0}
               globalRecord={globalRecords[game.id]}
-              isFavorite={userProfile.favorites.includes(game.id)}
+              isFavorite={(userProfile.favorites || []).includes(game.id)}
               onToggleFavorite={() => onToggleFavorite(game.id)}
             />
           ))}
@@ -330,7 +339,7 @@ const Hub: React.FC<HubProps> = ({
             className="px-6 py-2 glass-card border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 cursor-pointer hover:bg-indigo-500/5 transition-all select-none"
           >
             <span className={`w-1.5 h-1.5 rounded-full animate-ping ${syncStatus === 'synced' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-            PlayHub Cloud Protocol Enabled v3.0.2
+            PlayHub Cloud Protocol Enabled v3.0.3
           </span>
           <button onClick={handleAdminClick} className="text-[9px] font-bold text-slate-500/60 hover:text-indigo-500 transition-colors uppercase tracking-widest mt-2">
              <i className="fas fa-terminal mr-2"></i> Access Admin Console

@@ -69,15 +69,17 @@ export default {
       if (url.pathname === '/profile' && method === 'POST') {
         const p = await request.json();
         await env.PLAYHUB_DB.prepare(`
-          INSERT INTO profiles (deviceId, username, email, avatar, bio, favorites, joinedAt) 
-          VALUES (?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO profiles (deviceId, username, email, avatar, bio, favorites, joinedAt, playTime, gameStats) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(deviceId) DO UPDATE SET 
           username = excluded.username, 
           email = excluded.email, 
           avatar = excluded.avatar, 
           bio = excluded.bio,
           favorites = excluded.favorites,
-          joinedAt = excluded.joinedAt
+          joinedAt = excluded.joinedAt,
+          playTime = excluded.playTime,
+          gameStats = excluded.gameStats
         `).bind(
           p.deviceId, 
           p.username, 
@@ -85,7 +87,9 @@ export default {
           p.avatar, 
           p.bio, 
           JSON.stringify(p.favorites || []), 
-          p.joinedAt || Date.now()
+          p.joinedAt || Date.now(),
+          p.playTime || 0,
+          JSON.stringify(p.gameStats || {})
         ).run();
         return new Response(JSON.stringify({ status: 'synced' }), { headers: corsHeaders });
       }

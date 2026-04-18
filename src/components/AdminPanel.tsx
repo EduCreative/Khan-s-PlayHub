@@ -7,7 +7,8 @@ import { audioService } from '../services/audioService';
 import { 
   LineChart, Line, AreaChart, Area, BarChart, Bar, 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell, Legend 
+  PieChart, Pie, Cell, Legend,
+  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from 'recharts';
 
 import ConfirmModal from './ConfirmModal';
@@ -26,6 +27,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'games' | 'pwa' | 'migration' | 'system'>('overview');
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [userScores, setUserScores] = useState<any[]>([]);
+  const [loadingUserScores, setLoadingUserScores] = useState(false);
   const [confirmDeleteDeviceId, setConfirmDeleteDeviceId] = useState<string | null>(null);
   const [workerUrl, setWorkerUrl] = useState(cloud.getWorkerUrl());
   const [migrationStatus, setMigrationStatus] = useState<{ loading: boolean, result: any | null, error: string | null }>({
@@ -139,6 +143,51 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
     return { growthData, popularityData, hourlyData };
   }, []);
 
+  const handleUserClick = async (user: any) => {
+    setSelectedUser(user);
+    setLoadingUserScores(true);
+    audioService.playClick();
+    try {
+      const scores = await cloud.getAdminUserScores(user.deviceId || user.uid);
+      setUserScores(scores);
+    } catch (e) {
+      console.error("Failed to fetch user scores:", e);
+    }
+    setLoadingUserScores(false);
+  };
+
+  const userRadarData = useMemo(() => {
+    if (!selectedUser) return [];
+    return GAMES.map(g => {
+      const gameStat = selectedUser.gameStats?.[g.id];
+      const gameScore = userScores.find(s => s.gameId === g.id);
+      return {
+        subject: g.name,
+        A: gameScore?.score || gameStat?.highScore || 0,
+        fullMark: 2000 // Normalize
+      };
+    }).slice(0, 6);
+  }, [selectedUser, userScores]);
+
+  const userTimeData = useMemo(() => {
+    if (!selectedUser?.gameStats) return [];
+    return Object.entries(selectedUser.gameStats).map(([id, stat]: [string, any]) => {
+      const game = GAMES.find(g => g.id === id);
+      return {
+        name: game?.name || id,
+        time: Math.floor(stat.timeSpent / 60) // minutes
+      };
+    }).sort((a, b) => b.time - a.time);
+  }, [selectedUser]);
+
+  const formatDuration = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  };
   const handleDeleteUser = async (deviceId: string) => {
     audioService.playError();
     const success = await cloud.deleteUser(deviceId);
@@ -482,7 +531,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
               </>
             )}
 
-            {activeTab === 'users' && (
+            {activeTab === 'users' && !selectedUser && (
               <div className="glass-card rounded-[2.5rem] border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5 overflow-hidden">
                 <div className="p-8 border-b border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
@@ -505,7 +554,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                         <th className="p-8">Player</th>
                         <th className="p-8">Device ID</th>
                         <th className="p-8">Games</th>
-                        <th className="p-8">Total Score</th>
+                        <th className="p-8">Play Time</th>
                         <th className="p-8">Joined</th>
                         <th className="p-8 text-right">Actions</th>
                       </tr>
@@ -517,7 +566,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                         </tr>
                       ) : (
                         users.map((user) => (
-                          <tr key={user.deviceId} className="border-b border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group">
+                          <tr 
+                            key={user.deviceId} 
+                            onClick={() => handleUserClick(user)}
+                            className="border-b border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group cursor-pointer"
+                          >
                             <td className="p-8">
                               <div className="flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-xl bg-indigo-600/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">
@@ -530,12 +583,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                               </div>
                             </td>
                             <td className="p-8 font-mono text-[10px] text-slate-500">{user.deviceId.slice(0, 16)}...</td>
-                            <td className="p-8 text-slate-600 dark:text-slate-400 font-bold">{user.gamesPlayed}</td>
-                            <td className="p-8 text-indigo-600 dark:text-indigo-400 font-black italic text-lg">{user.totalScore?.toLocaleString()}</td>
+                            <td className="p-8 text-slate-600 dark:text-slate-400 font-bold">{user.gameStats ? Object.keys(user.gameStats).length : user.gamesPlayed}</td>
+                            <td className="p-8 text-indigo-600 dark:text-indigo-400 font-black italic">{formatDuration(user.playTime || 0)}</td>
                             <td className="p-8 text-slate-500 text-xs">{new Date(user.joinedAt).toLocaleDateString()}</td>
                             <td className="p-8 text-right">
                               <button 
-                                onClick={() => setConfirmDeleteDeviceId(user.deviceId)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setConfirmDeleteDeviceId(user.deviceId);
+                                }}
                                 className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all shadow-lg shadow-rose-500/0 hover:shadow-rose-500/20"
                                 title="Wipe Player Data"
                               >
@@ -547,6 +603,141 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                       )}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'users' && selectedUser && (
+              <div className="space-y-8 animate-in slide-in-from-right-8 duration-500">
+                <button 
+                  onClick={() => setSelectedUser(null)}
+                  className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 transition-colors"
+                >
+                  <i className="fas fa-arrow-left"></i>
+                  Back to Player List
+                </button>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Bio & Stats Card */}
+                  <div className="glass-card p-8 rounded-[2.5rem] border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5 flex flex-col items-center text-center">
+                    <div className="w-24 h-24 rounded-[2rem] bg-indigo-600 flex items-center justify-center text-white text-4xl mb-6 shadow-2xl shadow-indigo-600/40">
+                      <i className={`fas ${selectedUser.avatar || 'fa-user'}`}></i>
+                    </div>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white italic uppercase tracking-tighter mb-1">{selectedUser.username}</h3>
+                    <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-6">{selectedUser.email || 'Anonymous Fragment'}</p>
+                    
+                    <div className="w-full h-px bg-slate-200 dark:bg-white/5 mb-8" />
+                    
+                    <div className="grid grid-cols-2 gap-4 w-full">
+                      <div className="p-4 rounded-2xl bg-slate-100 dark:bg-white/5">
+                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Time</p>
+                        <p className="text-sm font-black text-slate-900 dark:text-white italic">{formatDuration(selectedUser.playTime || 0)}</p>
+                      </div>
+                      <div className="p-4 rounded-2xl bg-slate-100 dark:bg-white/5">
+                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Neural Ops</p>
+                        <p className="text-sm font-black text-slate-900 dark:text-white italic">{Object.keys(selectedUser.gameStats || {}).length} Games</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-8 text-left w-full">
+                      <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Identity Meta</h4>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center text-[10px]">
+                          <span className="font-bold text-slate-500">JOINED</span>
+                          <span className="font-bold text-slate-900 dark:text-white">{new Date(selectedUser.joinedAt).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px]">
+                          <span className="font-bold text-slate-500">DEVICE</span>
+                          <span className="font-mono text-slate-500">{selectedUser.deviceId?.slice(0, 12)}...</span>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px]">
+                          <span className="font-bold text-slate-500">ACHIEVEMENTS</span>
+                          <span className="font-bold text-indigo-500">{selectedUser.achievements?.length || 0}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Skill Radar Chart */}
+                  <div className="glass-card p-8 rounded-[2.5rem] border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5 lg:col-span-2">
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-8">Skill Proficiency Matrix</h3>
+                    <div className="h-[300px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RadarChart cx="50%" cy="50%" outerRadius="80%" data={userRadarData}>
+                          <PolarGrid stroke="#ffffff10" />
+                          <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 10, fontWeight: 'bold' }} />
+                          <PolarRadiusAxis angle={30} domain={[0, 2000]} axisLine={false} tick={false} />
+                          <Radar
+                            name={selectedUser.username}
+                            dataKey="A"
+                            stroke="#6366f1"
+                            fill="#6366f1"
+                            fillOpacity={0.6}
+                          />
+                        </RadarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* Play Time Breakdown */}
+                  <div className="glass-card p-8 rounded-[2.5rem] border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5">
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-8">Temporal Partitioning</h3>
+                    <div className="h-[250px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={userTimeData} layout="vertical">
+                          <XAxis type="number" hide />
+                          <YAxis 
+                            dataKey="name" 
+                            type="category" 
+                            width={80} 
+                            tick={{ fill: '#64748b', fontSize: 8, fontWeight: 'bold' }} 
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px' }}
+                            itemStyle={{ color: '#fff', fontSize: '10px', textTransform: 'uppercase' }}
+                          />
+                          <Bar dataKey="time" name="Minutes" fill="#a855f7" radius={[0, 4, 4, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* Progress Feed / Scores */}
+                  <div className="glass-card p-8 rounded-[2.5rem] border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5 lg:col-span-2 overflow-hidden flex flex-col">
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-8">Neural Event Registry</h3>
+                    <div className="flex-1 overflow-y-auto pr-2 max-h-[300px]">
+                      {loadingUserScores ? (
+                        <div className="h-full flex items-center justify-center italic text-slate-500 text-xs">Accessing historical segments...</div>
+                      ) : userScores.length === 0 ? (
+                        <div className="h-full flex items-center justify-center italic text-slate-500 text-xs text-center">No neural events recorded in the current sector.</div>
+                      ) : (
+                        <div className="space-y-4">
+                          {userScores.map((s, i) => {
+                            const game = GAMES.find(g => g.id === s.gameId);
+                            return (
+                              <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 group hover:border-indigo-500/30 transition-all">
+                                <div className="flex items-center gap-4">
+                                  <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${game?.color || 'from-slate-500 to-slate-600'} flex items-center justify-center text-white text-[10px]`}>
+                                    <i className={`fas ${game?.icon || 'fa-gamepad'}`}></i>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-tighter">{game?.name || s.gameId}</p>
+                                    <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">{new Date(s.timestamp).toLocaleString()}</p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-sm font-black text-indigo-600 dark:text-indigo-400 italic">+{s.score.toLocaleString()}</p>
+                                  <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">NEURAL SCORE</p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -786,10 +977,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                       <i className="fas fa-check-circle text-xl"></i>
                       <div className="flex-1">
                         <p className="text-xs font-black uppercase tracking-widest">Migration Successful</p>
-                        <div className="flex gap-4 mt-1">
-                          <span className="text-[10px] font-bold uppercase tracking-widest">Total: {migrationStatus.result.total}</span>
-                          <span className="text-[10px] font-bold uppercase tracking-widest">Success: {migrationStatus.result.success}</span>
-                          <span className="text-[10px] font-bold uppercase tracking-widest">Failed: {migrationStatus.result.failed}</span>
+                        <div className="flex flex-wrap gap-4 mt-1">
+                          <span className="text-[10px] font-bold uppercase tracking-widest">Profiles: {migrationStatus.result.usersSuccess}</span>
+                          <span className="text-[10px] font-bold uppercase tracking-widest">Scores Total: {migrationStatus.result.total}</span>
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/70">Success: {migrationStatus.result.success}</span>
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-rose-500/70">Failed: {migrationStatus.result.failed}</span>
                         </div>
                       </div>
                     </div>

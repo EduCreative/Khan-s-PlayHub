@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'khans-playhub-v3.0.1';
+const CACHE_NAME = 'khans-playhub-v3.0.3';
 
 // Core assets to cache
 const ASSETS_TO_CACHE = [
@@ -24,14 +24,18 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((name) => {
+          // Delete ALL caches that are not the current one
           if (name !== CACHE_NAME) {
+            console.log('SW: Deleting old cache', name);
             return caches.delete(name);
           }
         })
       );
+    }).then(() => {
+      console.log('SW: Activated and claimed clients');
+      return self.clients.claim();
     })
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {

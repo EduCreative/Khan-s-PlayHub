@@ -26,6 +26,13 @@ export interface UserProfile {
   joinedAt: number;
   achievements: string[]; // IDs of unlocked achievements
   role?: 'admin' | 'user';
+  playTime?: number; // Total seconds on platform
+  gameStats?: Record<string, {
+    timeSpent: number;
+    sessions: number;
+    lastPlayed: number;
+    highScore: number;
+  }>;
 }
 
 export interface AppSettings {

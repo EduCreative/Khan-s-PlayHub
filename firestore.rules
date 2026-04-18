@@ -42,7 +42,10 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return request.auth != null && request.auth.uid == "v2swNDzVnegsJNo5eNEiLYv6ZYi2";
+      return request.auth != null && (
+        request.auth.uid == "v2swNDzVnegsJNo5eNEiLYv6ZYi2" || 
+        request.auth.token.email.lower() == "kmasroor50@gmail.com"
+      );
     }
     
     function isValidEmail(email) {
@@ -62,7 +65,7 @@ service cloud.firestore {
 
     function isValidScore(data) {
       return data.keys().hasAll(['deviceId', 'gameId', 'score', 'timestamp', 'username', 'avatar']) &&
-             data.deviceId == request.auth.uid &&
+             (data.deviceId == request.auth.uid || isAdmin()) &&
              data.gameId is string &&
              data.score is number && data.score >= 0 &&
              data.timestamp is number &&
@@ -74,8 +77,8 @@ service cloud.firestore {
       // Admins can read (get/list) any profile. Owners can read their own.
       allow read: if isAdmin() || isOwner(userId);
       
-      // Only owner can create their own profile
-      allow create: if isOwner(userId) && isValidProfile(request.resource.data);
+      // Only owner can create their own profile, or admin can create any (for migration)
+      allow create: if (isOwner(userId) || isAdmin()) && isValidProfile(request.resource.data);
       
       // Owner or Admin can update
       allow update: if (isOwner(userId) || isAdmin()) && isValidProfile(request.resource.data) &&
@@ -89,20 +92,18 @@ service cloud.firestore {
       // Allow public read for leaderboards
       allow read: if true;
       
-      // Only owner can write their own scores
-      // scoreId is expected to be {gameId}_{userId}
+      // Only owner can write their own scores, or admin can write any score (for migration)
       allow create: if isAuthenticated() && 
-                      request.resource.data.deviceId == request.auth.uid &&
+                      (request.resource.data.deviceId == request.auth.uid || isAdmin()) &&
                       isValidScore(request.resource.data);
                       
       allow update: if isAuthenticated() && 
-                      resource.data.deviceId == request.auth.uid &&
-                      request.resource.data.deviceId == request.auth.uid &&
+                      (resource.data.deviceId == request.auth.uid || isAdmin()) &&
+                      (request.resource.data.deviceId == request.auth.uid || isAdmin()) &&
                       request.resource.data.gameId == resource.data.gameId &&
-                      isValidScore(request.resource.data) &&
-                      request.resource.data.score >= resource.data.score; // Only allow higher scores
+                      isValidScore(request.resource.data);
                       
-      allow delete: if false;
+      allow delete: if isAdmin();
     }
 
     // Default deny

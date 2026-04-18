@@ -9,7 +9,9 @@ CREATE TABLE IF NOT EXISTS profiles (
   avatar TEXT,
   bio TEXT,
   favorites TEXT DEFAULT '[]',
-  joinedAt INTEGER
+  joinedAt INTEGER,
+  playTime INTEGER DEFAULT 0,
+  gameStats TEXT DEFAULT '{}'
 );
 
 -- Scores Table
