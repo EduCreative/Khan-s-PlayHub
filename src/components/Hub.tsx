@@ -126,9 +126,12 @@ const Hub: React.FC<HubProps> = ({
               className={`h-full transition-all duration-500 shadow-[0_0_10px_currentColor] ${updateStatus === 'ready' ? 'bg-emerald-500' : 'bg-indigo-500'}`}
               style={{ width: `${updateProgress}%` }}
             />
-            <div className="absolute top-1 left-4 px-3 py-0.5 bg-indigo-600 rounded-b-lg text-[7px] font-black uppercase tracking-[0.2em] text-white flex items-center gap-2 animate-in slide-in-from-top-4">
+            <div 
+              onClick={() => window.location.reload()}
+              className="absolute top-1 left-4 px-3 py-0.5 bg-indigo-600 rounded-b-lg text-[7px] font-black uppercase tracking-[0.2em] text-white flex items-center gap-2 animate-in slide-in-from-top-4 cursor-pointer hover:bg-emerald-600 transition-colors"
+            >
               <i className={`fas ${updateStatus === 'ready' ? 'fa-check' : 'fa-sync-alt animate-spin'}`}></i>
-              {updateStatus === 'checking' ? 'Checking for updates...' : updateStatus === 'downloading' ? `Downloading Update: ${updateProgress}%` : `Update Ready: v${appUpdate?.version || ''}`}
+              {updateStatus === 'checking' ? 'Checking for updates...' : updateStatus === 'downloading' ? `Downloading Update: ${updateProgress}%` : `Update Ready: v${appUpdate?.version || ''} - Click to Reload`}
             </div>
           </div>
         )}
