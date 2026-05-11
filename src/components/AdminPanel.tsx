@@ -554,6 +554,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                         <th className="p-8">Player</th>
                         <th className="p-8">Device ID</th>
                         <th className="p-8">Games</th>
+                        <th className="p-8">Total Score</th>
                         <th className="p-8">Play Time</th>
                         <th className="p-8">Joined</th>
                         <th className="p-8 text-right">Actions</th>
@@ -584,6 +585,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                             </td>
                             <td className="p-8 font-mono text-[10px] text-slate-500">{user.deviceId.slice(0, 16)}...</td>
                             <td className="p-8 text-slate-600 dark:text-slate-400 font-bold">{user.gameStats ? Object.keys(user.gameStats).length : user.gamesPlayed}</td>
+                            <td className="p-8 text-emerald-600 dark:text-emerald-400 font-black italic">
+                              {Object.values(user.gameStats || {}).reduce((accValue: number, stat: any) => accValue + (stat.highScore || 0), 0).toLocaleString()}
+                            </td>
                             <td className="p-8 text-indigo-600 dark:text-indigo-400 font-black italic">{formatDuration(user.playTime || 0)}</td>
                             <td className="p-8 text-slate-500 text-xs">{new Date(user.joinedAt).toLocaleDateString()}</td>
                             <td className="p-8 text-right">

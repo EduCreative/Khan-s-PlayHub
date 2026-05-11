@@ -17,12 +17,14 @@ interface SettingsModalProps {
   isInstalled: boolean;
   onInstall: () => void;
   isInIframe: boolean;
+  isAdmin?: boolean;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ 
   sfxVolume, hapticFeedback, isDarkMode, dataProvider, workerUrl,
   onUpdateSfx, onUpdateHaptic, onUpdateDataProvider, onUpdateWorkerUrl,
-  onToggleTheme, onClose, canInstall, isInstalled, onInstall, isInIframe
+  onToggleTheme, onClose, canInstall, isInstalled, onInstall, isInIframe,
+  isAdmin
 }) => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-300">
@@ -102,54 +104,56 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           {/* Data Provider Section */}
-          <div className="p-6 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400">
-                <i className="fas fa-database"></i>
+          {isAdmin && (
+            <div className="p-6 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                  <i className="fas fa-database"></i>
+                </div>
+                <div>
+                  <p className="font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">Data Provider</p>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Storage Engine</p>
+                </div>
               </div>
-              <div>
-                <p className="font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">Data Provider</p>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Storage Engine</p>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-3 gap-2">
-              {(['firebase', 'cloudflare', 'hybrid'] as const).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => onUpdateDataProvider(p)}
-                  className={`py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
-                    dataProvider === p 
-                      ? 'bg-indigo-600 border-indigo-600 text-white' 
-                      : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500'
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-
-            {(dataProvider === 'cloudflare' || dataProvider === 'hybrid') && (
-              <div className="space-y-2">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Worker URL</p>
-                <input 
-                  type="text" 
-                  value={workerUrl}
-                  onChange={(e) => onUpdateWorkerUrl(e.target.value)}
-                  placeholder="https://your-worker.workers.dev"
-                  className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all"
-                />
+              <div className="grid grid-cols-3 gap-2">
+                {(['firebase', 'cloudflare', 'hybrid'] as const).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => onUpdateDataProvider(p)}
+                    className={`py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                      dataProvider === p 
+                        ? 'bg-indigo-600 border-indigo-600 text-white' 
+                        : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
               </div>
-            )}
-            
-            <p className="text-[9px] text-slate-500 font-medium italic">
-              {dataProvider === 'hybrid' 
-                ? 'Hybrid mode writes to both Firestore and D1, and reads from Cloudflare if available.' 
-                : dataProvider === 'cloudflare' 
-                ? 'Cloudflare mode uses D1 for all operations. Requires a valid Worker URL.'
-                : 'Firebase mode uses Firestore for all operations.'}
-            </p>
-          </div>
+
+              {(dataProvider === 'cloudflare' || dataProvider === 'hybrid') && (
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Worker URL</p>
+                  <input 
+                    type="text" 
+                    value={workerUrl}
+                    onChange={(e) => onUpdateWorkerUrl(e.target.value)}
+                    placeholder="https://your-worker.workers.dev"
+                    className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all"
+                  />
+                </div>
+              )}
+              
+              <p className="text-[9px] text-slate-500 font-medium italic">
+                {dataProvider === 'hybrid' 
+                  ? 'Hybrid mode writes to both Firestore and D1, and reads from Cloudflare if available.' 
+                  : dataProvider === 'cloudflare' 
+                  ? 'Cloudflare mode uses D1 for all operations. Requires a valid Worker URL.'
+                  : 'Firebase mode uses Firestore for all operations.'}
+              </p>
+            </div>
+          )}
 
           {/* PWA Section */}
           <div className="p-6 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">

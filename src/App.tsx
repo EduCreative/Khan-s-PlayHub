@@ -71,7 +71,7 @@ const App: React.FC = () => {
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [sfxVolume, setSfxVolume] = useState(0.5);
   const [hapticFeedback, setHapticFeedback] = useState(true);
-  const [dataProvider, setDataProvider] = useState<'firebase' | 'cloudflare' | 'hybrid'>('firebase');
+  const [dataProvider, setDataProvider] = useState<'firebase' | 'cloudflare' | 'hybrid'>('hybrid');
   const [workerUrl, setWorkerUrl] = useState('');
   const [syncStatus, setSyncStatus] = useState<'synced' | 'pending' | 'offline'>('synced');
   const [globalRecords, setGlobalRecords] = useState<Record<string, number>>({});
@@ -238,7 +238,7 @@ const App: React.FC = () => {
         const parsed = JSON.parse(savedSettings);
         setSfxVolume(parsed.sfxVolume ?? 0.5);
         setHapticFeedback(parsed.hapticFeedback ?? true);
-        setDataProvider(parsed.dataProvider ?? 'firebase');
+        setDataProvider(parsed.dataProvider ?? 'hybrid');
         setWorkerUrl(parsed.workerUrl ?? '');
       }
     } catch (e) { console.error('Failed to parse settings', e); }
@@ -710,6 +710,7 @@ const App: React.FC = () => {
           isDarkMode={isDarkMode}
           dataProvider={dataProvider}
           workerUrl={workerUrl}
+          isAdmin={isAdminUser}
           onUpdateSfx={(vol) => {
             setSfxVolume(vol);
             // Volume change feedback
