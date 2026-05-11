@@ -34,11 +34,14 @@ interface HubProps {
   onLogin: () => void;
   onLogout: () => void;
   isAuthReady: boolean;
+  updateStatus: 'idle' | 'checking' | 'downloading' | 'ready';
+  updateProgress: number;
+  appUpdate: { version: string; changelog: string[] } | null;
 }
 
 const Hub: React.FC<HubProps> = ({ 
   games, onSelectGame, filter, setFilter, highScores, globalRecords, userProfile, isDarkMode, syncStatus, onSyncAll, onToggleTheme, onOpenProfile, onToggleFavorite, onUpdateGlobalRecord, onOpenAdmin, isAdmin, onOpenSettings, onOpenPrivacy, canInstall, isInstalled, onInstall,
-  user, onLogin, onLogout, isAuthReady
+  user, onLogin, onLogout, isAuthReady, updateStatus, updateProgress, appUpdate
 }) => {
   const [vClickCount, setVClickCount] = useState(0);
   const [adminClickCount, setAdminClickCount] = useState(0);
@@ -116,7 +119,19 @@ const Hub: React.FC<HubProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-12 flex flex-col gap-6 md:gap-12 animate-in fade-in duration-700">
-      <header id="hub-header" className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white/40 dark:bg-slate-900/50 p-6 md:p-8 rounded-[2.5rem] border-2 border-slate-200 dark:border-indigo-500/20 backdrop-blur-xl shadow-2xl transition-all">
+      <header id="hub-header" className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white/40 dark:bg-slate-900/50 p-6 md:p-8 rounded-[2.5rem] border-2 border-slate-200 dark:border-indigo-500/20 backdrop-blur-xl shadow-2xl transition-all relative overflow-hidden">
+        {updateStatus !== 'idle' && (
+          <div className="absolute top-0 left-0 right-0 h-1 bg-slate-100 dark:bg-slate-800 z-50">
+            <div 
+              className={`h-full transition-all duration-500 shadow-[0_0_10px_currentColor] ${updateStatus === 'ready' ? 'bg-emerald-500' : 'bg-indigo-500'}`}
+              style={{ width: `${updateProgress}%` }}
+            />
+            <div className="absolute top-1 left-4 px-3 py-0.5 bg-indigo-600 rounded-b-lg text-[7px] font-black uppercase tracking-[0.2em] text-white flex items-center gap-2 animate-in slide-in-from-top-4">
+              <i className={`fas ${updateStatus === 'ready' ? 'fa-check' : 'fa-sync-alt animate-spin'}`}></i>
+              {updateStatus === 'checking' ? 'Checking for updates...' : updateStatus === 'downloading' ? `Downloading Update: ${updateProgress}%` : `Update Ready: v${appUpdate?.version || ''}`}
+            </div>
+          </div>
+        )}
         <div className="flex items-center gap-4 md:gap-6">
           <Logo size={logoSize} />
           <div className="flex flex-col">
@@ -170,30 +185,13 @@ const Hub: React.FC<HubProps> = ({
           <button id="leaderboard-header-btn" onClick={() => setFilter('Leaderboard')} className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-lg shadow-xl border-2 transition-all ${filter === 'Leaderboard' ? 'bg-amber-500 border-amber-400 text-white' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500'}`} title="Global Leaderboards">
             <i className="fas fa-trophy"></i>
           </button>
+          <button id="theme-toggle" onClick={onToggleTheme} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700" title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
+             <i className={`fas ${isDarkMode ? 'fa-sun text-amber-400' : 'fa-moon text-indigo-600'}`}></i>
+          </button>
           <button id="share-btn" onClick={handleShare} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all" title="Share this app">
             <i className="fas fa-share-alt text-emerald-500"></i>
           </button>
           
-          {isAuthReady && !user && (
-            <button 
-              onClick={onLogin}
-              className="px-6 h-12 md:h-14 rounded-2xl bg-indigo-600 text-white font-black uppercase italic tracking-tighter shadow-xl hover:bg-indigo-500 transition-all flex items-center gap-2"
-            >
-              <i className="fab fa-google"></i>
-              <span className="hidden sm:inline">Sign In</span>
-            </button>
-          )}
-
-          {user && (
-            <button 
-              onClick={onLogout}
-              className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all"
-              title="Sign Out"
-            >
-              <i className="fas fa-sign-out-alt text-rose-500"></i>
-            </button>
-          )}
-
           {canInstall && (
             <button id="install-btn" onClick={onInstall} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all animate-bounce" title="Install App">
               <i className="fas fa-download text-indigo-500"></i>
@@ -211,9 +209,6 @@ const Hub: React.FC<HubProps> = ({
           <button id="settings-btn" onClick={onOpenSettings} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all" title="App Settings">
             <i className="fas fa-cog text-slate-500"></i>
           </button>
-          <button id="theme-toggle" onClick={onToggleTheme} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700" title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
-             <i className={`fas ${isDarkMode ? 'fa-sun text-amber-400' : 'fa-moon text-indigo-600'}`}></i>
-          </button>
 
           {isAdmin && (
             <button 
@@ -223,6 +218,26 @@ const Hub: React.FC<HubProps> = ({
             >
               <i className="fas fa-terminal"></i>
               <span className="font-black uppercase italic tracking-tighter text-xs">Admin</span>
+            </button>
+          )}
+
+          {isAuthReady && !user && (
+            <button 
+              onClick={onLogin}
+              className="px-6 h-12 md:h-14 rounded-2xl bg-indigo-600 text-white font-black uppercase italic tracking-tighter shadow-xl hover:bg-indigo-500 transition-all flex items-center gap-2"
+            >
+              <i className="fab fa-google"></i>
+              <span className="hidden sm:inline">Sign In</span>
+            </button>
+          )}
+
+          {user && (
+            <button 
+              onClick={onLogout}
+              className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all"
+              title="Sign Out"
+            >
+              <i className="fas fa-sign-out-alt text-rose-500"></i>
             </button>
           )}
         </div>
@@ -339,7 +354,7 @@ const Hub: React.FC<HubProps> = ({
             className="px-6 py-2 glass-card border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 cursor-pointer hover:bg-indigo-500/5 transition-all select-none"
           >
             <span className={`w-1.5 h-1.5 rounded-full animate-ping ${syncStatus === 'synced' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-            PlayHub Cloud Protocol Enabled v3.0.3
+            PlayHub Cloud Protocol Enabled v3.0.6
           </span>
           <button onClick={handleAdminClick} className="text-[9px] font-bold text-slate-500/60 hover:text-indigo-500 transition-colors uppercase tracking-widest mt-2">
              <i className="fas fa-terminal mr-2"></i> Access Admin Console

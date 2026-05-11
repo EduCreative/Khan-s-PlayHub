@@ -1,8 +1,9 @@
 {
-  "version": "3.0.4",
+  "version": "3.0.6",
   "changelog": [
-    "Re-enabled PWA Service Worker for App Installation",
-    "Improved Installation UX with direct 'Open in New Tab' link",
-    "Added iframe detection for smarter Install status guidance"
+    "Intelligent Background Auto-Update System",
+    "Real-time update progress indicator in Header",
+    "Optimized navigation icon flow",
+    "Monetag ad verification integration"
   ]
 }

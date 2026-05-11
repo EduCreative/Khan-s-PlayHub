@@ -78,6 +78,8 @@ const App: React.FC = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [recentAchievement, setRecentAchievement] = useState<Achievement | null>(null);
   const [appUpdate, setAppUpdate] = useState<{ version: string; changelog: string[] } | null>(null);
+  const [updateProgress, setUpdateProgress] = useState(0);
+  const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'downloading' | 'ready'>('idle');
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [canInstall, setCanInstall] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -89,7 +91,7 @@ const App: React.FC = () => {
                      (user?.uid === 'v2swNDzVnegsJNo5eNEiLYv6ZYi2') ||
                      (userProfile.role === 'admin');
 
-  const CURRENT_VERSION = '3.0.4';
+  const CURRENT_VERSION = '3.0.6';
 
   // PWA Install Prompt
   useEffect(() => {
@@ -147,20 +149,63 @@ const App: React.FC = () => {
   useEffect(() => {
     const checkUpdates = async () => {
       try {
+        setUpdateStatus('checking');
         const response = await fetch(`/version.json?t=${Date.now()}`);
         if (response.ok) {
           const data = await response.json();
           if (data.version !== CURRENT_VERSION) {
             setAppUpdate(data);
+            setUpdateStatus('downloading');
+            
+            // Simulate download progress since SW doesn't give real percentage
+            let progress = 0;
+            const interval = setInterval(() => {
+              progress += Math.random() * 15;
+              if (progress >= 95) {
+                clearInterval(interval);
+                setUpdateProgress(95);
+              } else {
+                setUpdateProgress(Math.floor(progress));
+              }
+            }, 800);
+
+            // Trigger Service Worker Update
+            if ('serviceWorker' in navigator) {
+              const registration = await navigator.serviceWorker.getRegistration();
+              if (registration) {
+                registration.update();
+                
+                registration.onupdatefound = () => {
+                  const newWorker = registration.installing;
+                  if (newWorker) {
+                    newWorker.onstatechange = () => {
+                      if (newWorker.state === 'installed') {
+                        clearInterval(interval);
+                        setUpdateProgress(100);
+                        setUpdateStatus('ready');
+                      }
+                    };
+                  }
+                };
+              } else {
+                // If no SW but version mismatch, fallback to ready
+                clearInterval(interval);
+                setUpdateProgress(100);
+                setUpdateStatus('ready');
+              }
+            }
+          } else {
+            setUpdateStatus('idle');
           }
         }
       } catch (e) {
         console.warn('Update check failed', e);
+        setUpdateStatus('idle');
       }
     };
 
     checkUpdates();
-    const interval = setInterval(checkUpdates, 1000 * 60 * 5); // Every 5 minutes
+    const interval = setInterval(checkUpdates, 1000 * 60 * 15); // Every 15 minutes
     return () => clearInterval(interval);
   }, []);
 
@@ -637,6 +682,9 @@ const App: React.FC = () => {
             onLogin={handleLogin}
             onLogout={handleLogout}
             isAuthReady={isAuthReady}
+            updateStatus={updateStatus}
+            updateProgress={updateProgress}
+            appUpdate={appUpdate}
           />
         )}
       </main>
