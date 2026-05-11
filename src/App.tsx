@@ -83,15 +83,18 @@ const App: React.FC = () => {
   const [isInstalled, setIsInstalled] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
+  const [isInIframe, setIsInIframe] = useState(false);
 
   const isAdminUser = (user?.email?.toLowerCase() === 'kmasroor50@gmail.com'.toLowerCase()) || 
                      (user?.uid === 'v2swNDzVnegsJNo5eNEiLYv6ZYi2') ||
                      (userProfile.role === 'admin');
 
-  const CURRENT_VERSION = '3.0.3';
+  const CURRENT_VERSION = '3.0.4';
 
   // PWA Install Prompt
   useEffect(() => {
+    // Detect iframe
+    setIsInIframe(window.self !== window.top);
     // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true) {
       setIsInstalled(true);
@@ -687,6 +690,7 @@ const App: React.FC = () => {
           canInstall={canInstall}
           isInstalled={isInstalled}
           onInstall={handleInstall}
+          isInIframe={isInIframe}
         />
       )}
 

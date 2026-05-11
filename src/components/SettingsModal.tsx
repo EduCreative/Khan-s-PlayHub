@@ -16,12 +16,13 @@ interface SettingsModalProps {
   canInstall: boolean;
   isInstalled: boolean;
   onInstall: () => void;
+  isInIframe: boolean;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ 
   sfxVolume, hapticFeedback, isDarkMode, dataProvider, workerUrl,
   onUpdateSfx, onUpdateHaptic, onUpdateDataProvider, onUpdateWorkerUrl,
-  onToggleTheme, onClose, canInstall, isInstalled, onInstall
+  onToggleTheme, onClose, canInstall, isInstalled, onInstall, isInIframe
 }) => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-300">
@@ -174,10 +175,24 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               >
                 Install Now
               </button>
+            ) : isInIframe ? (
+              <div className="space-y-4">
+                <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                  Browser security blocks installation within frames. Step outside the preview to install.
+                </p>
+                <a 
+                  href={window.location.href} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="block w-full py-3 bg-indigo-600 text-white text-center rounded-xl font-black uppercase italic tracking-tighter hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20"
+                >
+                  Open in New Tab
+                </a>
+              </div>
             ) : (
               <div className="space-y-3">
-                <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
-                  To install PlayHub, open this app in a <span className="text-indigo-500 font-bold">New Tab</span> outside the preview frame.
+                <p className="text-[10px] text-slate-500 font-medium leading-relaxed italic">
+                  Waiting for browser detection... If icons meet requirements, an "Install" button will appear here shortly.
                 </p>
               </div>
             )}

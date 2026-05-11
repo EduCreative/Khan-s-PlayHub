@@ -46,17 +46,6 @@ if (container) {
     </ErrorBoundary>
   );
 
-  // Unregister existing service workers to fix potential blank screen issues
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(registrations => {
-      for (let registration of registrations) {
-        registration.unregister();
-        console.log('SW Unregistered');
-      }
-    });
-  }
-
-  /*
   // Register Service Worker
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -65,5 +54,4 @@ if (container) {
         .catch(err => console.log('SW Registration Failed:', err));
     });
   }
-  */
 }

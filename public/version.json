@@ -1,9 +1,8 @@
 {
-  "version": "3.0.3",
+  "version": "3.0.4",
   "changelog": [
-    "Fixed Service Worker caching issue (Update Fix)",
-    "Added Hybrid Model visibility in Admin Panel",
-    "Direct Admin Console access for administrators",
-    "Improved Cloudflare Worker connection testing"
+    "Re-enabled PWA Service Worker for App Installation",
+    "Improved Installation UX with direct 'Open in New Tab' link",
+    "Added iframe detection for smarter Install status guidance"
   ]
 }
