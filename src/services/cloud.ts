@@ -78,7 +78,7 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 
 class CloudService {
   private provider: 'firebase' | 'cloudflare' | 'hybrid' = 'firebase';
-  private workerUrl: string = '';
+  private workerUrl: string = 'https://khans-playhub-worker.kmasroor50.workers.dev';
 
   constructor() {
     this.testConnection();
@@ -163,18 +163,42 @@ class CloudService {
     }
 
     // Fallback to Firebase
-    const path = 'scores';
     try {
-      let q;
       if (gameId === 'all') {
-        q = query(collection(db, 'scores'), orderBy('score', 'desc'), limit(10));
+        // Retrieve all scores across the platform, group by user, sum them up
+        // This solves the issue of a single user showing up multiple times for different games on the All Games Leaderboard
+        const snapshot = await getDocs(collection(db, 'scores'));
+        const scoresByUser: Record<string, { username: string; avatar: string; score: number; deviceId: string }> = {};
+        
+        snapshot.docs.forEach(docDoc => {
+          const s = docDoc.data();
+          const uid = s.deviceId;
+          if (!uid) return;
+          
+          if (!scoresByUser[uid]) {
+            scoresByUser[uid] = {
+              username: s.username || 'Anonymous',
+              avatar: s.avatar || 'fa-user-ninja',
+              score: 0,
+              deviceId: uid
+            };
+          }
+          // Firebase writes exactly one document per game per player (document ID is ${gameId}_${uid}),
+          // so summing s.score gives the perfect aggregate of high scores of all games played!
+          scoresByUser[uid].score += (s.score || 0);
+        });
+
+        return Object.values(scoresByUser)
+          .filter(p => p.score > 0)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 10);
       } else {
-        q = query(collection(db, 'scores'), where('gameId', '==', gameId), orderBy('score', 'desc'), limit(10));
+        const q = query(collection(db, 'scores'), where('gameId', '==', gameId), orderBy('score', 'desc'), limit(10));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => doc.data());
       }
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => doc.data());
     } catch (e) {
-      handleFirestoreError(e, OperationType.LIST, path);
+      handleFirestoreError(e, OperationType.LIST, 'scores');
       return [];
     }
   }
@@ -269,24 +293,102 @@ class CloudService {
       return [];
     }
     
+    let rawUsers: any[] = [];
     if ((this.provider === 'cloudflare' || this.provider === 'hybrid') && this.workerUrl) {
       try {
         const baseUrl = this.workerUrl.endsWith('/') ? this.workerUrl.slice(0, -1) : this.workerUrl;
         const res = await fetch(`${baseUrl}/admin/users`);
-        if (res.ok) return await res.json();
+        if (res.ok) {
+          rawUsers = await res.json();
+        }
       } catch (e) {
         console.error('Cloudflare Admin Users Failed:', e);
       }
     }
 
-    console.log(`Attempting getAdminUsers as: ${auth.currentUser.email} (${auth.currentUser.uid})`);
-    const path = 'profiles';
+    // Load from Firestore profiles
+    if (rawUsers.length === 0) {
+      try {
+        const snapshot = await getDocs(collection(db, 'profiles'));
+        rawUsers = snapshot.docs.map(doc => ({ deviceId: doc.id, ...doc.data() }));
+      } catch (e) {
+        handleFirestoreError(e, OperationType.LIST, 'profiles');
+        return [];
+      }
+    }
+
+    // Reconcile and synchronize dynamic scores with profile stats on-the-fly!
     try {
-      const snapshot = await getDocs(collection(db, 'profiles'));
-      return snapshot.docs.map(doc => ({ deviceId: doc.id, ...doc.data() }));
+      const scoresSnapshot = await getDocs(collection(db, 'scores'));
+      const scoresList = scoresSnapshot.docs.map(doc => doc.data());
+
+      // Map deviceId -> scores list
+      const scoresByDevice: Record<string, any[]> = {};
+      scoresList.forEach(s => {
+        if (!s.deviceId) return;
+        if (!scoresByDevice[s.deviceId]) {
+          scoresByDevice[s.deviceId] = [];
+        }
+        scoresByDevice[s.deviceId].push(s);
+      });
+
+      // Match users and patch missing gameStats and high scores
+      const reconciledUsers = rawUsers.map(user => {
+        const deviceId = user.deviceId;
+        const userScoresList = scoresByDevice[deviceId] || [];
+        
+        const gameStats = { ...user.gameStats };
+        userScoresList.forEach(s => {
+          if (!gameStats[s.gameId]) {
+            gameStats[s.gameId] = {
+              timeSpent: 0,
+              sessions: 0,
+              lastPlayed: s.timestamp || Date.now(),
+              highScore: s.score
+            };
+          } else {
+            gameStats[s.gameId].highScore = Math.max(gameStats[s.gameId].highScore || 0, s.score || 0);
+          }
+        });
+
+        return {
+          ...user,
+          gameStats
+        };
+      });
+
+      // Match any device IDs in scores collection that do not have a profile yet and synthesize them
+      const existingDeviceIds = new Set(reconciledUsers.map(u => u.deviceId));
+      Object.entries(scoresByDevice).forEach(([deviceId, userScoresList]) => {
+        if (!existingDeviceIds.has(deviceId) && userScoresList.length > 0) {
+          const sample = userScoresList[0];
+          const gameStats: Record<string, any> = {};
+          userScoresList.forEach(s => {
+            gameStats[s.gameId] = {
+              timeSpent: 0,
+              sessions: 0,
+              lastPlayed: s.timestamp || Date.now(),
+              highScore: s.score
+            };
+          });
+
+          reconciledUsers.push({
+            deviceId,
+            username: sample.username || 'Anonymous',
+            avatar: sample.avatar || 'fa-user-ninja',
+            joinedAt: sample.timestamp || Date.now(),
+            bio: 'Scores reconciled from raw gaming database',
+            favorites: [],
+            achievements: [],
+            gameStats
+          });
+        }
+      });
+
+      return reconciledUsers;
     } catch (e) {
-      handleFirestoreError(e, OperationType.LIST, path);
-      return [];
+      console.error('Failed to run full admin users score reconciliation:', e);
+      return rawUsers;
     }
   }
 

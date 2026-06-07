@@ -1,8 +1,8 @@
 {
-  "version": "3.1.1",
+  "version": "3.1.2",
   "changelog": [
-    "Added CSV exporting features in Recent Activity section",
-    "Secure formatting of platform activity with standard columns",
-    "Polished micro-sound feedback on export operations"
+    "Fixed multiple entries per player in Global Leaderboard 'All Games' view with dynamic aggregation",
+    "Self-healing profile-to-raw-scores automatic synchronization in Admin Users interface",
+    "Pre-populated default Cloudflare Worker URL to resolve 'URL Missing' issue automatically"
   ]
 }

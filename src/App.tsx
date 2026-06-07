@@ -72,7 +72,7 @@ const App: React.FC = () => {
   const [sfxVolume, setSfxVolume] = useState(0.5);
   const [hapticFeedback, setHapticFeedback] = useState(true);
   const [dataProvider, setDataProvider] = useState<'firebase' | 'cloudflare' | 'hybrid'>('hybrid');
-  const [workerUrl, setWorkerUrl] = useState('');
+  const [workerUrl, setWorkerUrl] = useState('https://khans-playhub-worker.kmasroor50.workers.dev');
   const [syncStatus, setSyncStatus] = useState<'synced' | 'pending' | 'offline'>('synced');
   const [globalRecords, setGlobalRecords] = useState<Record<string, number>>({});
   const [isSyncing, setIsSyncing] = useState(false);
@@ -91,7 +91,7 @@ const App: React.FC = () => {
                      (user?.uid === 'v2swNDzVnegsJNo5eNEiLYv6ZYi2') ||
                      (userProfile.role === 'admin');
 
-  const CURRENT_VERSION = '3.1.1';
+  const CURRENT_VERSION = '3.1.2';
 
   // PWA Install Prompt
   useEffect(() => {
@@ -239,7 +239,7 @@ const App: React.FC = () => {
         setSfxVolume(parsed.sfxVolume ?? 0.5);
         setHapticFeedback(parsed.hapticFeedback ?? true);
         setDataProvider(parsed.dataProvider ?? 'hybrid');
-        setWorkerUrl(parsed.workerUrl ?? '');
+        setWorkerUrl(parsed.workerUrl || 'https://khans-playhub-worker.kmasroor50.workers.dev');
       }
     } catch (e) { console.error('Failed to parse settings', e); }
   }, []);
@@ -533,6 +533,25 @@ const App: React.FC = () => {
       const nextScores = { ...scores, [gameId]: score };
       setScores(nextScores);
       localStorage.setItem('khans-playhub-scores', JSON.stringify(nextScores));
+
+      // Synchronize gameStats and profile immediately on scoring to avoid any visual lag/discrepancies
+      setUserProfile(prev => {
+        const stats = prev.gameStats || {};
+        const gameStat = stats[gameId] || { timeSpent: 0, sessions: 0, lastPlayed: 0, highScore: 0 };
+        const updated = {
+          ...prev,
+          gameStats: {
+            ...stats,
+            [gameId]: {
+              ...gameStat,
+              lastPlayed: Date.now(),
+              highScore: score
+            }
+          }
+        };
+        saveProfile(updated);
+        return updated;
+      });
     }
 
     // Always attempt to sync if the score is at least the current high score

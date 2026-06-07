@@ -1,11 +1,11 @@
 
 # Changelog
 
-## [3.1.1] - 2026-06-07
-### Added
-- **Export to CSV**: Formatted exporting tool inside the 'Recent Activity' widget of the Admin Panel allowing administrators to download the live feed securely.
-- **Formattings & Compliance**: Ensured standardized RFC-4180 CSV columns structure (Username, Game ID, Game Name, Score, Timestamp, Device ID) with proper quote escaping.
-- **Version Alignment**: Synced all local constants, caching layers, and config indicators to v3.1.1.
+## [3.1.2] - 2026-06-07
+### Changed
+- **Unified Leaderboard Aggregation**: Re-engineered the Firebase fallback 'All Games' view on the Global Leaderboard to sum up high scores of played games per user. This prevents duplicate entries of the same player showing up on the leaderboard and tracks cumulative scores perfectly.
+- **Self-Healing Admin Scores Alignment**: Patched the Admin Users list to dynamically reconcile and sync raw platform scores with user profiles on-the-fly, ensuring gaming records are immediately visible in the Admin Panel without delay or unmount-loss.
+- **Pre-populated Cloudflare URL**: Configured `https://khans-playhub-worker.kmasroor50.workers.dev` as the default Worker URL inside the system, removing manual setup prompts and solving the 'URL Missing' issue.
 
 ## [3.1.0] - 2026-06-07
 ### Added

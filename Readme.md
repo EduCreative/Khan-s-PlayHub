@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.1.1 "Data Pulse"  
+**Version:** 3.1.2 "Sync Pulse"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,10 +9,11 @@ Khan's PlayHub is a high-performance, mobile-first Progressive Web App (PWA) tha
 
 ---
 
-## 🚀 Recent Enhancements (v3.1.1)
-- **Export to CSV**: Integrated an instantaneous CSV exporter into the 'Recent Activity' widget of the Admin Panel, enabling secure backups of recent platform-wide scores.
-- **Auto-polling / Live Update (v3.1.0)**: Implemented a 15-second quiet polling refresh system to update score list entries instantly.
-- **Deep Redirection Navigation (v3.1.0)**: Clicking on any Recent Activity feed entry navigates directly to the 'Users' tab and focuses details on the selected player.
+## 🚀 Recent Enhancements (v3.1.2)
+- **Unified Leaderboard Aggregations**: Upgraded the Global Leaderboard's Firebase fallback to dynamically group and sum scores from different games per user. This prevents duplicate entries of a single player on the leaderboard.
+- **Self-Healing Admin Alignment**: Reconstructed the Admin Panel's user lookup system to automatically reconcile profiles with raw gaming scores in real-time, correcting any empty totals or stats discrepancies seamlessly.
+- **Default Cloudflare URL Integration**: Pre-populated the official Cloudflare Worker endpoint inside the system configurations, ensuring zero configuration is needed on launch and resolving any "URL Missing" flags.
+- **Export to CSV (v3.1.1)**: Integrated an instantaneous CSV exporter into the 'Recent Activity' widget of the Admin Panel, enabling secure backups of recent platform-wide scores.
 
 ## 🚀 Previous Enhancements (v3.0.0)
 - **Player Identity & Onboarding**: New players are now greeted with a setup flow to personalize their name, email, and avatar.
