@@ -1,6 +1,6 @@
 {
-  "version": "3.1.7",
+  "version": "3.1.8",
   "changelog": [
-    "Added a beautiful, robust multi-select duplicate consolidation tool inside the Admin Console Player Database table, enabling physical merges of profiles and historical records based on dynamic activity metrics."
+    "Created a comprehensive Visual Leaderboard component using interactive Recharts bar charts and donut percentage slices to compare high scores and dynamic individual game telemetry details dynamically."
   ]
 }

@@ -59,7 +59,7 @@ const App: React.FC = () => {
   }, []);
 
   const [activeGame, setActiveGame] = useState<Game | null>(null);
-  const [filter, setFilter] = useState<Category | 'All' | 'Favorites' | 'Leaderboard'>('All');
+  const [filter, setFilter] = useState<Category | 'All' | 'Favorites' | 'Leaderboard' | 'Visual Leaderboard'>('All');
   const [scores, setScores] = useState<Record<string, number>>({});
   const [userProfile, setUserProfile] = useState<UserProfile>(DEFAULT_PROFILE);
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -91,7 +91,7 @@ const App: React.FC = () => {
                      (user?.uid === 'v2swNDzVnegsJNo5eNEiLYv6ZYi2') ||
                      (userProfile.role === 'admin');
 
-  const CURRENT_VERSION = '3.1.7';
+  const CURRENT_VERSION = '3.1.8';
 
   // PWA Install Prompt
   useEffect(() => {

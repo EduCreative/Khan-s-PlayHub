@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'khans-playhub-v3.1.7';
+const CACHE_NAME = 'khans-playhub-v3.1.8';
 
 // Core assets to cache
 const ASSETS_TO_CACHE = [

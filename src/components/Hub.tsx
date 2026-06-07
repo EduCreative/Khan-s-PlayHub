@@ -4,6 +4,7 @@ import { Game, Category, UserProfile } from '../types';
 import GameCard from './GameCard';
 import Logo from './Logo';
 import Leaderboard from './Leaderboard';
+import VisualLeaderboard from './VisualLeaderboard';
 import { User } from 'firebase/auth';
 
 import { audioService } from '../services/audioService';
@@ -11,8 +12,8 @@ import { audioService } from '../services/audioService';
 interface HubProps {
   games: Game[];
   onSelectGame: (game: Game) => void;
-  filter: Category | 'All' | 'Favorites' | 'Leaderboard';
-  setFilter: (filter: Category | 'All' | 'Favorites' | 'Leaderboard') => void;
+  filter: Category | 'All' | 'Favorites' | 'Leaderboard' | 'Visual Leaderboard';
+  setFilter: (filter: Category | 'All' | 'Favorites' | 'Leaderboard' | 'Visual Leaderboard') => void;
   highScores: Record<string, number>;
   globalRecords: Record<string, number>;
   userProfile: UserProfile;
@@ -59,11 +60,11 @@ const Hub: React.FC<HubProps> = ({
     ? games 
     : filter === 'Favorites'
     ? games.filter(g => (userProfile.favorites || []).includes(g.id))
-    : filter === 'Leaderboard'
+    : filter === 'Leaderboard' || filter === 'Visual Leaderboard'
     ? []
     : games.filter(g => g.category === filter);
 
-  const categories = ['All', 'Favorites', 'Leaderboard', ...Object.values(Category)];
+  const categories = ['All', 'Favorites', 'Leaderboard', 'Visual Leaderboard', ...Object.values(Category)];
 
   const totalScore = Object.values(highScores).reduce((sum, s) => sum + s, 0);
 
@@ -259,15 +260,21 @@ const Hub: React.FC<HubProps> = ({
         {categories.map((cat) => (
           <button 
             key={cat} 
-            onClick={() => setFilter(cat as any)} 
+            onClick={() => {
+              setFilter(cat as any);
+              audioService.playNav();
+            }} 
             className={`px-4 md:px-6 py-2 md:py-2.5 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all border-2 ${
               filter === cat 
-                ? cat === 'Leaderboard' ? 'bg-amber-500 border-amber-400 text-white shadow-lg scale-105' : 'bg-indigo-600 border-indigo-400 text-white shadow-lg scale-105' 
+                ? cat === 'Leaderboard' ? 'bg-amber-500 border-amber-400 text-white shadow-lg scale-105' 
+                : cat === 'Visual Leaderboard' ? 'bg-indigo-650 border-indigo-550 text-white shadow-lg scale-105'
+                : 'bg-indigo-600 border-indigo-400 text-white shadow-lg scale-105' 
                 : 'bg-white/50 dark:bg-slate-900/40 border-slate-200 dark:border-white/5 text-slate-500 hover:border-indigo-500/30'
             }`}
           >
             {cat === 'Favorites' && <i className="fas fa-star mr-1.5 text-amber-400"></i>}
             {cat === 'Leaderboard' && <i className="fas fa-trophy mr-1.5 text-amber-400"></i>}
+            {cat === 'Visual Leaderboard' && <i className="fas fa-chart-line mr-1.5 text-indigo-400"></i>}
             {cat}
           </button>
         ))}
@@ -316,6 +323,8 @@ const Hub: React.FC<HubProps> = ({
 
       {filter === 'Leaderboard' ? (
         <Leaderboard games={games} onBack={() => setFilter('All')} onUpdateGlobalRecord={onUpdateGlobalRecord} />
+      ) : filter === 'Visual Leaderboard' ? (
+        <VisualLeaderboard games={games} globalRecords={globalRecords} isDarkMode={isDarkMode} onBack={() => setFilter('All')} />
       ) : (
         <div id="games-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 min-h-[400px]">
           {filteredGames.map((game: Game, idx: number) => (
@@ -357,7 +366,7 @@ const Hub: React.FC<HubProps> = ({
             className="px-6 py-2 glass-card border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 cursor-pointer hover:bg-indigo-500/5 transition-all select-none"
           >
             <span className={`w-1.5 h-1.5 rounded-full animate-ping ${syncStatus === 'synced' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-            PlayHub Cloud Protocol Enabled v3.1.7
+            PlayHub Cloud Protocol Enabled v3.1.8
           </span>
           <button onClick={handleAdminClick} className="text-[9px] font-bold text-slate-500/60 hover:text-indigo-500 transition-colors uppercase tracking-widest mt-2">
              <i className="fas fa-terminal mr-2"></i> Access Admin Console

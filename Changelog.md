@@ -1,6 +1,10 @@
 
 # Changelog
 
+## [3.1.8] - 2026-06-07
+### Added
+- **Visual Analytics Dashboard**: Created an immersive and fully responsive player-ranking analytics sub-system in the Hub using Recharts. Renders high-fidelity animated Bar Charts comparing top 10 player records, a digital 3D ranking podium indicating championship tiers, and comparative layout highlights tracking global records across all 16 micro-games.
+
 ## [3.1.7] - 2026-06-07
 ### Added
 - **Dynamic Duplication Cleanup Tool**: Integrated a powerful profile merge engine inside the Player Database. Admins can multi-select rows representing duplicates, evaluate each profile's cumulative activity (comparing `joinedAt`, `lastPlayed` and other stats), designate the Primary profile, and seamlessly consolidate play lengths, list matrices, achievements, high scores, and live references across both Firestore and Cloudflare D1.
