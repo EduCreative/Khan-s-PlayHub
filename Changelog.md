@@ -1,6 +1,12 @@
 
 # Changelog
 
+## [3.1.0] - 2026-06-07
+### Added
+- **Recent Activity Live Feed**: Integrated a platform-wide 'Recent Activity' feed inside the Admin Panel 'Overview' tab displaying real-time scores submitted by users.
+- **Auto-polling / Live Update**: Implemented automatic 15-second quiet polling intervals to update score list entries in real-time.
+- **Deep Redirection Navigation**: Connected Recent Activity list items to the Players tab. Clicking an item redirects to the 'Users' tab and focuses on the selected player's dashboard.
+
 ## [3.0.0] - 2026-03-10
 ### Added
 - **Onboarding Flow**: Automatic profile setup for new players.

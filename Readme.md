@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.0.0 "Player Identity"  
+**Version:** 3.1.0 "Activity Pulse"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,7 +9,12 @@ Khan's PlayHub is a high-performance, mobile-first Progressive Web App (PWA) tha
 
 ---
 
-## 🚀 Recent Enhancements (v3.0.0)
+## 🚀 Recent Enhancements (v3.1.0)
+- **Recent Activity Live Feed**: Integrated a platform-wide progress feed in the Admin Panel Overview, rendering real-time scores submitted across the platform.
+- **Auto-polling / Live Update**: Implemented a 15-second quiet polling refresh system to update score list entries instantly.
+- **Deep Redirection Navigation**: Clicking on any Recent Activity feed entry navigates directly to the 'Users' tab and focuses details on the selected player.
+
+## 🚀 Previous Enhancements (v3.0.0)
 - **Player Identity & Onboarding**: New players are now greeted with a setup flow to personalize their name, email, and avatar.
 - **Responsive Profile Modal**: Completely redesigned the profile window to fit perfectly on all screens with scrollable content.
 - **Expanded Achievements**: Added 7 new achievements (total 13) to track your progress across all games.

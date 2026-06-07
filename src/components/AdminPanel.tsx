@@ -30,6 +30,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [userScores, setUserScores] = useState<any[]>([]);
   const [loadingUserScores, setLoadingUserScores] = useState(false);
+  const [recentScores, setRecentScores] = useState<any[]>([]);
+  const [loadingRecentScores, setLoadingRecentScores] = useState(false);
   const [confirmDeleteDeviceId, setConfirmDeleteDeviceId] = useState<string | null>(null);
   const [workerUrl, setWorkerUrl] = useState(cloud.getWorkerUrl());
   const [migrationStatus, setMigrationStatus] = useState<{ loading: boolean, result: any | null, error: string | null }>({
@@ -86,6 +88,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
     img.src = url;
   };
 
+  const fetchRecentScores = async (quiet = false) => {
+    if (!quiet) setLoadingRecentScores(true);
+    try {
+      const scores = await cloud.getRecentScores();
+      setRecentScores(scores);
+    } catch (e) {
+      console.error("Failed to fetch recent platform scores:", e);
+    }
+    if (!quiet) setLoadingRecentScores(false);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -106,6 +119,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
             setError(uErr.message || "Failed to retrieve operative data.");
           }
         }
+
+        // Also fetch recent scores for the dashboard feed
+        await fetchRecentScores(true);
       } catch (e) {
         setError("A critical connection error occurred.");
       }
@@ -113,6 +129,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
     };
     fetchData();
   }, []);
+
+  // Poll recent scores every 15 seconds for the live feed when in overview tab
+  useEffect(() => {
+    if (activeTab !== 'overview' || loading) return;
+
+    // Refresh initially
+    fetchRecentScores(true);
+
+    const interval = setInterval(() => {
+      fetchRecentScores(true);
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [activeTab, loading]);
 
   // Mock data for charts if real data is unavailable
   const chartData = useMemo(() => {
@@ -493,39 +523,136 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                   </div>
                 </div>
 
-                {/* Hourly Activity Area Chart */}
-                <div className="glass-card p-8 rounded-[2.5rem] border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5">
-                  <div className="flex items-center justify-between mb-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Temporal Activity */}
+                  <div className="glass-card p-8 rounded-[2.5rem] border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5 h-[380px] flex flex-col justify-between">
                     <div>
                       <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Temporal Activity</h3>
                       <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">System Load by Hour</p>
                     </div>
+                    <div className="h-[220px] w-full mt-4">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartData.hourlyData}>
+                          <defs>
+                            <linearGradient id="colorActivity" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
+                          <XAxis 
+                            dataKey="hour" 
+                            stroke="#64748b" 
+                            fontSize={8} 
+                            tickLine={false} 
+                            axisLine={false}
+                            interval={2}
+                          />
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #ffffff10', borderRadius: '12px' }}
+                            itemStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}
+                          />
+                          <Area type="stepAfter" dataKey="activity" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorActivity)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
                   </div>
-                  <div className="h-[200px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={chartData.hourlyData}>
-                        <defs>
-                          <linearGradient id="colorActivity" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
-                        <XAxis 
-                          dataKey="hour" 
-                          stroke="#64748b" 
-                          fontSize={8} 
-                          tickLine={false} 
-                          axisLine={false}
-                          interval={2}
-                        />
-                        <Tooltip 
-                          contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #ffffff10', borderRadius: '12px' }}
-                          itemStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}
-                        />
-                        <Area type="stepAfter" dataKey="activity" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorActivity)" />
-                      </AreaChart>
-                    </ResponsiveContainer>
+
+                  {/* Recent Activity Live Feed */}
+                  <div className="glass-card p-8 rounded-[2.5rem] border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5 h-[380px] flex flex-col">
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Recent Activity</h3>
+                          <span className="flex h-2 w-2 relative">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                          </span>
+                        </div>
+                        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Live Platform Score Feed</p>
+                      </div>
+                      
+                      <button 
+                        onClick={() => { fetchRecentScores(false); audioService.playClick(); }}
+                        disabled={loadingRecentScores}
+                        className="px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 active:scale-95 transition-all text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 font-black text-[9px] uppercase tracking-widest flex items-center gap-2"
+                        title="Force Refresh Feed"
+                      >
+                        <i className={`fas fa-sync-alt ${loadingRecentScores ? 'animate-spin' : ''}`}></i>
+                        Sync
+                      </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+                      {loadingRecentScores && recentScores.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 py-12">
+                          <i className="fas fa-spinner animate-spin text-xl mb-2 text-indigo-500"></i>
+                          <p className="text-[10px] font-black uppercase tracking-widest">Listening, Standby...</p>
+                        </div>
+                      ) : recentScores.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 py-12">
+                          <i className="fas fa-satellite text-xl mb-2 text-indigo-500/50"></i>
+                          <p className="text-[10px] font-black uppercase tracking-widest normal-case italic">No scores recorded yet.</p>
+                        </div>
+                      ) : (
+                        recentScores.map((s, index) => {
+                          const game = GAMES.find(g => g.id === s.gameId);
+                          const timeStr = (() => {
+                            const diff = Date.now() - s.timestamp;
+                            const sec = Math.floor(diff / 1000);
+                            const min = Math.floor(sec / 60);
+                            const hr = Math.floor(min / 60);
+                            if (sec < 60) return 'Just now';
+                            if (min < 60) return `${min}m ago`;
+                            if (hr < 24) return `${hr}h ago`;
+                            return new Date(s.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                          })();
+
+                          const matchedUser = users.find(u => u.deviceId === s.deviceId);
+
+                          return (
+                            <div 
+                              key={`${s.gameId}_${s.deviceId}_${s.timestamp}_${index}`}
+                              onClick={() => {
+                                if (matchedUser) {
+                                  setActiveTab('users');
+                                  handleUserClick(matchedUser);
+                                }
+                              }}
+                              className={`flex items-center justify-between p-3 rounded-2xl bg-white/40 dark:bg-white/5 border border-slate-100 dark:border-white/10 group hover:border-indigo-500/40 hover:scale-[1.01] transition-all duration-300 ${matchedUser ? 'cursor-pointer' : ''}`}
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="relative">
+                                  <div className="w-9 h-9 rounded-xl bg-indigo-600/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:scale-105 transition-transform">
+                                    <i className={`fas ${s.avatar || 'fa-user'}`}></i>
+                                  </div>
+                                  <div 
+                                    className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-lg bg-gradient-to-br ${game?.color || 'from-slate-500 to-slate-600'} flex items-center justify-center text-white text-[8px] ring-2 ring-white dark:ring-slate-900`}
+                                    title={game?.name || s.gameId}
+                                  >
+                                    <i className={`fas ${game?.icon || 'fa-gamepad'}`}></i>
+                                  </div>
+                                </div>
+                                <div className="min-w-0 pr-2">
+                                  <p className="text-xs font-black text-slate-800 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                    {s.username || 'Anonymous'}
+                                  </p>
+                                  <p className="text-[8px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-0.5">
+                                    {game?.name || s.gameId} • {timeStr}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-right flex flex-col justify-center shrink-0">
+                                <p className="text-xs font-black text-emerald-600 dark:text-emerald-400 italic">
+                                  {s.score.toLocaleString()}
+                                </p>
+                                <p className="text-[7px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-widest mt-0.5">PTS</p>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
                   </div>
                 </div>
               </>

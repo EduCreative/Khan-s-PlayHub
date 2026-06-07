@@ -318,6 +318,33 @@ class CloudService {
     }
   }
 
+  async getRecentScores(limitCount: number = 50): Promise<any[]> {
+    if ((this.provider === 'cloudflare' || this.provider === 'hybrid') && this.workerUrl) {
+      try {
+        const baseUrl = this.workerUrl.endsWith('/') ? this.workerUrl.slice(0, -1) : this.workerUrl;
+        const res = await fetch(`${baseUrl}/admin/all-scores`);
+        if (res.ok) {
+          const scores = await res.json();
+          return scores
+            .sort((a: any, b: any) => (b.timestamp || 0) - (a.timestamp || 0))
+            .slice(0, limitCount);
+        }
+      } catch (e) {
+        console.error('Cloudflare Admin Fetch Recent Scores Failed, falling back to Firebase:', e);
+      }
+    }
+
+    // Firebase fallback
+    try {
+      const q = query(collection(db, 'scores'), orderBy('timestamp', 'desc'), limit(limitCount));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => doc.data());
+    } catch (e) {
+      handleFirestoreError(e, OperationType.LIST, `scores ordered by timestamp desc limit ${limitCount}`);
+      return [];
+    }
+  }
+
   async deleteUser(uid: string): Promise<boolean> {
     const path = `profiles/${uid}`;
     try {
