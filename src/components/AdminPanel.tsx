@@ -72,6 +72,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
   const [userSortField, setUserSortField] = useState<'username' | 'gamesCount' | 'totalScore' | 'playTime' | 'joinedAt'>('joinedAt');
   const [userSortOrder, setUserSortOrder] = useState<'asc' | 'desc'>('desc');
 
+  // Multi-select duplicate cleanup states
+  const [cleanupMode, setCleanupMode] = useState(false);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [isMerging, setIsMerging] = useState(false);
+
   // Game Filtering and Sorting states
   const [gameSearchText, setGameSearchText] = useState('');
   const [gameSortField, setGameSortField] = useState<'name' | 'plays' | 'avgScore' | 'highScore'>('plays');
@@ -208,6 +213,63 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
     } else {
       setUserSortField(field);
       setUserSortOrder('desc');
+    }
+  };
+
+  const handleMergeDuplicates = async () => {
+    if (selectedUserIds.length < 2) return;
+    
+    setIsMerging(true);
+    audioService.playClick();
+    
+    try {
+      // Find the user with the most recent activity timestamp among the selected ones
+      const selectedUsers = users.filter(u => selectedUserIds.includes(u.deviceId));
+      
+      const getMostRecentTimestamp = (u: any): number => {
+        let maxTime = Number(u.joinedAt) || 0;
+        if (u.gameStats) {
+          Object.values(u.gameStats).forEach((stat: any) => {
+            if (stat.lastPlayed && stat.lastPlayed > maxTime) {
+              maxTime = stat.lastPlayed;
+            }
+          });
+        }
+        return maxTime;
+      };
+
+      // Sort by activity timestamp (descending) so the latest/most active is picked as index 0 (Primary)
+      const sortedByActivity = [...selectedUsers].sort((a, b) => getMostRecentTimestamp(b) - getMostRecentTimestamp(a));
+      
+      const primaryUser = sortedByActivity[0];
+      const duplicateIds = sortedByActivity.slice(1).map(u => u.deviceId);
+
+      const success = await cloud.mergeDuplicateUsers(primaryUser.deviceId, duplicateIds);
+      if (success) {
+        setCleanupMode(false);
+        setSelectedUserIds([]);
+        
+        // Reload users list
+        setLoading(true);
+        const fetchedUsers = await cloud.getAdminUsers();
+        setUsers(fetchedUsers);
+        setLoading(false);
+        
+        // Push notification into system logs
+        setSyncLogs(prev => [
+          `[${new Date().toLocaleTimeString()}] [SYSTEM] Merged ${duplicateIds.length} duplicates into primary user "${primaryUser.username || primaryUser.deviceId}".`,
+          ...prev
+        ]);
+        
+        alert(`Successfully merged ${duplicateIds.length} players into the primary profile: ${primaryUser.username || 'Anonymous'}`);
+      } else {
+        alert('Data merge failed. Please check the console or try again.');
+      }
+    } catch (err: any) {
+      console.error('An error occurred during merging duplicates:', err);
+      alert(`An error occurred during merge: ${err.message || err}`);
+    } finally {
+      setIsMerging(false);
     }
   };
 
@@ -1027,21 +1089,80 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                     <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Player Database</h3>
                     <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Persistent Identity Matrix</p>
                   </div>
-                  <div className="relative">
-                    <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-                    <input 
-                      type="text" 
-                      placeholder="Filter Players..." 
-                      value={userSearchText}
-                      onChange={(e) => setUserSearchText(e.target.value)}
-                      className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all w-full md:w-64"
-                    />
+                  <div className="flex items-center flex-wrap gap-3">
+                    <button
+                      onClick={() => {
+                        setCleanupMode(!cleanupMode);
+                        setSelectedUserIds([]);
+                        audioService.playClick();
+                      }}
+                      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border transition-all ${
+                        cleanupMode
+                          ? 'bg-rose-500 hover:bg-rose-600 text-white border-rose-600 shadow-md shadow-rose-500/20'
+                          : 'bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10'
+                      }`}
+                    >
+                      <i className={`fas ${cleanupMode ? 'fa-times' : 'fa-broom'} text-xs`}></i>
+                      <span>{cleanupMode ? 'Cancel Cleanup' : 'Cleanup Duplicates'}</span>
+                    </button>
+
+                    <div className="relative">
+                      <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                      <input 
+                        type="text" 
+                        placeholder="Filter Players..." 
+                        value={userSearchText}
+                        onChange={(e) => setUserSearchText(e.target.value)}
+                        className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all w-full md:w-64"
+                      />
+                    </div>
                   </div>
                 </div>
+
+                {cleanupMode && (
+                  <div className="px-8 py-4 bg-indigo-500/10 border-b border-indigo-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-indigo-500/25 flex items-center justify-center text-indigo-500">
+                        <i className="fas fa-circle-info"></i>
+                      </div>
+                      <div>
+                        <p className="uppercase tracking-wider font-extrabold text-indigo-600 dark:text-indigo-400">Neural Consolidation Rule Active</p>
+                        <p className="text-[10px] text-slate-600 dark:text-slate-300 font-medium">Select duplicate entries. The record with the latest activity timestamp becomes the primary; all others are safely merged and purged.</p>
+                      </div>
+                    </div>
+                    {selectedUserIds.length > 1 ? (
+                      <button
+                        onClick={handleMergeDuplicates}
+                        disabled={isMerging}
+                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-[10px] uppercase font-black tracking-widest transition-all shadow-md shadow-indigo-600/30 flex items-center gap-2 self-start sm:self-auto shrink-0"
+                      >
+                        {isMerging ? (
+                          <>
+                            <i className="fas fa-spinner animate-spin"></i>
+                            <span>Merging {selectedUserIds.length} Profiles...</span>
+                          </>
+                        ) : (
+                          <>
+                            <i className="fas fa-wand-magic-sparkles"></i>
+                            <span>Consolidate {selectedUserIds.length} Players</span>
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <div className="text-[10px] text-slate-500 uppercase tracking-widest bg-slate-150 dark:bg-white/5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 select-none">
+                        Select at least 2 entries to merge ({selectedUserIds.length} selected)
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
                     <thead>
                       <tr className="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200 dark:border-white/5">
+                        {cleanupMode && (
+                          <th className="p-8 w-12 text-center select-none text-slate-450 font-bold">Select</th>
+                        )}
                         <th 
                           className="p-8 cursor-pointer select-none hover:text-indigo-500 transition-colors" 
                           onClick={() => toggleUserSort('username')}
@@ -1083,21 +1204,51 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                             Joined {renderUserSortIcon('joinedAt')}
                           </div>
                         </th>
-                        <th className="p-8 text-right select-none text-slate-400">Actions</th>
+                        {!cleanupMode && <th className="p-8 text-right select-none text-slate-400">Actions</th>}
                       </tr>
                     </thead>
                     <tbody className="text-sm">
                       {processedUsers.length === 0 ? (
                         <tr>
-                          <td colSpan={7} className="p-20 text-center text-slate-500 font-medium italic">No players found match the criteria.</td>
+                          <td colSpan={cleanupMode ? 8 : 7} className="p-20 text-center text-slate-500 font-medium italic">No players found match the criteria.</td>
                         </tr>
                       ) : (
                         processedUsers.map((user) => (
                           <tr 
                             key={user.deviceId} 
-                            onClick={() => handleUserClick(user)}
-                            className="border-b border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group cursor-pointer"
+                            onClick={() => {
+                              if (cleanupMode) {
+                                setSelectedUserIds(prev => 
+                                  prev.includes(user.deviceId)
+                                    ? prev.filter(id => id !== user.deviceId)
+                                    : [...prev, user.deviceId]
+                                );
+                                audioService.playClick();
+                              } else {
+                                handleUserClick(user);
+                              }
+                            }}
+                            className={`border-b border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group cursor-pointer ${
+                              selectedUserIds.includes(user.deviceId) ? 'bg-indigo-550/5 dark:bg-indigo-500/10 border-l-4 border-l-indigo-600' : ''
+                            }`}
                           >
+                            {cleanupMode && (
+                              <td className="p-8 w-12 text-center" onClick={(e) => e.stopPropagation()}>
+                                <input 
+                                  type="checkbox" 
+                                  checked={selectedUserIds.includes(user.deviceId)}
+                                  onChange={() => {
+                                    setSelectedUserIds(prev => 
+                                      prev.includes(user.deviceId)
+                                        ? prev.filter(id => id !== user.deviceId)
+                                        : [...prev, user.deviceId]
+                                    );
+                                    audioService.playClick();
+                                  }}
+                                  className="accent-indigo-600 h-4 w-4 rounded border-slate-300 dark:border-white/10 dark:bg-white/5 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0 cursor-pointer"
+                                />
+                              </td>
+                            )}
                             <td className="p-8">
                               <div className="flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-xl bg-indigo-600/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">
@@ -1116,18 +1267,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                             </td>
                             <td className="p-8 text-indigo-600 dark:text-indigo-400 font-black italic">{formatDuration(user.playTime || 0)}</td>
                             <td className="p-8 text-slate-500 text-xs">{formatDate(user.joinedAt)}</td>
-                            <td className="p-8 text-right">
-                              <button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setConfirmDeleteDeviceId(user.deviceId);
-                                }}
-                                className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all shadow-lg shadow-rose-500/0 hover:shadow-rose-500/20"
-                                title="Wipe Player Data"
-                              >
-                                <i className="fas fa-trash-alt text-xs"></i>
-                              </button>
-                            </td>
+                            {!cleanupMode && (
+                              <td className="p-8 text-right">
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setConfirmDeleteDeviceId(user.deviceId);
+                                  }}
+                                  className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all shadow-lg shadow-rose-500/0 hover:shadow-rose-500/20"
+                                  title="Wipe Player Data"
+                                >
+                                  <i className="fas fa-trash-alt text-xs"></i>
+                                </button>
+                              </td>
+                            )}
                           </tr>
                         ))
                       )}

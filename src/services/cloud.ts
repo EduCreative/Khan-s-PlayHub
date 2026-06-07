@@ -8,7 +8,8 @@ import {
   where, 
   orderBy, 
   limit,
-  getDocFromServer
+  getDocFromServer,
+  deleteDoc
 } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { Game, UserProfile } from '../types';
@@ -455,6 +456,188 @@ class CloudService {
       return true;
     } catch (e) {
       handleFirestoreError(e, OperationType.WRITE, path);
+      return false;
+    }
+  }
+
+  async mergeDuplicateUsers(primaryId: string, duplicateIds: string[]): Promise<boolean> {
+    if (!auth.currentUser) {
+      console.warn('mergeDuplicateUsers called but no admin is authenticated.');
+      return false;
+    }
+
+    try {
+      // 1. Fetch primary profile
+      const primaryRef = doc(db, 'profiles', primaryId);
+      const primaryDoc = await getDoc(primaryRef);
+      let primaryData = primaryDoc.exists() ? primaryDoc.data() : null;
+
+      if (!primaryData) {
+        // Synthesize if missing in Firestore
+        primaryData = {
+          deviceId: primaryId,
+          username: 'Primary Player',
+          avatar: 'fa-user-ninja',
+          joinedAt: Date.now(),
+          favorites: [],
+          achievements: [],
+          gameStats: {},
+          playTime: 0
+        };
+      }
+
+      // Initialize merged values starting with primaryData
+      const mergedProfile = {
+        username: primaryData.username || 'Anonymous',
+        email: primaryData.email || null,
+        avatar: primaryData.avatar || 'fa-user-ninja',
+        bio: primaryData.bio || '',
+        favorites: Array.isArray(primaryData.favorites) ? [...primaryData.favorites] : [],
+        achievements: Array.isArray(primaryData.achievements) ? [...primaryData.achievements] : [],
+        gameStats: primaryData.gameStats ? { ...primaryData.gameStats } : {},
+        playTime: Number(primaryData.playTime) || 0,
+        joinedAt: primaryData.joinedAt || Date.now(),
+        deviceId: primaryId
+      };
+
+      // 2. Load and merge duplicate profiles
+      for (const dupeId of duplicateIds) {
+        const dupeRef = doc(db, 'profiles', dupeId);
+        const dupeDoc = await getDoc(dupeRef);
+        if (dupeDoc.exists()) {
+          const dupeData = dupeDoc.data();
+
+          // Merge fields if primary's is empty
+          if (!mergedProfile.email && dupeData.email) mergedProfile.email = dupeData.email;
+          if (!mergedProfile.bio && dupeData.bio) mergedProfile.bio = dupeData.bio;
+          if (mergedProfile.username === 'Anonymous' && dupeData.username && dupeData.username !== 'Anonymous') {
+            mergedProfile.username = dupeData.username;
+          }
+
+          // Merge lists
+          if (Array.isArray(dupeData.favorites)) {
+            mergedProfile.favorites = Array.from(new Set([...mergedProfile.favorites, ...dupeData.favorites]));
+          }
+          if (Array.isArray(dupeData.achievements)) {
+            mergedProfile.achievements = Array.from(new Set([...mergedProfile.achievements, ...dupeData.achievements]));
+          }
+
+          // Merge play time
+          mergedProfile.playTime += Number(dupeData.playTime) || 0;
+
+          // Merge gameStats
+          if (dupeData.gameStats) {
+            Object.entries(dupeData.gameStats).forEach(([gameId, dupeStat]: [string, any]) => {
+              if (mergedProfile.gameStats[gameId]) {
+                const priStat = mergedProfile.gameStats[gameId];
+                mergedProfile.gameStats[gameId] = {
+                  highScore: Math.max(priStat.highScore || 0, dupeStat.highScore || 0),
+                  sessions: (priStat.sessions || 0) + (dupeStat.sessions || 0),
+                  timeSpent: (priStat.timeSpent || 0) + (dupeStat.timeSpent || 0),
+                  lastPlayed: Math.max(priStat.lastPlayed || 0, dupeStat.lastPlayed || 0),
+                };
+              } else {
+                mergedProfile.gameStats[gameId] = { ...dupeStat };
+              }
+            });
+          }
+        }
+      }
+
+      // Save merged profile to Firestore
+      await setDoc(primaryRef, mergedProfile, { merge: true });
+
+      // Save merged profile to Cloudflare D1 profiles table if enabled
+      if ((this.provider === 'cloudflare' || this.provider === 'hybrid') && this.workerUrl) {
+        try {
+          const baseUrl = this.workerUrl.endsWith('/') ? this.workerUrl.slice(0, -1) : this.workerUrl;
+          await fetch(`${baseUrl}/profile`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(mergedProfile)
+          });
+        } catch (we) {
+          console.error('Failed to sync merged profile to Cloudflare D1:', we);
+        }
+      }
+
+      // 3. For each duplicate user, query all score documents, merge into primary user's scores, and delete duplicate's scores
+      for (const dupeId of duplicateIds) {
+        try {
+          const scoresQ = query(collection(db, 'scores'), where('deviceId', '==', dupeId));
+          const scoresSnap = await getDocs(scoresQ);
+
+          for (const scoreDoc of scoresSnap.docs) {
+            const dupeScoreData = scoreDoc.data();
+            const gameId = dupeScoreData.gameId;
+
+            if (gameId) {
+              const primaryScoreRef = doc(db, 'scores', `${gameId}_${primaryId}`);
+              const primaryScoreDoc = await getDoc(primaryScoreRef);
+
+              let mergedScore = dupeScoreData.score || 0;
+              let mergedTimestamp = dupeScoreData.timestamp || Date.now();
+
+              if (primaryScoreDoc.exists()) {
+                const primaryScoreData = primaryScoreDoc.data();
+                if ((primaryScoreData.score || 0) > mergedScore) {
+                  mergedScore = primaryScoreData.score;
+                  mergedTimestamp = primaryScoreData.timestamp || mergedTimestamp;
+                } else if ((primaryScoreData.score || 0) === mergedScore) {
+                  mergedTimestamp = Math.max(primaryScoreData.timestamp || 0, mergedTimestamp);
+                }
+              }
+
+              // Save the merged score under the primary user's deviceId
+              const finalScoreObj = {
+                deviceId: primaryId,
+                gameId,
+                score: mergedScore,
+                timestamp: mergedTimestamp,
+                username: mergedProfile.username,
+                avatar: mergedProfile.avatar
+              };
+              await setDoc(primaryScoreRef, finalScoreObj, { merge: true });
+
+              // Sync merged score to Cloudflare D1 if enabled/provider is hybrid or cloudflare
+              if ((this.provider === 'cloudflare' || this.provider === 'hybrid') && this.workerUrl) {
+                try {
+                  const baseUrl = this.workerUrl.endsWith('/') ? this.workerUrl.slice(0, -1) : this.workerUrl;
+                  await fetch(`${baseUrl}/scores`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(finalScoreObj)
+                  });
+                } catch (che) {
+                  console.error(`Failed to sync merged score to Cloudflare D1 for game ${gameId}:`, che);
+                }
+              }
+            }
+
+            // Delete duplicate's score document in Firestore
+            await deleteDoc(scoreDoc.ref);
+          }
+        } catch (se) {
+          console.error(`Failed to merge scores for duplicate user ${dupeId}:`, se);
+        }
+
+        // 4. Delete duplicate user's profile document in Firestore
+        await deleteDoc(doc(db, 'profiles', dupeId));
+
+        // Delete duplicate user's profile and scores in Cloudflare D1 (if enabled)
+        if ((this.provider === 'cloudflare' || this.provider === 'hybrid') && this.workerUrl) {
+          try {
+            const baseUrl = this.workerUrl.endsWith('/') ? this.workerUrl.slice(0, -1) : this.workerUrl;
+            await fetch(`${baseUrl}/admin/user/${dupeId}`, { method: 'DELETE' });
+          } catch (we) {
+            console.error(`Failed to delete duplicate user ${dupeId} from Cloudflare D1:`, we);
+          }
+        }
+      }
+
+      return true;
+    } catch (e) {
+      console.error('Failed to merge duplicate users:', e);
       return false;
     }
   }

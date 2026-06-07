@@ -1,6 +1,10 @@
 
 # Changelog
 
+## [3.1.7] - 2026-06-07
+### Added
+- **Dynamic Duplication Cleanup Tool**: Integrated a powerful profile merge engine inside the Player Database. Admins can multi-select rows representing duplicates, evaluate each profile's cumulative activity (comparing `joinedAt`, `lastPlayed` and other stats), designate the Primary profile, and seamlessly consolidate play lengths, list matrices, achievements, high scores, and live references across both Firestore and Cloudflare D1.
+
 ## [3.1.6] - 2026-06-07
 ### Changed
 - **Unified Date Format**: Re-engineered raw locale date and time render nodes across the Admin Console interfaces to strictly align with the clean, standardized `"dd/mmm/yyyy"` schema (e.g. `07/Jun/2026`).
