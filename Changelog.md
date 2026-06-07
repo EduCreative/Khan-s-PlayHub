@@ -1,6 +1,12 @@
 
 # Changelog
 
+## [3.1.1] - 2026-06-07
+### Added
+- **Export to CSV**: Formatted exporting tool inside the 'Recent Activity' widget of the Admin Panel allowing administrators to download the live feed securely.
+- **Formattings & Compliance**: Ensured standardized RFC-4180 CSV columns structure (Username, Game ID, Game Name, Score, Timestamp, Device ID) with proper quote escaping.
+- **Version Alignment**: Synced all local constants, caching layers, and config indicators to v3.1.1.
+
 ## [3.1.0] - 2026-06-07
 ### Added
 - **Recent Activity Live Feed**: Integrated a platform-wide 'Recent Activity' feed inside the Admin Panel 'Overview' tab displaying real-time scores submitted by users.

@@ -1,9 +1,8 @@
 {
-  "version": "3.0.6",
+  "version": "3.1.1",
   "changelog": [
-    "Intelligent Background Auto-Update System",
-    "Real-time update progress indicator in Header",
-    "Optimized navigation icon flow",
-    "Monetag ad verification integration"
+    "Added CSV exporting features in Recent Activity section",
+    "Secure formatting of platform activity with standard columns",
+    "Polished micro-sound feedback on export operations"
   ]
 }

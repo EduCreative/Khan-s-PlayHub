@@ -99,6 +99,48 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
     if (!quiet) setLoadingRecentScores(false);
   };
 
+  const handleExportCSV = () => {
+    try {
+      audioService.playClick();
+      if (!recentScores || recentScores.length === 0) return;
+
+      const headers = ['Username', 'Game ID', 'Game Name', 'Score', 'Timestamp', 'Device ID'];
+      const rows = recentScores.map(s => {
+        const game = GAMES.find(g => g.id === s.gameId);
+        const gameName = game ? game.name : s.gameId;
+        const dateTimeStr = new Date(s.timestamp).toISOString();
+        
+        const username = (s.username || 'Anonymous').replace(/"/g, '""');
+        const deviceId = (s.deviceId || '').replace(/"/g, '""');
+
+        return [
+          `"${username}"`,
+          `"${s.gameId}"`,
+          `"${gameName}"`,
+          s.score,
+          `"${dateTimeStr}"`,
+          `"${deviceId}"`
+        ];
+      });
+
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.join(','))
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `playhub_recent_scores_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      console.error('Failed to export CSV:', e);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -572,15 +614,27 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                         <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Live Platform Score Feed</p>
                       </div>
                       
-                      <button 
-                        onClick={() => { fetchRecentScores(false); audioService.playClick(); }}
-                        disabled={loadingRecentScores}
-                        className="px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 active:scale-95 transition-all text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 font-black text-[9px] uppercase tracking-widest flex items-center gap-2"
-                        title="Force Refresh Feed"
-                      >
-                        <i className={`fas fa-sync-alt ${loadingRecentScores ? 'animate-spin' : ''}`}></i>
-                        Sync
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={handleExportCSV}
+                          disabled={loadingRecentScores || recentScores.length === 0}
+                          className="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none active:scale-95 transition-all text-emerald-600 dark:text-emerald-400 font-black text-[9px] uppercase tracking-widest flex items-center gap-2"
+                          title="Export Currently Visible Scores to CSV"
+                        >
+                          <i className="fas fa-file-csv"></i>
+                          Export
+                        </button>
+                        
+                        <button 
+                          onClick={() => { fetchRecentScores(false); audioService.playClick(); }}
+                          disabled={loadingRecentScores}
+                          className="px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 active:scale-95 transition-all text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 font-black text-[9px] uppercase tracking-widest flex items-center gap-2"
+                          title="Force Refresh Feed"
+                        >
+                          <i className={`fas fa-sync-alt ${loadingRecentScores ? 'animate-spin' : ''}`}></i>
+                          Sync
+                        </button>
+                      </div>
                     </div>
 
                     <div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
