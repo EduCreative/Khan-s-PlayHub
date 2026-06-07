@@ -1,0 +1,8 @@
+## [3.1.6] - 2026-06-07
+### Changed
+- **Unified Date Format**: Re-engineered raw locale date and time render nodes across the Admin Console interfaces to strictly align with the clean, standardized `"dd/mmm/yyyy"` schema (e.g. `07/Jun/2026`).
+
+## [3.1.5] - 2026-06-07
+### Added
+- **Dynamic Database Sync Badges**: Integrates adaptive notification bubbles directly inside the Admin Console tab selection header displaying active score discrepancy counts.
+- **Critical & Warning Overview Alert Banners**: Programmed glowing, user-friendly CSS-pulsing notices prominently positioned on the dashboard overview homepage when database mismatch values are verified.

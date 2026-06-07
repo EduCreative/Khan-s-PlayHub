@@ -91,7 +91,7 @@ const App: React.FC = () => {
                      (user?.uid === 'v2swNDzVnegsJNo5eNEiLYv6ZYi2') ||
                      (userProfile.role === 'admin');
 
-  const CURRENT_VERSION = '3.1.3';
+  const CURRENT_VERSION = '3.1.6';
 
   // PWA Install Prompt
   useEffect(() => {

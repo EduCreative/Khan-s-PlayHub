@@ -1,7 +1,20 @@
 
 # Changelog
 
-## [3.1.3] - 2026-06-07
+## [3.1.6] - 2026-06-07
+### Changed
+- **Unified Date Format**: Re-engineered raw locale date and time render nodes across the Admin Console interfaces to strictly align with the clean, standardized `"dd/mmm/yyyy"` schema (e.g. `07/Jun/2026`).
+
+## [3.1.5] - 2026-06-07
+### Added
+- **Dynamic Database Sync Badges**: Integrates adaptive notification bubbles directly inside the Admin Console tab selection header displaying active score discrepancy counts.
+- **Critical & Warning Overview Alert Banners**: Programmed glowing, user-friendly notices prominently positioned on the dashboard overview homepage when database mismatch values are verified.
+
+## [3.1.4] - 2026-06-07
+### Added
+- **Autonomous Database Sync Service**: Introduced a high-availability score sync checker that operates periodically (45-second intervals) when the Admin Console is open. 
+- **Consensus & Self-Healing Protocols**: Programmed automated discrepancy detection and conflict resolution rules bridging Cloud Firestore and Cloudflare D1. Outdated or missing data nodes are seamlessly updated with the superior/higher record.
+- **Visual Sync Control Dashboard & Ledger Terminal**: Designed a responsive telemetry console inside the System tab, featuring a master Auto-Sync toggle, diagnostic card metrics, active self-healed feed, and a real-time console logger terminal.
 ### Added
 - **Interactive Player Sorting & Searching**: Added fully clickable table columns in the Admin Player Database (Users tab) to dynamically sort players by Username, Games count, Total Score, Play Time, or Register Date, combined with real-time text-filtering.
 - **Dynamic Games Catalog Search & Sorting**: Added customized game searches and multi-metric sorting (by Plays, Avg Score, Record Scores, or Game Name) inside the Admin Games console, powered by real-time aggregate statistics.

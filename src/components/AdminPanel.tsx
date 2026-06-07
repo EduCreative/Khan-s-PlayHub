@@ -15,6 +15,17 @@ import ConfirmModal from './ConfirmModal';
 
 const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6'];
 
+const formatDate = (dateInput: Date | number | string | undefined | null): string => {
+  if (!dateInput) return '---';
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return '---';
+  const day = String(d.getDate()).padStart(2, '0');
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const month = months[d.getMonth()];
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
 interface AdminPanelProps {
   onClose: () => void;
   dataProvider: 'firebase' | 'cloudflare' | 'hybrid';
@@ -44,6 +55,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
     success: null,
     error: null
   });
+
+  // Background Auto-Sync Service states
+  const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
+  const [syncLogs, setSyncLogs] = useState<string[]>([]);
+  const [syncStats, setSyncStats] = useState<{ checked: number, resolved: number, lastSyncTime: string | null, active: boolean }>({
+    checked: 0,
+    resolved: 0,
+    lastSyncTime: null,
+    active: false
+  });
+  const [discrepancyList, setDiscrepancyList] = useState<any[]>([]);
 
   // User Filtering and Sorting states
   const [userSearchText, setUserSearchText] = useState('');
@@ -337,6 +359,79 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
     return () => clearInterval(interval);
   }, [activeTab, loading]);
 
+  // Background Auto-Sync Effect
+  useEffect(() => {
+    if (!autoSyncEnabled) return;
+
+    const runBackgroundSync = async () => {
+      setSyncStats(prev => ({ ...prev, active: true }));
+      try {
+        const result = await cloud.checkAndResolveDiscrepancies(workerUrl);
+        setSyncStats({
+          checked: result.checked,
+          resolved: result.resolved,
+          lastSyncTime: new Date().toLocaleTimeString(),
+          active: false
+        });
+        setSyncLogs(prev => {
+          const combined = [...result.logs, ...prev];
+          // Keep only first 100 log items for performance
+          return combined.slice(0, 100);
+        });
+        setDiscrepancyList(result.discrepancies);
+        // If discrepancies were found and resolved, refresh user and score metrics
+        if (result.resolved > 0) {
+          const u = await cloud.getAdminUsers();
+          setUsers(u);
+        }
+      } catch (err: any) {
+        console.error('Background automatic sync utility crashed:', err);
+        setSyncStats(prev => ({ ...prev, active: false }));
+        setSyncLogs(prev => {
+          const errorLog = `[${new Date().toLocaleTimeString()}] [ERROR] Auto-sync failure: ${err.message || err}`;
+          return [errorLog, ...prev].slice(0, 100);
+        });
+      }
+    };
+
+    // Run custom synchronization cycle immediately on activation
+    runBackgroundSync();
+
+    const interval = setInterval(() => {
+      runBackgroundSync();
+    }, 45000); // Poll and auto-heal every 45s
+
+    return () => clearInterval(interval);
+  }, [autoSyncEnabled, workerUrl]);
+
+  const handleManualSyncAudit = async () => {
+    audioService.playClick();
+    setSyncStats(prev => ({ ...prev, active: true }));
+    setSyncLogs(prev => [`[${new Date().toLocaleTimeString()}] [SYSTEM] Manual override active. Running real-time consensus protocol...`, ...prev]);
+    try {
+      const result = await cloud.checkAndResolveDiscrepancies(workerUrl);
+      setSyncStats({
+        checked: result.checked,
+        resolved: result.resolved,
+        lastSyncTime: new Date().toLocaleTimeString(),
+        active: false
+      });
+      setSyncLogs(prev => {
+        const combined = [...result.logs, ...prev];
+        return combined.slice(0, 100);
+      });
+      setDiscrepancyList(result.discrepancies);
+      // Refresh user views on successful healing
+      if (result.resolved > 0) {
+        const u = await cloud.getAdminUsers();
+        setUsers(u);
+      }
+    } catch (e: any) {
+      setSyncStats(prev => ({ ...prev, active: false }));
+      setSyncLogs(prev => [`[${new Date().toLocaleTimeString()}] [ERROR] Manual consensus failure: ${e.message}`, ...prev]);
+    }
+  };
+
   // Mock data for charts if real data is unavailable
   const chartData = useMemo(() => {
     // User Growth (Last 7 days)
@@ -488,9 +583,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                     setActiveTab(tab);
                     audioService.playNav();
                   }}
-                  className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                  className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all relative flex items-center gap-1.5 ${activeTab === tab ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                 >
-                  {tab}
+                  <span>{tab}</span>
+                  {tab === 'system' && discrepancyList.length > 0 && (
+                    <span 
+                      className={`inline-flex items-center justify-center rounded-full h-4 min-w-[16px] px-1 text-[8px] font-black pointer-events-none leading-none ${
+                        discrepancyList.length >= 3
+                          ? 'bg-rose-500 text-white animate-pulse shadow-md shadow-rose-500/50'
+                          : 'bg-amber-500 text-slate-900 shadow-sm'
+                      }`}
+                    >
+                      {discrepancyList.length}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -535,6 +641,57 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
             
             {activeTab === 'overview' && (
               <>
+                {/* Score Discrepancies Alert Badge / Notification Block */}
+                {discrepancyList.length >= 3 && (
+                  <div className="p-6 rounded-3xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 max-w-7xl mx-auto w-full animate-pulse">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-rose-500 flex items-center justify-center text-white shadow-lg shadow-rose-500/30">
+                        <i className="fas fa-triangle-exclamation text-lg"></i>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black uppercase tracking-wider">Critical Sync Discrepancies Detected!</h4>
+                        <p className="text-xs text-slate-800 dark:text-slate-200 font-bold mt-1">
+                          The Consensus Sync Engine discovered and auto-resolved <span className="font-extrabold text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded">{discrepancyList.length} key-value score differences</span> between Firestore and Cloudflare D1 databases.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setActiveTab('system');
+                        audioService.playClick();
+                      }}
+                      className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-[10px] uppercase font-black tracking-widest rounded-xl shadow-md shadow-rose-600/30 transition-all self-end md:self-auto shrink-0 leading-none"
+                    >
+                      Audit Sync Ledger
+                    </button>
+                  </div>
+                )}
+                
+                {discrepancyList.length > 0 && discrepancyList.length < 3 && (
+                  <div className="p-6 rounded-3xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 max-w-7xl mx-auto w-full">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-amber-500 flex items-center justify-center text-slate-900 shadow-lg shadow-amber-500/30 font-black">
+                        <i className="fas fa-triangle-exclamation text-lg"></i>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black uppercase tracking-wider">Minor Score Alignment Activity</h4>
+                        <p className="text-xs text-slate-850 dark:text-slate-150 font-medium mt-1">
+                          Consensus engine successfully resolved {discrepancyList.length} scores matching database layers.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setActiveTab('system');
+                        audioService.playClick();
+                      }}
+                      className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 text-[10px] uppercase font-black tracking-widest rounded-xl transition-all self-end md:self-auto shrink-0 leading-none"
+                    >
+                      Audit Ledger
+                    </button>
+                  </div>
+                )}
+
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-10">
                   <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                     <div className="glass-card p-6 rounded-3xl border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5 flex items-center justify-between">
@@ -810,7 +967,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                             if (sec < 60) return 'Just now';
                             if (min < 60) return `${min}m ago`;
                             if (hr < 24) return `${hr}h ago`;
-                            return new Date(s.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                            return formatDate(s.timestamp);
                           })();
 
                           const matchedUser = users.find(u => u.deviceId === s.deviceId);
@@ -958,7 +1115,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                               {Object.values(user.gameStats || {}).reduce((accValue: number, stat: any) => accValue + (stat.highScore || 0), 0).toLocaleString()}
                             </td>
                             <td className="p-8 text-indigo-600 dark:text-indigo-400 font-black italic">{formatDuration(user.playTime || 0)}</td>
-                            <td className="p-8 text-slate-500 text-xs">{new Date(user.joinedAt).toLocaleDateString()}</td>
+                            <td className="p-8 text-slate-500 text-xs">{formatDate(user.joinedAt)}</td>
                             <td className="p-8 text-right">
                               <button 
                                 onClick={(e) => {
@@ -1017,7 +1174,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                       <div className="space-y-3">
                         <div className="flex justify-between items-center text-[10px]">
                           <span className="font-bold text-slate-500">JOINED</span>
-                          <span className="font-bold text-slate-900 dark:text-white">{new Date(selectedUser.joinedAt).toLocaleDateString()}</span>
+                          <span className="font-bold text-slate-900 dark:text-white">{formatDate(selectedUser.joinedAt)}</span>
                         </div>
                         <div className="flex justify-between items-center text-[10px]">
                           <span className="font-bold text-slate-500">DEVICE</span>
@@ -1097,7 +1254,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                                   </div>
                                   <div>
                                     <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-tighter">{game?.name || s.gameId}</p>
-                                    <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">{new Date(s.timestamp).toLocaleString()}</p>
+                                    <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">{formatDate(s.timestamp)} {new Date(s.timestamp).toLocaleTimeString()}</p>
                                   </div>
                                 </div>
                                 <div className="text-right">
@@ -1316,6 +1473,188 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                     <div className="flex items-center gap-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
                       <i className="fas fa-circle-info"></i>
                       <p className="text-[10px] font-black uppercase tracking-widest">Changes are applied instantly across all active sessions.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Automated Cloud Database Sync Utility */}
+                <div className="glass-card p-8 rounded-[2.5rem] border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/30">
+                        <i className="fas fa-arrows-rotate"></i>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase italic">Consensus Sync Engine</h3>
+                        <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Firestore & Cloudflare D1 Auto-Healer</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div className="relative inline-flex items-center cursor-pointer select-none">
+                        <div
+                          onClick={() => {
+                            const nextVal = !autoSyncEnabled;
+                            setAutoSyncEnabled(nextVal);
+                            audioService.playToggle(nextVal);
+                          }}
+                          className={`w-11 h-6 bg-slate-200 dark:bg-white/10 rounded-full transition-colors relative flex items-center p-[2px] cursor-pointer ${autoSyncEnabled ? 'bg-emerald-600 dark:bg-emerald-600' : ''}`}
+                        >
+                          <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-200 ${autoSyncEnabled ? 'translate-x-[20px]' : 'translate-x-[0px]'}`} />
+                        </div>
+                        <span className="ml-3 text-[10px] font-black uppercase text-slate-500 tracking-wider">Auto-Sync</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Status Indicator */}
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                      <div className="flex items-center gap-3">
+                        <span className="relative flex h-3 w-3">
+                          {syncStats.active ? (
+                            <>
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
+                            </>
+                          ) : autoSyncEnabled ? (
+                            <>
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                            </>
+                          ) : (
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                          )}
+                        </span>
+                        <div>
+                          <p className="text-xs font-black text-slate-800 dark:text-white uppercase leading-none">
+                            {syncStats.active 
+                              ? 'Resolving Discrepancies...' 
+                              : autoSyncEnabled 
+                              ? 'Active Auto-Healer (45s cycle)' 
+                              : 'Standby / Paused'}
+                          </p>
+                          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-1.5">
+                            Sync Status Indicator
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={handleManualSyncAudit}
+                        disabled={syncStats.active}
+                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                          syncStats.active
+                            ? 'bg-slate-200 dark:bg-white/5 text-slate-400 cursor-not-allowed'
+                            : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 active:scale-95'
+                        }`}
+                      >
+                        {syncStats.active ? (
+                          <span className="flex items-center gap-1.5">
+                            <i className="fas fa-circle-notch animate-spin"></i> Analyzing
+                          </span>
+                        ) : (
+                          'Sync Now'
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Operational Metrics */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div className="p-4 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Scores Checked</p>
+                      <p className="text-lg font-black text-slate-900 dark:text-white italic">{syncStats.checked}</p>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Healed Database</p>
+                      <p className="text-lg font-black text-emerald-600 dark:text-emerald-400 italic">
+                        {syncStats.resolved}
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Discrepancies</p>
+                      <p className={`text-lg font-black italic leading-none ${discrepancyList.length > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                        {discrepancyList.length}
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 col-span-2 md:col-span-1">
+                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Last Consensus</p>
+                      <p className="text-[10px] font-black text-slate-900 dark:text-white italic truncate mt-0.5">
+                        {syncStats.lastSyncTime || 'Pending'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Discrepancy Active Feed */}
+                  {discrepancyList.length > 0 && (
+                    <div className="mb-6 space-y-3">
+                      <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest">
+                        <i className="fas fa-triangle-exclamation mr-1"></i> Active Discrepancies Resolved In Last Run
+                      </p>
+                      <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
+                        {discrepancyList.map((d, index) => (
+                          <div 
+                            key={index}
+                            className="flex items-center justify-between p-3 rounded-xl bg-rose-500/5 dark:bg-rose-500/10 border border-rose-500/20 text-[11px]"
+                          >
+                            <div className="flex items-center gap-2">
+                              <i className={`fas ${d.status === 'resolved' ? 'fa-circle-check text-emerald-500 animate-pulse' : 'fa-circle-xmark text-rose-500'}`} />
+                              <div>
+                                <span className="font-extrabold text-slate-900 dark:text-white">{d.username}</span>
+                                <span className="text-slate-500 uppercase text-[9px] font-black ml-2 bg-slate-200 dark:bg-white/10 px-1.5 py-0.5 rounded">
+                                  {d.gameId}
+                                </span>
+                              </div>
+                            </div>
+                            <span className="font-mono text-slate-600 dark:text-slate-400 text-[10px] bg-white/50 dark:bg-black/20 px-2 py-0.5 rounded border border-slate-200/50 dark:border-white/5">
+                              {d.resolution}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Live Sync Ledger */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3 border-b border-slate-200 dark:border-white/5 pb-2">
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Sync Engine Ledger</p>
+                      <button 
+                        onClick={() => {
+                          audioService.playClick();
+                          setSyncLogs([]);
+                        }}
+                        className="text-[8px] font-black text-slate-500 hover:text-rose-500 uppercase tracking-widest transition-colors"
+                      >
+                        Clear Terminal
+                      </button>
+                    </div>
+                    
+                    <div className="relative bg-black rounded-2xl p-4 border border-slate-200 dark:border-white/5 font-mono text-[9px] leading-relaxed text-slate-400 h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
+                      {syncLogs.length === 0 ? (
+                        <div className="h-full flex items-center justify-center text-slate-600 italic">
+                          [SYSTEM] Consensus ledger is empty. Awaiting verification run...
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          {syncLogs.map((log, i) => {
+                            let colorClass = 'text-slate-400';
+                            if (log.includes('[ERROR]')) colorClass = 'text-rose-400 font-extrabold';
+                            else if (log.includes('[SUCCESS]')) colorClass = 'text-emerald-400';
+                            else if (log.includes('[DISCREPANCY]')) colorClass = 'text-amber-300 font-bold';
+                            else if (log.includes('[RESOLVE]')) colorClass = 'text-cyan-400';
+                            else if (log.includes('[FIREBASE]')) colorClass = 'text-orange-400';
+                            else if (log.includes('[CLOUDFLARE]')) colorClass = 'text-sky-400';
+                            
+                            return (
+                              <div key={i} className={`whitespace-pre-wrap ${colorClass}`}>
+                                {log}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

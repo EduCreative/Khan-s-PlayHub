@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.1.3 "Audit Pulse"  
+**Version:** 3.1.6 "Standardized Pulse"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,7 +9,18 @@ Khan's PlayHub is a high-performance, mobile-first Progressive Web App (PWA) tha
 
 ---
 
-## 🚀 Recent Enhancements (v3.1.3)
+## 🚀 Recent Enhancements (v3.1.6)
+- **Standardized Date Layouts**: Integrated elegant `"dd/mmm/yyyy"` calendar stamp notations across multiple layers of the Admin telemetry table records, supporting structured chronological audits.
+
+## 🚀 Previous Enhancements (v3.1.5)
+- **Dynamic Database Sync Badges**: Integrates adaptive notification bubbles directly inside the Admin Console tab selection header displaying active score discrepancy counts.
+- **Critical & Warning Overview Alert Banners**: Programmed glowing, user-friendly CSS-pulsing notices prominently positioned on the dashboard overview homepage when database mismatch values are verified.
+
+## 🚀 Previous Enhancements (v3.1.4)
+- **Autonomous Consensus Sync Engine**: Programmed a robust, self-healing database sync checker operating on a 45-second background loop inside the Admin Panel. It compares real-time records from Firestore and Cloudflare D1, resolving any scores, missing values, or duplicate discrepancies in favor of the higher/superior high score.
+- **Visual Sync Control Dashboard**: Added an interactive telemetry suite in the System configuration tab, featuring a master Auto-Sync toggle, diagnostic operational metrics, self-healed feed, and a rich scrolling live ledger console terminal.
+
+## 🚀 Previous Enhancements (v3.1.3)
 - **Advanced Player Catalog Sorting**: Clickable table columns in Admin Users view allow instant ascending/descending sorting for Username, Games, Total Score, Play Time, and Join Date.
 - **Dynamic Games Search & Multi-Ranking**: Enhanced the Admin Games dashboard with dynamic search filters and sorting (Most Plays, Avg Scores, Record score, and Name) computed live from actual players' stats.
 

@@ -533,6 +533,229 @@ class CloudService {
       throw e;
     }
   }
+
+  async checkAndResolveDiscrepancies(targetWorkerUrl?: string): Promise<{
+    checked: number;
+    resolved: number;
+    discrepancies: any[];
+    logs: string[];
+  }> {
+    const activeUrl = targetWorkerUrl || this.workerUrl;
+    const baseUrl = activeUrl.endsWith('/') ? activeUrl.slice(0, -1) : activeUrl;
+    const logs: string[] = [];
+    const discrepancies: any[] = [];
+    let checked = 0;
+    let resolved = 0;
+
+    const addLog = (tag: string, text: string) => {
+      const timeStr = new Date().toLocaleTimeString();
+      logs.push(`[${timeStr}] [${tag}] ${text}`);
+    };
+
+    addLog('SYSTEM', 'Initiating neural database synchronization protocol...');
+
+    // 1. Fetch Firestore scores
+    let firestoreScores: any[] = [];
+    try {
+      addLog('FIREBASE', 'Fetching all score entries from Cloud Firestore database...');
+      const snapshot = await getDocs(collection(db, 'scores'));
+      firestoreScores = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      addLog('FIREBASE', `Read complete: ${firestoreScores.length} records retrieved from Firestore.`);
+    } catch (e: any) {
+      addLog('ERROR', `Firestore fetch failed: ${e.message}`);
+      return { checked: 0, resolved: 0, discrepancies: [], logs };
+    }
+
+    // 2. Fetch D1 scores
+    let d1Scores: any[] = [];
+    if (!baseUrl) {
+      addLog('WARNING', 'Cloudflare Worker URL is completely empty. Skipping cross-database matching.');
+      return { checked: firestoreScores.length, resolved: 0, discrepancies: [], logs };
+    }
+
+    try {
+      addLog('CLOUDFLARE', 'Fetching all score entries from Cloudflare D1 via Worker admin gateway...');
+      const res = await fetch(`${baseUrl}/admin/all-scores`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!res.ok) {
+        throw new Error(`Worker returned status ${res.status}`);
+      }
+      d1Scores = await res.json();
+      if (!Array.isArray(d1Scores)) {
+        throw new Error('D1 response format is invalid (expected array of scores)');
+      }
+      addLog('CLOUDFLARE', `Read complete: ${d1Scores.length} records received from Cloudflare D1.`);
+    } catch (e: any) {
+      addLog('ERROR', `Cloudflare D1 fetch failed: ${e.message}`);
+      addLog('SYSTEM', 'Network or credential block encountered. Aborting synchronization cycle.');
+      return { checked: firestoreScores.length, resolved: 0, discrepancies: [], logs };
+    }
+
+    // Index databases by `${gameId}_${deviceId}` to identify matches and discrepancies
+    const fsMap = new Map<string, any>();
+    firestoreScores.forEach(s => {
+      if (s.gameId && s.deviceId) {
+        fsMap.set(`${s.gameId}_${s.deviceId}`, s);
+      }
+    });
+
+    const d1Map = new Map<string, any>();
+    d1Scores.forEach(s => {
+      if (s.gameId && s.deviceId) {
+        d1Map.set(`${s.gameId}_${s.deviceId}`, s);
+      }
+    });
+
+    const allKeys = new Set<string>([...fsMap.keys(), ...d1Map.keys()]);
+    checked = allKeys.size;
+    addLog('SYSTEM', `Evaluating difference tree spanning ${checked} master scores...`);
+
+    const syncActions: Array<{
+      key: string;
+      gameId: string;
+      deviceId: string;
+      type: 'fs_to_d1' | 'd1_to_fs';
+      score: number;
+      username: string;
+      avatar: string;
+      timestamp: number;
+      detail: string;
+    }> = [];
+
+    for (const key of allKeys) {
+      const fsVal = fsMap.get(key);
+      const d1Val = d1Map.get(key);
+      const [gameId, deviceId] = key.split('_');
+
+      if (fsVal && !d1Val) {
+        syncActions.push({
+          key,
+          gameId,
+          deviceId,
+          type: 'fs_to_d1',
+          score: fsVal.score || 0,
+          username: fsVal.username || 'Anonymous',
+          avatar: fsVal.avatar || 'fa-user-ninja',
+          timestamp: fsVal.timestamp || Date.now(),
+          detail: `Firestore holds high score (${fsVal.score}), but Cloudflare D1 has no entry.`
+        });
+      } else if (!fsVal && d1Val) {
+        syncActions.push({
+          key,
+          gameId,
+          deviceId,
+          type: 'd1_to_fs',
+          score: d1Val.score || 0,
+          username: d1Val.username || 'Anonymous',
+          avatar: d1Val.avatar || 'fa-user-ninja',
+          timestamp: d1Val.timestamp || Date.now(),
+          detail: `Cloudflare D1 holds high score (${d1Val.score}), but Firestore has no entry.`
+        });
+      } else if (fsVal && d1Val) {
+        const fsScore = fsVal.score || 0;
+        const d1Score = d1Val.score || 0;
+
+        if (fsScore > d1Score) {
+          syncActions.push({
+            key,
+            gameId,
+            deviceId,
+            type: 'fs_to_d1',
+            score: fsScore,
+            username: fsVal.username || d1Val.username || 'Anonymous',
+            avatar: fsVal.avatar || d1Val.avatar || 'fa-user-ninja',
+            timestamp: fsVal.timestamp || Date.now(),
+            detail: `High Score discrepancy: Firestore is higher (${fsScore}) than Cloudflare D1 (${d1Score}).`
+          });
+        } else if (d1Score > fsScore) {
+          syncActions.push({
+            key,
+            gameId,
+            deviceId,
+            type: 'd1_to_fs',
+            score: d1Score,
+            username: d1Val.username || fsVal.username || 'Anonymous',
+            avatar: d1Val.avatar || fsVal.avatar || 'fa-user-ninja',
+            timestamp: d1Val.timestamp || Date.now(),
+            detail: `High Score discrepancy: Cloudflare D1 is higher (${d1Score}) than Firestore (${fsScore}).`
+          });
+        }
+      }
+    }
+
+    if (syncActions.length === 0) {
+      addLog('SYSTEM', 'Automatic alignment confirmation complete. Both databases are 100% synchronized.');
+      return { checked, resolved: 0, discrepancies: [], logs };
+    }
+
+    addLog('SYSTEM', `Discovered ${syncActions.length} record discrepancies. Executing healing protocols...`);
+
+    for (const action of syncActions) {
+      const { gameId, deviceId, score, username, avatar, timestamp, type, detail } = action;
+      addLog('DISCREPANCY', `Record {Game: "${gameId}", User ID: "${deviceId}"}. ${detail}`);
+
+      if (type === 'fs_to_d1') {
+        try {
+          addLog('RESOLVE', `Pushing Firestore record value (${score}) into Cloudflare D1...`);
+          const pushUrl = `${baseUrl}/scores`;
+          const res = await fetch(pushUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceId, gameId, score, timestamp })
+          });
+          if (res.ok) {
+            addLog('SUCCESS', `Cloudflare D1 updated successfully with score ${score}.`);
+            resolved++;
+            discrepancies.push({
+              deviceId, gameId, username, avatar,
+              firestoreScore: score, cloudflareScore: null,
+              status: 'resolved', resolution: 'Propagated score to Cloudflare D1'
+            });
+          } else {
+            throw new Error(`Worker returned response ${res.status}`);
+          }
+        } catch (err: any) {
+          addLog('ERROR', `Cloudflare update failing for {${gameId}_${deviceId}}: ${err.message}`);
+          discrepancies.push({
+            deviceId, gameId, username, avatar,
+            firestoreScore: score, cloudflareScore: null,
+            status: 'failed', resolution: `D1 post failure: ${err.message}`
+          });
+        }
+      } else if (type === 'd1_to_fs') {
+        try {
+          addLog('RESOLVE', `Writing D1 record value (${score}) into Firestore...`);
+          const docId = `${gameId}_${deviceId}`;
+          await setDoc(doc(db, 'scores', docId), {
+            deviceId,
+            gameId,
+            score,
+            timestamp,
+            username,
+            avatar
+          }, { merge: true });
+          addLog('SUCCESS', `Firestore scores collections synchronized with score ${score}.`);
+          resolved++;
+          discrepancies.push({
+            deviceId, gameId, username, avatar,
+            firestoreScore: null, cloudflareScore: score,
+            status: 'resolved', resolution: 'Propagated score to Firestore'
+          });
+        } catch (err: any) {
+          addLog('ERROR', `Firestore write failure for {${gameId}_${deviceId}}: ${err.message}`);
+          discrepancies.push({
+            deviceId, gameId, username, avatar,
+            firestoreScore: null, cloudflareScore: score,
+            status: 'failed', resolution: `Firestore write failure: ${err.message}`
+          });
+        }
+      }
+    }
+
+    addLog('SYSTEM', `Consensus run finished: ${resolved}/${syncActions.length} discrepancies successfully resolved.`);
+    return { checked, resolved, discrepancies, logs };
+  }
 }
 
 
