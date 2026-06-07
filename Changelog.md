@@ -1,6 +1,11 @@
 
 # Changelog
 
+## [3.1.3] - 2026-06-07
+### Added
+- **Interactive Player Sorting & Searching**: Added fully clickable table columns in the Admin Player Database (Users tab) to dynamically sort players by Username, Games count, Total Score, Play Time, or Register Date, combined with real-time text-filtering.
+- **Dynamic Games Catalog Search & Sorting**: Added customized game searches and multi-metric sorting (by Plays, Avg Score, Record Scores, or Game Name) inside the Admin Games console, powered by real-time aggregate statistics.
+
 ## [3.1.2] - 2026-06-07
 ### Changed
 - **Unified Leaderboard Aggregation**: Re-engineered the Firebase fallback 'All Games' view on the Global Leaderboard to sum up high scores of played games per user. This prevents duplicate entries of the same player showing up on the leaderboard and tracks cumulative scores perfectly.

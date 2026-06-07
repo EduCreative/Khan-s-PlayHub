@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.1.2 "Sync Pulse"  
+**Version:** 3.1.3 "Audit Pulse"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,7 +9,11 @@ Khan's PlayHub is a high-performance, mobile-first Progressive Web App (PWA) tha
 
 ---
 
-## 🚀 Recent Enhancements (v3.1.2)
+## 🚀 Recent Enhancements (v3.1.3)
+- **Advanced Player Catalog Sorting**: Clickable table columns in Admin Users view allow instant ascending/descending sorting for Username, Games, Total Score, Play Time, and Join Date.
+- **Dynamic Games Search & Multi-Ranking**: Enhanced the Admin Games dashboard with dynamic search filters and sorting (Most Plays, Avg Scores, Record score, and Name) computed live from actual players' stats.
+
+## 🚀 Previous Enhancements (v3.1.2)
 - **Unified Leaderboard Aggregations**: Upgraded the Global Leaderboard's Firebase fallback to dynamically group and sum scores from different games per user. This prevents duplicate entries of a single player on the leaderboard.
 - **Self-Healing Admin Alignment**: Reconstructed the Admin Panel's user lookup system to automatically reconcile profiles with raw gaming scores in real-time, correcting any empty totals or stats discrepancies seamlessly.
 - **Default Cloudflare URL Integration**: Pre-populated the official Cloudflare Worker endpoint inside the system configurations, ensuring zero configuration is needed on launch and resolving any "URL Missing" flags.

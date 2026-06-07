@@ -1,8 +1,8 @@
 {
-  "version": "3.1.2",
+  "version": "3.1.3",
   "changelog": [
-    "Fixed multiple entries per player in Global Leaderboard 'All Games' view with dynamic aggregation",
-    "Self-healing profile-to-raw-scores automatic synchronization in Admin Users interface",
-    "Pre-populated default Cloudflare Worker URL to resolve 'URL Missing' issue automatically"
+    "Added high-performance player search and full column-sorting inside the Admin Player Database",
+    "Added powerful games search, custom metric aggregation, and interactive sorting inside the Admin Games console",
+    "Synchronized audit trail, software configuration metrics, and package versioning to v3.1.3"
   ]
 }
