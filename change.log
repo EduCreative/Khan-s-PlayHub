@@ -1,3 +1,8 @@
+## [3.1.9] - 2026-06-07
+### Changed
+- **Synchronized User Deletion**: Re-engineered user removal inside the Admin Console to systematically remove account records and historical high scores synchronously across both central Firestore collections and multi-regional Cloudflare D1 nodes.
+- **Deep Reconciliation Verification**: Audited the dynamic player-merging and profile-consolidation flows, verifying full dual-database alignment and dynamic scoring consolidation metrics.
+
 ## [3.1.8] - 2026-06-07
 ### Added
 - **Visual Analytics Dashboard**: Created an immersive and fully responsive player-ranking analytics sub-system in the Hub using Recharts. Renders high-fidelity animated Bar Charts comparing top 10 player records, a digital 3D ranking podium indicating championship tiers, and comparative layout highlights tracking global records across all 16 micro-games.

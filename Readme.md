@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.1.8 "Visual Pulse"  
+**Version:** 3.1.9 "De-duplicated Sync"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,7 +9,11 @@ Khan's PlayHub is a high-performance, mobile-first Progressive Web App (PWA) tha
 
 ---
 
-## 🚀 Recent Enhancements (v3.1.8)
+## 🚀 Recent Enhancements (v3.1.9)
+- **Synchronized User Deletion**: Re-engineered user removal inside the Admin Console to physically purge selected player rows and corresponding local/cloud scores synchronously from both central Firestore collection storage and Cloudflare D1 remote database nodes.
+- **Audited Profile Consolidation**: Verified and robustified the cumulative duplicate merge algorithms to ensure frictionless cross-network replication.
+
+## 🚀 Previous Enhancements (v3.1.8)
 - **Visual Analytics Dashboard**: Fully integrated a rich visual telemetry sub-system featuring Recharts-powered ranking charts, a 3D championship podium representing top-tier player hierarchies, and automatic horizontal comparative grids showing top records across all 16 micro-games.
 
 ## 🚀 Previous Enhancements (v3.1.7)

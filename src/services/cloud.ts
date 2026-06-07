@@ -451,8 +451,29 @@ class CloudService {
   async deleteUser(uid: string): Promise<boolean> {
     const path = `profiles/${uid}`;
     try {
-      // In a real app, you'd also delete their scores
-      await setDoc(doc(db, 'profiles', uid), { deleted: true }, { merge: true });
+      // 1. Delete associated scores in Firestore so they don't get reconciled or synthesized later
+      const scoresQ = query(collection(db, 'scores'), where('deviceId', '==', uid));
+      const scoresSnap = await getDocs(scoresQ);
+      for (const scoreDoc of scoresSnap.docs) {
+        await deleteDoc(scoreDoc.ref);
+      }
+
+      // 2. Delete the profile document globally in Firestore
+      await deleteDoc(doc(db, 'profiles', uid));
+
+      // 3. Delete from Cloudflare D1 database if enabled
+      if ((this.provider === 'cloudflare' || this.provider === 'hybrid') && this.workerUrl) {
+        try {
+          const baseUrl = this.workerUrl.endsWith('/') ? this.workerUrl.slice(0, -1) : this.workerUrl;
+          const res = await fetch(`${baseUrl}/admin/user/${uid}`, { method: 'DELETE' });
+          if (!res.ok) {
+            console.warn('Cloudflare user wipe returned non-OK status code:', res.status);
+          }
+        } catch (e) {
+          console.error('Cloudflare Admin User Wipe Failed:', e);
+        }
+      }
+
       return true;
     } catch (e) {
       handleFirestoreError(e, OperationType.WRITE, path);
