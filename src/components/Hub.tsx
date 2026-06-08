@@ -323,7 +323,13 @@ const Hub: React.FC<HubProps> = ({
       )}
 
       {filter === 'Leaderboard' ? (
-        <Leaderboard games={games} onBack={() => setFilter('All')} onUpdateGlobalRecord={onUpdateGlobalRecord} />
+        <Leaderboard 
+          games={games} 
+          onBack={() => setFilter('All')} 
+          onUpdateGlobalRecord={onUpdateGlobalRecord} 
+          currentUser={user}
+          userProfile={userProfile}
+        />
       ) : filter === 'Visual Leaderboard' ? (
         <VisualLeaderboard games={games} globalRecords={globalRecords} isDarkMode={isDarkMode} onBack={() => setFilter('All')} />
       ) : (

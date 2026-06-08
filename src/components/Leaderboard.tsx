@@ -7,6 +7,8 @@ import { audioService } from '../services/audioService';
 interface LeaderboardProps {
   games: Game[];
   onUpdateGlobalRecord?: (gameId: string, score: number) => void;
+  currentUser?: { uid: string } | null;
+  userProfile?: { username: string; avatar: string };
 }
 
 const SCORING_GUIDE = [
@@ -28,7 +30,13 @@ const SCORING_GUIDE = [
   { game: "Sky Strike", action: "Enemy Destroyed", scoring: "10 / 30", note: "Auto-fire on touch" }
 ];
 
-const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({ games, onBack, onUpdateGlobalRecord }) => {
+const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({ 
+  games, 
+  onBack, 
+  onUpdateGlobalRecord,
+  currentUser,
+  userProfile
+}) => {
   const [selectedGameId, setSelectedGameId] = useState<string>('all');
   const [scores, setScores] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -178,33 +186,57 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({ gam
                   </td>
                 </tr>
               ) : (
-                scores.map((s, idx) => (
-                  <tr key={idx} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black italic ${
-                        idx === 0 ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30' :
-                        idx === 1 ? 'bg-slate-300 text-slate-700' :
-                        idx === 2 ? 'bg-orange-400 text-white' :
-                        'text-slate-400'
-                      }`}>
-                        {idx + 1}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform">
-                          <i className={`fas ${s.avatar || 'fa-user-ninja'} text-xs`}></i>
+                scores.map((s, idx) => {
+                  const isCurrentUser = (currentUser && s.deviceId && s.deviceId === currentUser.uid) ||
+                                        (userProfile && s.username === userProfile.username && s.avatar === userProfile.avatar);
+
+                  return (
+                    <tr 
+                      key={idx} 
+                      className={`border-b transition-colors group relative ${
+                        isCurrentUser 
+                          ? 'bg-indigo-500/10 dark:bg-indigo-500/20 border-indigo-500/20 dark:border-indigo-500/30 font-semibold' 
+                          : 'border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5'
+                      }`}
+                    >
+                      <td className="px-6 py-4">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black italic ${
+                          idx === 0 ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30' :
+                          idx === 1 ? 'bg-slate-300 text-slate-700' :
+                          idx === 2 ? 'bg-orange-400 text-white' :
+                          isCurrentUser ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/20' :
+                          'text-slate-400'
+                        }`}>
+                          {idx + 1}
                         </div>
-                        <span className="font-black uppercase italic text-slate-700 dark:text-slate-200">{s.username || 'Anonymous'}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <span className="text-xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums">
-                        {(s.score || 0).toLocaleString()}
-                      </span>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform ${
+                            isCurrentUser ? 'bg-indigo-500/25 ring-2 ring-indigo-500/50' : 'bg-indigo-500/10'
+                          }`}>
+                            <i className={`fas ${s.avatar || 'fa-user-ninja'} text-xs`}></i>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`font-black uppercase italic ${isCurrentUser ? 'text-indigo-600 dark:text-indigo-300' : 'text-slate-700 dark:text-slate-200'}`}>
+                              {s.username || 'Anonymous'}
+                            </span>
+                            {isCurrentUser && (
+                              <span className="text-[8px] font-black tracking-widest bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-2 py-0.5 rounded-[6px] shadow-sm uppercase leading-none">
+                                YOU
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <span className={`text-xl font-black tabular-nums ${isCurrentUser ? 'text-indigo-700 dark:text-indigo-300 contrast-125' : 'text-indigo-600 dark:text-indigo-400'}`}>
+                          {(s.score || 0).toLocaleString()}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
