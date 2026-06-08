@@ -28,6 +28,24 @@
         "avatar": { "type": "string", "description": "Avatar at time of score (for leaderboard)" }
       },
       "required": ["deviceId", "gameId", "score", "timestamp"]
+    },
+    "Challenge": {
+      "title": "Challenge",
+      "description": "Challenge record created to beat a high score",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Challenge unique identifier" },
+        "gameId": { "type": "string", "description": "Micro-game identifier" },
+        "creatorUid": { "type": "string", "description": "User ID who created the challenge" },
+        "creatorUsername": { "type": "string", "description": "Creator username" },
+        "creatorAvatar": { "type": "string", "description": "Creator avatar class" },
+        "targetScore": { "type": "number", "description": "Score to beat" },
+        "createdAt": { "type": "number", "description": "Created epoch timestamp" },
+        "playsCount": { "type": "number", "description": "Number of challenge requests played" },
+        "bestChallengerScore": { "type": "number", "description": "High score recorded by challengers" },
+        "bestChallengerName": { "type": "string", "description": "Username of best challenger" }
+      },
+      "required": ["id", "gameId", "creatorUid", "creatorUsername", "creatorAvatar", "targetScore", "createdAt"]
     }
   },
   "firestore": {
@@ -38,6 +56,10 @@
     "/scores/{scoreId}": {
       "schema": "GameScore",
       "description": "High scores keyed by gameId_deviceId"
+    },
+    "/challenges/{challengeId}": {
+      "schema": "Challenge",
+      "description": "Challenges sent to beat high scores"
     }
   }
 }

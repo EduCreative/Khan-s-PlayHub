@@ -11,6 +11,7 @@ interface GameCardProps {
   globalRecord?: number;
   isFavorite: boolean;
   onToggleFavorite: () => void;
+  onChallenge?: () => void;
 }
 
 const GameHero: React.FC<{ game: Game }> = ({ game }) => {
@@ -24,7 +25,7 @@ const GameHero: React.FC<{ game: Game }> = ({ game }) => {
   );
 };
 
-const GameCard: React.FC<GameCardProps> = ({ game, onPlay, highScore, globalRecord, index, isFavorite, onToggleFavorite }) => {
+const GameCard: React.FC<GameCardProps> = ({ game, onPlay, highScore, globalRecord, index, isFavorite, onToggleFavorite, onChallenge }) => {
   return (
     <div className="group relative glass-card rounded-[2.5rem] overflow-hidden cursor-pointer transition-all duration-500 hover:-translate-y-4 hover:shadow-3xl hover:shadow-indigo-500/30 active:scale-95 stagger-item" 
       style={{ animationDelay: `${index * 80}ms` }}
@@ -63,9 +64,24 @@ const GameCard: React.FC<GameCardProps> = ({ game, onPlay, highScore, globalReco
               </span>
             </div>
           </div>
-          <button className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center transition-all shadow-lg shadow-indigo-500/30 group-hover:scale-110 active:scale-90 border-2 border-indigo-400/20">
-            <i className="fas fa-play"></i>
-          </button>
+          
+          <div className="flex items-center gap-2">
+            {highScore > 0 && onChallenge && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChallenge();
+                }}
+                className="w-11 h-11 rounded-2xl bg-amber-500/10 border-2 border-amber-500/30 text-amber-500 flex items-center justify-center hover:bg-amber-500/20 hover:scale-105 active:scale-95 transition-all shadow-md shrink-0"
+                title="Challenge a Friend to beat your score!"
+              >
+                <i className="fas fa-swords text-xs"></i>
+              </button>
+            )}
+            <button className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center transition-all shadow-lg shadow-indigo-500/30 group-hover:scale-110 active:scale-90 border-2 border-indigo-400/20">
+              <i className="fas fa-play"></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>

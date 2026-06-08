@@ -38,11 +38,12 @@ interface HubProps {
   updateStatus: 'idle' | 'checking' | 'downloading' | 'ready';
   updateProgress: number;
   appUpdate: { version: string; changelog: string[] } | null;
+  onChallenge: (game: Game) => void;
 }
 
 const Hub: React.FC<HubProps> = ({ 
   games, onSelectGame, filter, setFilter, highScores, globalRecords, userProfile, isDarkMode, syncStatus, onSyncAll, onToggleTheme, onOpenProfile, onToggleFavorite, onUpdateGlobalRecord, onOpenAdmin, isAdmin, onOpenSettings, onOpenPrivacy, canInstall, isInstalled, onInstall,
-  user, onLogin, onLogout, isAuthReady, updateStatus, updateProgress, appUpdate
+  user, onLogin, onLogout, isAuthReady, updateStatus, updateProgress, appUpdate, onChallenge
 }) => {
   const [vClickCount, setVClickCount] = useState(0);
   const [adminClickCount, setAdminClickCount] = useState(0);
@@ -337,6 +338,7 @@ const Hub: React.FC<HubProps> = ({
               globalRecord={globalRecords[game.id]}
               isFavorite={(userProfile.favorites || []).includes(game.id)}
               onToggleFavorite={() => onToggleFavorite(game.id)}
+              onChallenge={() => onChallenge(game)}
             />
           ))}
         </div>

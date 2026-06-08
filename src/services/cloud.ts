@@ -960,6 +960,77 @@ class CloudService {
     addLog('SYSTEM', `Consensus run finished: ${resolved}/${syncActions.length} discrepancies successfully resolved.`);
     return { checked, resolved, discrepancies, logs };
   }
+
+  async createChallenge(gameId: string, targetScore: number, userProfile: UserProfile): Promise<string> {
+    const id = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const challengePath = `challenges/${id}`;
+    
+    const challengeData = {
+      id,
+      gameId,
+      creatorUid: auth.currentUser?.uid || 'anonymous',
+      creatorUsername: userProfile.username || 'Anonymous Player',
+      creatorAvatar: userProfile.avatar || 'fa-user-astronaut',
+      targetScore,
+      createdAt: Date.now(),
+      playsCount: 0,
+      bestChallengerScore: 0,
+      bestChallengerName: ''
+    };
+
+    try {
+      await setDoc(doc(db, 'challenges', id), challengeData);
+      return id;
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, challengePath);
+      throw e;
+    }
+  }
+
+  async getChallenge(challengeId: string): Promise<any | null> {
+    const challengePath = `challenges/${challengeId}`;
+    try {
+      const snap = await getDoc(doc(db, 'challenges', challengeId));
+      if (snap.exists()) {
+        return snap.data();
+      }
+      return null;
+    } catch (e) {
+      handleFirestoreError(e, OperationType.GET, challengePath);
+      return null;
+    }
+  }
+
+  async updateChallengePlay(challengeId: string, challengerScore: number, challengerName: string): Promise<boolean> {
+    const challengePath = `challenges/${challengeId}`;
+    try {
+      const challengeRef = doc(db, 'challenges', challengeId);
+      const snap = await getDoc(challengeRef);
+      if (!snap.exists()) {
+        console.warn('Cannot update challenge play. Challenge does not exist in Firestore:', challengeId);
+        return false;
+      }
+
+      const challenge = snap.data();
+      const currentPlays = challenge.playsCount || 0;
+      const currentBest = challenge.bestChallengerScore || 0;
+
+      const updateData: any = {
+        playsCount: currentPlays + 1
+      };
+
+      if (challengerScore > currentBest) {
+        updateData.bestChallengerScore = challengerScore;
+        updateData.bestChallengerName = challengerName;
+      }
+
+      await setDoc(challengeRef, updateData, { merge: true });
+      return true;
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, challengePath);
+      return false;
+    }
+  }
 }
 
 

@@ -33,9 +33,10 @@ interface GameRunnerProps {
   sfxVolume: number;
   hapticFeedback: boolean;
   globalRecord?: number;
+  activeChallenge?: any | null;
 }
 
-const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, highScore, isDarkMode, isAnonymous, onOpenProfile, onViewLeaderboard, sfxVolume, hapticFeedback, globalRecord }) => {
+const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, highScore, isDarkMode, isAnonymous, onOpenProfile, onViewLeaderboard, sfxVolume, hapticFeedback, globalRecord, activeChallenge }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showGameOver, setShowGameOver] = useState(false);
   const [isVictory, setIsVictory] = useState(false);
@@ -142,6 +143,21 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
             )}
           </div>
         </div>
+
+        {activeChallenge && isPlaying && (
+          <div className="flex items-center gap-3 bg-amber-500/10 border-2 border-amber-500/30 px-4 py-2 rounded-2xl backdrop-blur-md shadow-xl pointer-events-auto animate-in fade-in slide-in-from-right-4 duration-500">
+            <i className="fas fa-swords text-amber-500 animate-pulse"></i>
+            <div className="flex flex-col">
+              <span className="text-[7px] font-black text-amber-500 uppercase tracking-widest leading-none mb-1">Target to Beat ({activeChallenge.creatorUsername})</span>
+              <span className="text-xs font-black text-white tabular-nums italic leading-none">{activeChallenge.targetScore.toLocaleString()}</span>
+            </div>
+            {currentScore > activeChallenge.targetScore ? (
+              <span className="text-[8px] font-bold text-white bg-emerald-500 px-1.5 py-0.5 rounded uppercase leading-none ml-1 animate-bounce"><i className="fas fa-check mr-0.5"></i> Beaten</span>
+            ) : (
+              <span className="text-[8px] font-bold text-slate-300 bg-rose-500/50 px-1.5 py-0.5 rounded uppercase leading-none ml-1">-{Math.max(0, activeChallenge.targetScore - currentScore).toLocaleString()}</span>
+            )}
+          </div>
+        )}
       </div>
 
       <div className={`flex-1 flex flex-col items-center justify-center relative bg-grid-white/[0.02] ${isPlaying && game.id === 'tetris' ? 'overflow-hidden pt-16 pb-4' : 'overflow-y-auto pt-24 pb-12'} transition-all duration-700`}>
@@ -179,40 +195,89 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
             </button>
           </div>
         ) : showGameOver ? (
-          <div className="text-center p-8 glass-card rounded-[3rem] max-w-xl w-full border-rose-500/30 shadow-2xl transition-all animate-in fade-in zoom-in-95 duration-700 border-2 my-auto mx-4 overflow-hidden relative">
-            {isVictory && <div className="absolute inset-0 pointer-events-none"><VictoryEffect onComplete={() => {}} /></div>}
-            <div className={`w-20 h-20 mx-auto rounded-[1.8rem] bg-gradient-to-br ${isVictory ? 'from-emerald-400 to-teal-600' : 'from-rose-500 to-rose-700'} flex items-center justify-center text-4xl mb-6 shadow-2xl animate-bounce`}>
-              <i className={`fas ${isVictory ? 'fa-trophy' : 'fa-skull'} text-white`}></i>
-            </div>
-            <h1 className={`text-5xl font-black mb-2 tracking-tighter italic uppercase ${isVictory ? 'text-emerald-500' : 'text-rose-500'}`}>{isVictory ? 'SUCCESS!' : 'GAME OVER'}</h1>
-            
-            <div className="bg-slate-100 dark:bg-white/5 rounded-3xl p-8 border border-slate-200 dark:border-white/5 mb-8 shadow-inner">
-              <p className="text-[10px] font-black text-slate-500 tracking-[0.3em] mb-2">Total Score Gained</p>
-              <p className={`text-6xl font-black tabular-nums drop-shadow-sm italic mb-4 ${isVictory ? 'text-emerald-500' : 'text-indigo-500'}`}>{currentScore.toLocaleString()}</p>
-              
-              <div className="grid grid-cols-2 gap-4 border-t border-slate-200 dark:border-white/10 pt-4">
-                <div className="flex flex-col">
-                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Personal Best</span>
-                  <span className="text-lg font-black text-indigo-500 tabular-nums italic">{Math.max(highScore, currentScore).toLocaleString()}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest">Global Record</span>
-                  <span className="text-lg font-black text-amber-500 tabular-nums italic">{globalRecord !== undefined ? Math.max(globalRecord, currentScore).toLocaleString() : '---'}</span>
-                </div>
+          <div className="text-center p-8 glass-card rounded-[3rem] max-w-xl w-full border-indigo-500/30 shadow-2xl transition-all animate-in fade-in zoom-in-95 duration-700 border-2 my-auto mx-4 overflow-hidden relative">
+            {(isVictory || (activeChallenge && currentScore > activeChallenge.targetScore)) && (
+              <div className="absolute inset-0 pointer-events-none">
+                <VictoryEffect onComplete={() => {}} />
               </div>
-            </div>
+            )}
+            
+            {activeChallenge ? (
+              <>
+                <div className={`w-20 h-20 mx-auto rounded-[1.8rem] bg-gradient-to-br ${currentScore > activeChallenge.targetScore ? 'from-amber-400 to-amber-600 shadow-[0_0_20px_rgba(245,158,11,0.4)]' : 'from-rose-500 to-rose-700'} flex items-center justify-center text-4xl mb-6 shadow-2xl ${currentScore > activeChallenge.targetScore ? 'animate-bounce' : ''}`}>
+                  <i className={`fas ${currentScore > activeChallenge.targetScore ? 'fa-crown text-white' : 'fa-swords text-white'}`}></i>
+                </div>
+                
+                <h1 className={`text-4xl font-black mb-2 tracking-tighter italic uppercase ${currentScore > activeChallenge.targetScore ? 'text-amber-500' : 'text-rose-500'}`}>
+                  {currentScore > activeChallenge.targetScore ? 'DUEL VICTORIOUS!' : 'DUEL DEFEATED'}
+                </h1>
+                
+                <p className="text-slate-600 dark:text-slate-400 text-sm font-medium mb-6 px-4">
+                  {currentScore > activeChallenge.targetScore 
+                    ? `Astonishing! You beat ${activeChallenge.creatorUsername}'s record score in ${game.name}!` 
+                    : `You gave your best, but you didn't conquer ${activeChallenge.creatorUsername}'s target.`}
+                </p>
+
+                <div className="bg-slate-100 dark:bg-white/5 rounded-3xl p-8 border border-slate-200 dark:border-white/5 mb-8 shadow-inner text-center">
+                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 block mb-1">Your Score Achieved</span>
+                  <p className={`text-6xl font-black tabular-nums drop-shadow-sm italic mb-4 ${currentScore > activeChallenge.targetScore ? 'text-amber-500' : 'text-indigo-500'}`}>
+                    {currentScore.toLocaleString()}
+                  </p>
+                  
+                  <div className="grid grid-cols-2 gap-4 border-t border-slate-200 dark:border-white/10 pt-4">
+                    <div className="flex flex-col">
+                      <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Target to beat</span>
+                      <span className="text-lg font-black text-rose-500 tabular-nums italic">{activeChallenge.targetScore.toLocaleString()}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest">Opened By</span>
+                      <span className="text-sm font-black text-slate-700 dark:text-slate-300 truncate block mt-1">{activeChallenge.creatorUsername}</span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className={`w-20 h-20 mx-auto rounded-[1.8rem] bg-gradient-to-br ${isVictory ? 'from-emerald-400 to-teal-600' : 'from-rose-500 to-rose-700'} flex items-center justify-center text-4xl mb-6 shadow-2xl animate-bounce`}>
+                  <i className={`fas ${isVictory ? 'fa-trophy' : 'fa-skull'} text-white`}></i>
+                </div>
+                <h1 className={`text-5xl font-black mb-2 tracking-tighter italic uppercase ${isVictory ? 'text-emerald-500' : 'text-rose-500'}`}>{isVictory ? 'SUCCESS!' : 'GAME OVER'}</h1>
+                
+                <div className="bg-slate-100 dark:bg-white/5 rounded-3xl p-8 border border-slate-200 dark:border-white/5 mb-8 shadow-inner">
+                  <p className="text-[10px] font-black text-slate-500 tracking-[0.3em] mb-2">Total Score Gained</p>
+                  <p className={`text-6xl font-black tabular-nums drop-shadow-sm italic mb-4 ${isVictory ? 'text-emerald-500' : 'text-indigo-500'}`}>{currentScore.toLocaleString()}</p>
+                  
+                  <div className="grid grid-cols-2 gap-4 border-t border-slate-200 dark:border-white/10 pt-4">
+                    <div className="flex flex-col">
+                      <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Personal Best</span>
+                      <span className="text-lg font-black text-indigo-500 tabular-nums italic">{Math.max(highScore, currentScore).toLocaleString()}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest">Global Record</span>
+                      <span className="text-lg font-black text-amber-500 tabular-nums italic">{globalRecord !== undefined ? Math.max(globalRecord, currentScore).toLocaleString() : '---'}</span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className="flex flex-col gap-3">
-              {isAnonymous && currentScore > 0 && (
+              {isAnonymous && currentScore > 0 && !activeChallenge && (
                 <button onClick={onOpenProfile} className="w-full py-4 bg-emerald-500/20 border-2 border-emerald-500/40 text-emerald-500 rounded-2xl font-black text-sm mb-2 flex items-center justify-center gap-3 animate-pulse">
                   <i className="fas fa-cloud-arrow-up"></i> SECURE PROGRESS TO PROFILE
                 </button>
               )}
-              <button onClick={handleRetry} className="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-black text-xl hover:scale-105 active:scale-95 transition-all shadow-xl uppercase italic tracking-tighter">RETRY SESSION</button>
-              <button onClick={onViewLeaderboard} className="w-full py-4 bg-indigo-500/10 border border-indigo-500/20 text-indigo-500 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-500/20 transition-all">
-                <i className="fas fa-trophy mr-2"></i> View Global Leaderboard
+              <button onClick={handleRetry} className="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-black text-xl hover:scale-105 active:scale-95 transition-all shadow-xl uppercase italic tracking-tighter">
+                {activeChallenge ? 'RETRY DUEL SESSION' : 'RETRY SESSION'}
               </button>
-              <button onClick={handleClose} className="py-4 bg-white/5 border border-white/10 text-slate-500 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-rose-500/10 transition-all">Close Session</button>
+              {!activeChallenge && (
+                <button onClick={onViewLeaderboard} className="w-full py-4 bg-indigo-500/10 border border-indigo-500/20 text-indigo-500 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-500/20 transition-all">
+                  <i className="fas fa-trophy mr-2"></i> View Global Leaderboard
+                </button>
+              )}
+              <button onClick={handleClose} className="py-4 bg-white/5 border border-white/10 text-slate-500 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-rose-500/10 transition-all">
+                {activeChallenge ? 'Close Duel & Return Hub' : 'Close Session'}
+              </button>
             </div>
           </div>
         ) : (

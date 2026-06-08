@@ -73,6 +73,20 @@ service cloud.firestore {
              data.avatar is string;
     }
 
+    function isValidChallenge(data) {
+      return data.keys().hasAll(['id', 'gameId', 'creatorUid', 'creatorUsername', 'creatorAvatar', 'targetScore', 'createdAt']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.gameId is string && data.gameId.size() <= 128 &&
+             data.creatorUid is string && data.creatorUid.size() <= 128 &&
+             data.creatorUsername is string && data.creatorUsername.size() <= 100 &&
+             data.creatorAvatar is string && data.creatorAvatar.size() <= 100 &&
+             data.targetScore is number && data.targetScore >= 0 &&
+             data.createdAt is number &&
+             (!('playsCount' in data) || data.playsCount is number) &&
+             (!('bestChallengerScore' in data) || data.bestChallengerScore is number) &&
+             (!('bestChallengerName' in data) || data.bestChallengerName is string);
+    }
+
     match /profiles/{userId} {
       // Admins can read (get/list) any profile. Owners can read their own.
       allow read: if isAdmin() || isOwner(userId);
@@ -103,6 +117,29 @@ service cloud.firestore {
                       request.resource.data.gameId == resource.data.gameId &&
                       isValidScore(request.resource.data);
                       
+      allow delete: if isAdmin();
+    }
+
+    match /challenges/{challengeId} {
+      allow read: if true;
+      
+      allow create: if isAuthenticated() && 
+                    (request.resource.data.creatorUid == request.auth.uid || isAdmin()) &&
+                    isValidChallenge(request.resource.data);
+                    
+      allow update: if (
+                      isAdmin() ||
+                      (request.auth != null && resource.data.creatorUid == request.auth.uid && isValidChallenge(request.resource.data)) ||
+                      (
+                        isValidChallenge(request.resource.data) &&
+                        request.resource.data.id == resource.data.id &&
+                        request.resource.data.gameId == resource.data.gameId &&
+                        request.resource.data.creatorUid == resource.data.creatorUid &&
+                        request.resource.data.targetScore == resource.data.targetScore &&
+                        request.resource.data.createdAt == resource.data.createdAt
+                      )
+                    );
+                    
       allow delete: if isAdmin();
     }
 

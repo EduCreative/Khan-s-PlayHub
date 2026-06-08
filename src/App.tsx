@@ -16,6 +16,8 @@ import { Achievement } from './types';
 import { audioService } from './services/audioService';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { auth } from './firebase';
+import ChallengeModal from './components/ChallengeModal';
+import ChallengeInvitationScreen from './components/ChallengeInvitationScreen';
 
 const DEFAULT_PROFILE: UserProfile = {
   username: 'New Player',
@@ -59,6 +61,12 @@ const App: React.FC = () => {
   }, []);
 
   const [activeGame, setActiveGame] = useState<Game | null>(null);
+  
+  // Challenge Features State
+  const [challengeGame, setChallengeGame] = useState<Game | null>(null);
+  const [showChallengeModal, setShowChallengeModal] = useState(false);
+  const [challengeInvitation, setChallengeInvitation] = useState<any | null>(null);
+  const [activeChallenge, setActiveChallenge] = useState<any | null>(null);
   const [filter, setFilter] = useState<Category | 'All' | 'Favorites' | 'Leaderboard' | 'Visual Leaderboard'>('All');
   const [scores, setScores] = useState<Record<string, number>>({});
   const [userProfile, setUserProfile] = useState<UserProfile>(DEFAULT_PROFILE);
@@ -243,6 +251,74 @@ const App: React.FC = () => {
       }
     } catch (e) { console.error('Failed to parse settings', e); }
   }, []);
+
+  // Parse Challenge URL Parameters
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const challengeId = params.get('challengeId');
+    const gameId = params.get('gameId');
+    if (challengeId && gameId) {
+      const targetScore = parseInt(params.get('targetScore') || '0', 10);
+      const creatorUsername = params.get('by') || 'Anonymous Player';
+      const creatorAvatar = params.get('avatar') || 'fa-user-astronaut';
+      
+      const parsedChallenge = {
+        id: challengeId,
+        gameId,
+        targetScore,
+        creatorUsername,
+        creatorAvatar,
+        loadedFromUrl: true
+      };
+      
+      setChallengeInvitation(parsedChallenge);
+      
+      // Attempt to load from Cloud to enrich stats (playsCount, bestChallenger)
+      cloud.getChallenge(challengeId).then(dbData => {
+        if (dbData) {
+          setChallengeInvitation({
+            ...parsedChallenge,
+            ...dbData,
+            loadedFromUrl: false
+          });
+        }
+      }).catch(err => {
+        console.warn('Could not load challenge from Firestore:', err);
+      });
+    }
+  }, []);
+
+  const handleAcceptChallenge = (challengerName: string) => {
+    if (!challengeInvitation) return;
+    const targetGame = GAMES.find(g => g.id === challengeInvitation.gameId);
+    if (!targetGame) return;
+
+    // Use name
+    const updatedProfile = {
+      ...userProfile,
+      username: challengerName
+    };
+    setUserProfile(updatedProfile);
+    localStorage.setItem('khans-playhub-username', challengerName);
+
+    setActiveChallenge({
+      ...challengeInvitation,
+      challengerName
+    });
+    setChallengeInvitation(null);
+    setActiveGame(targetGame);
+  };
+
+  const handleDeclineChallenge = () => {
+    setChallengeInvitation(null);
+    window.history.replaceState({}, document.title, window.location.pathname);
+  };
+
+  const handleOpenChallengeDialog = (game: Game) => {
+    setChallengeGame(game);
+    setShowChallengeModal(true);
+    audioService.playNav();
+  };
 
   // Handle popstate and history - depends on active states
   useEffect(() => {
@@ -582,7 +658,20 @@ const App: React.FC = () => {
         setSyncStatus('offline');
       }
     }
-  }, [scores, unlockAchievement, userProfile, quotaExceeded]);
+
+    // Challenge Play log update
+    if (activeChallenge && activeChallenge.gameId === gameId && metadata?.final) {
+      try {
+        await cloud.updateChallengePlay(
+          activeChallenge.id,
+          score,
+          activeChallenge.challengerName || 'Anonymous Challenger'
+        );
+      } catch (err) {
+        console.error('Failed to log challenge updates in Firestore:', err);
+      }
+    }
+  }, [scores, unlockAchievement, userProfile, quotaExceeded, activeChallenge]);
 
   const isAnonymous = userProfile.username === 'New Player' || userProfile.username === 'Player';
 
@@ -595,6 +684,20 @@ const App: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [isAnonymous, showTutorial]);
+
+  if (challengeInvitation) {
+    const targetGame = GAMES.find(g => g.id === challengeInvitation.gameId);
+    return (
+      <ChallengeInvitationScreen
+        challenge={challengeInvitation}
+        game={targetGame}
+        defaultUsername={userProfile.username || 'Challenger_HQ'}
+        isDarkMode={isDarkMode}
+        onAccept={handleAcceptChallenge}
+        onDecline={handleDeclineChallenge}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-white selection:bg-indigo-500 selection:text-white transition-colors duration-500">
@@ -634,6 +737,8 @@ const App: React.FC = () => {
             game={activeGame} 
             onClose={() => {
               setActiveGame(null);
+              setActiveChallenge(null);
+              window.history.replaceState({}, document.title, window.location.pathname);
               audioService.playNav();
             }} 
             onSaveScore={(s, meta) => saveScore(activeGame.id, s, meta)}
@@ -646,12 +751,15 @@ const App: React.FC = () => {
             }}
             onViewLeaderboard={() => {
               setActiveGame(null);
+              setActiveChallenge(null);
+              window.history.replaceState({}, document.title, window.location.pathname);
               setFilter('Leaderboard');
               audioService.playNav();
             }}
             sfxVolume={sfxVolume}
             hapticFeedback={hapticFeedback}
             globalRecord={globalRecords[activeGame.id]}
+            activeChallenge={activeChallenge}
           />
         ) : (
           <Hub 
@@ -704,9 +812,23 @@ const App: React.FC = () => {
             updateStatus={updateStatus}
             updateProgress={updateProgress}
             appUpdate={appUpdate}
+            onChallenge={handleOpenChallengeDialog}
           />
         )}
       </main>
+
+      {showChallengeModal && challengeGame && (
+        <ChallengeModal
+          game={challengeGame}
+          highScore={scores[challengeGame.id] || 0}
+          userProfile={userProfile}
+          isOpen={showChallengeModal}
+          onClose={() => {
+            setShowChallengeModal(false);
+            setChallengeGame(null);
+          }}
+        />
+      )}
 
       {showProfileSetup && (
         <ProfileModal 

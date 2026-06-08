@@ -59,3 +59,17 @@ export interface Score {
   score: number;
   timestamp: number;
 }
+
+export interface Challenge {
+  id: string;
+  gameId: string;
+  creatorUid: string;
+  creatorUsername: string;
+  creatorAvatar: string;
+  targetScore: number;
+  createdAt: number;
+  playsCount?: number;
+  bestChallengerScore?: number;
+  bestChallengerName?: string;
+}
+
