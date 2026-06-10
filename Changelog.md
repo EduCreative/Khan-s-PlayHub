@@ -1,6 +1,14 @@
 
 # Changelog
 
+## [3.2.1] - 2026-06-10
+### Added
+- **Global Leaderboard Trends view**: Developed an analytical "Global Leaderboard" sub-view powered by Recharts. It features:
+  - **Cognitive Silhouette Radar**: Normalizes user category averages against global player records.
+  - **Bell Curve Score Distribution**: Plots a smooth, animated area curve of player scores with an interactive "YOU ARE HERE" indicator.
+  - **Elite Progression Lines**: Compares the variance steepness of top players relative to the user's reference.
+  - **Active Player Search Registry**: Enables dynamic keyword search across the player user base.
+
 ## [3.2.0] - 2026-06-10
 ### Added
 - **Expanded Grammar Questions**: Added a vast dictionary of grammar questions inside Grammar Guardian to minimize question repetition and improve player retention.

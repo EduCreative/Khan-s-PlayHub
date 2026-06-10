@@ -67,7 +67,7 @@ const App: React.FC = () => {
   const [showChallengeModal, setShowChallengeModal] = useState(false);
   const [challengeInvitation, setChallengeInvitation] = useState<any | null>(null);
   const [activeChallenge, setActiveChallenge] = useState<any | null>(null);
-  const [filter, setFilter] = useState<Category | 'All' | 'Favorites' | 'Leaderboard' | 'Visual Leaderboard'>('All');
+  const [filter, setFilter] = useState<Category | 'All' | 'Favorites' | 'Leaderboard' | 'Visual Leaderboard' | 'Global Leaderboard'>('All');
   const [scores, setScores] = useState<Record<string, number>>({});
   const [userProfile, setUserProfile] = useState<UserProfile>(DEFAULT_PROFILE);
   const [isDarkMode, setIsDarkMode] = useState(true);

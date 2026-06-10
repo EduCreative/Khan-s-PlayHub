@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.2.0 "Cyber Snake Arena & Ranked Highlights"  
+**Version:** 3.2.1 "Neural Telemetry & Global Distribution Curves"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,7 +9,14 @@ Khan's PlayHub is an active collection of classic, high-performance, and mobile-
 
 ---
 
-## 🚀 Recent Enhancements (v3.2.0)
+## 🚀 Recent Enhancements (v3.2.1)
+- **Analytical "Global Leaderboard" Trends Dashboard**: Added an advanced, fully interactive Recharts analytical tab inside the platform Hub.
+  - **Cognitive Silhouette Radar**: Normalizes user category averages against global player records.
+  - **Bell Curve Concentration Curve**: Plots a smooth, animated area curve of player scores with an interactive "YOU ARE HERE" indicator.
+  - **Elite Progression Lines**: Compares the variance steepness of top players relative to the user's reference.
+  - **Active Player Search Registry**: Enables dynamic keyword search across the player user base.
+
+## 🚀 Previous Enhancements (v3.2.0)
 - **Brand New "Snake Arena" Game!**: A Slither-style survival game where you guide your snake around an endless digital field.
   - **Eat and Grow**: Collect colorful glowing dots of different values to grow longer and wider.
   - **Other Snakes (AI Bots)**: Avoid head-on collisions with opponent snakes of active different colors!

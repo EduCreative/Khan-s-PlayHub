@@ -5,6 +5,7 @@ import GameCard from './GameCard';
 import Logo from './Logo';
 import Leaderboard from './Leaderboard';
 import VisualLeaderboard from './VisualLeaderboard';
+import GlobalLeaderboard from './GlobalLeaderboard';
 import { User } from 'firebase/auth';
 
 import { audioService } from '../services/audioService';
@@ -12,8 +13,8 @@ import { audioService } from '../services/audioService';
 interface HubProps {
   games: Game[];
   onSelectGame: (game: Game) => void;
-  filter: Category | 'All' | 'Favorites' | 'Leaderboard' | 'Visual Leaderboard';
-  setFilter: (filter: Category | 'All' | 'Favorites' | 'Leaderboard' | 'Visual Leaderboard') => void;
+  filter: Category | 'All' | 'Favorites' | 'Leaderboard' | 'Visual Leaderboard' | 'Global Leaderboard';
+  setFilter: (filter: Category | 'All' | 'Favorites' | 'Leaderboard' | 'Visual Leaderboard' | 'Global Leaderboard') => void;
   highScores: Record<string, number>;
   globalRecords: Record<string, number>;
   userProfile: UserProfile;
@@ -61,11 +62,11 @@ const Hub: React.FC<HubProps> = ({
     ? games 
     : filter === 'Favorites'
     ? games.filter(g => (userProfile.favorites || []).includes(g.id))
-    : filter === 'Leaderboard' || filter === 'Visual Leaderboard'
+    : filter === 'Leaderboard' || filter === 'Visual Leaderboard' || filter === 'Global Leaderboard'
     ? []
     : games.filter(g => g.category === filter);
 
-  const categories = ['All', 'Favorites', 'Leaderboard', 'Visual Leaderboard', ...Object.values(Category)];
+  const categories = ['All', 'Favorites', 'Leaderboard', 'Visual Leaderboard', 'Global Leaderboard', ...Object.values(Category)];
 
   const totalScore = Object.values(highScores).reduce((sum, s) => sum + s, 0);
 
@@ -269,6 +270,7 @@ const Hub: React.FC<HubProps> = ({
               filter === cat 
                 ? cat === 'Leaderboard' ? 'bg-amber-500 border-amber-400 text-white shadow-lg scale-105' 
                 : cat === 'Visual Leaderboard' ? 'bg-indigo-650 border-indigo-550 text-white shadow-lg scale-105'
+                : cat === 'Global Leaderboard' ? 'bg-purple-600 border-purple-400 text-white shadow-lg scale-105'
                 : 'bg-indigo-600 border-indigo-400 text-white shadow-lg scale-105' 
                 : 'bg-white/50 dark:bg-slate-900/40 border-slate-200 dark:border-white/5 text-slate-500 hover:border-indigo-500/30'
             }`}
@@ -276,6 +278,7 @@ const Hub: React.FC<HubProps> = ({
             {cat === 'Favorites' && <i className="fas fa-star mr-1.5 text-amber-400"></i>}
             {cat === 'Leaderboard' && <i className="fas fa-trophy mr-1.5 text-amber-400"></i>}
             {cat === 'Visual Leaderboard' && <i className="fas fa-chart-line mr-1.5 text-indigo-400"></i>}
+            {cat === 'Global Leaderboard' && <i className="fas fa-chart-pie mr-1.5 text-purple-400"></i>}
             {cat}
           </button>
         ))}
@@ -332,6 +335,8 @@ const Hub: React.FC<HubProps> = ({
         />
       ) : filter === 'Visual Leaderboard' ? (
         <VisualLeaderboard games={games} globalRecords={globalRecords} isDarkMode={isDarkMode} onBack={() => setFilter('All')} />
+      ) : filter === 'Global Leaderboard' ? (
+        <GlobalLeaderboard games={games} highScores={highScores} userProfile={userProfile} isDarkMode={isDarkMode} onBack={() => setFilter('All')} />
       ) : (
         <div id="games-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 min-h-[400px]">
           {filteredGames.map((game: Game, idx: number) => (
