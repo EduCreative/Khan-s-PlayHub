@@ -46,12 +46,24 @@ if (container) {
     </ErrorBoundary>
   );
 
-  // Register Service Worker
+  // Clear browser caches and unregister service workers to prevent loading stale cached bundles
+  if (window.caches) {
+    window.caches.keys().then((keys) => {
+      keys.forEach((key) => {
+        window.caches.delete(key);
+      });
+    });
+  }
+
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('SW Registered:', reg.scope))
-        .catch(err => console.log('SW Registration Failed:', err));
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) {
+        registration.unregister().then((unregistered) => {
+          if (unregistered) {
+            console.log('Unregistered service worker to load fresh assets:', registration);
+          }
+        });
+      }
     });
   }
 }

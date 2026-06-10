@@ -161,5 +161,15 @@ export const GAMES: Game[] = [
     color: 'from-blue-400 to-indigo-600',
     description: 'Pilot a high-tech jet, dodge incoming missiles, and neutralize enemy threats.',
     instructions: ['Use arrows or touch to move', 'Tap or Space to fire', 'Avoid enemy fire and collisions']
+  },
+  {
+    id: 'snake-arena',
+    name: 'Snake Arena',
+    tagline: 'Open Arena Survival Duel',
+    category: Category.Arcade,
+    icon: 'fa-dragon',
+    color: 'from-fuchsia-400 to-indigo-600',
+    description: 'Bait other cyber snakes into crashing into your tail, collect energy dots, and grow to rule the arena!',
+    instructions: ['Guide your snake using keys or touch', 'Collect colorful dots to increase your size & score', 'Trap other snakes to consume their remains', 'Hold SPACEBAR or tap BOOST button to sprint']
   }
 ];

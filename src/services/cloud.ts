@@ -144,11 +144,11 @@ class CloudService {
         });
         cloudflareSuccess = res.ok;
       } catch (e) {
-        console.error('Cloudflare Sync Failed:', e);
+        console.warn('Cloudflare Sync Warning (Non-fatal, falling back):', e);
       }
     }
 
-    return this.provider === 'hybrid' ? (firebaseSuccess && cloudflareSuccess) : (firebaseSuccess || cloudflareSuccess);
+    return this.provider === 'hybrid' ? (firebaseSuccess || cloudflareSuccess) : (firebaseSuccess || cloudflareSuccess);
   }
 
   async getGlobalHighScores(gameId: string): Promise<any[]> {
@@ -224,20 +224,20 @@ class CloudService {
     }
 
     if ((this.provider === 'cloudflare' || this.provider === 'hybrid') && this.workerUrl) {
-      try {
-        const baseUrl = this.workerUrl.endsWith('/') ? this.workerUrl.slice(0, -1) : this.workerUrl;
-        const res = await fetch(`${baseUrl}/profile`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...profile, deviceId: uid })
-        });
-        cloudflareSuccess = res.ok;
-      } catch (e) {
-        console.error('Cloudflare Profile Sync Failed:', e);
-      }
-    }
+       try {
+         const baseUrl = this.workerUrl.endsWith('/') ? this.workerUrl.slice(0, -1) : this.workerUrl;
+         const res = await fetch(`${baseUrl}/profile`, {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ ...profile, deviceId: uid })
+         });
+         cloudflareSuccess = res.ok;
+       } catch (e) {
+         console.warn('Cloudflare Profile Sync Warning (Non-fatal, falling back):', e);
+       }
+     }
 
-    return this.provider === 'hybrid' ? (firebaseSuccess && cloudflareSuccess) : (firebaseSuccess || cloudflareSuccess);
+    return this.provider === 'hybrid' ? (firebaseSuccess || cloudflareSuccess) : (firebaseSuccess || cloudflareSuccess);
   }
 
   async getProfile(): Promise<UserProfile | null> {

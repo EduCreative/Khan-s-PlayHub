@@ -18,6 +18,7 @@ import ReactionTest from '../games/ReactionTest';
 import Tetris from '../games/Tetris';
 import NeonRacer from '../games/NeonRacer';
 import SkyStrike from '../games/SkyStrike';
+import SnakeArena from '../games/SnakeArena';
 import Logo from './Logo';
 import VictoryEffect from './VictoryEffect';
 
@@ -42,6 +43,7 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
   const [isVictory, setIsVictory] = useState(false);
   const [currentScore, setCurrentScore] = useState(0);
   const [isClosing, setIsClosing] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
   const handleScoreUpdate = React.useCallback((score: number, metadata?: any) => {
     setCurrentScore(score);
@@ -61,6 +63,20 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
     return () => window.removeEventListener('message', handleMessage);
   }, [onClose, onSaveScore]);
 
+  // Keyboard shortcut listener to pause/resume the game
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isPlaying || showGameOver) return;
+      if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
+        e.preventDefault();
+        setIsPaused(prev => !prev);
+        audioService.playClick();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPlaying, showGameOver]);
+
   const handleClose = () => {
     setIsClosing(true);
     setTimeout(onClose, 400); 
@@ -71,6 +87,7 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
     onSaveScore(finalScore, { ...metadata, final: true });
     setIsVictory(victory);
     setIsPlaying(false);
+    setIsPaused(false);
     setShowGameOver(true);
     if (victory) audioService.playSuccess();
     else audioService.playError();
@@ -81,13 +98,14 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
     setShowGameOver(false);
     setIsVictory(false);
     setIsPlaying(true);
+    setIsPaused(false);
     audioService.playClick();
   };
 
   const renderGame = () => {
     const commonProps = { 
       onGameOver: handleGameOver, 
-      isPlaying, 
+      isPlaying: isPlaying && !isPaused, 
       sfxVolume, 
       hapticFeedback,
       onScoreUpdate: handleScoreUpdate 
@@ -110,6 +128,7 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
       case 'tetris': return <Tetris {...commonProps} />;
       case 'neon-racer': return <NeonRacer {...commonProps} />;
       case 'sky-strike': return <SkyStrike {...commonProps} />;
+      case 'snake-arena': return <SnakeArena {...commonProps} />;
       default:
         return (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
@@ -125,9 +144,23 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
     <div className={`fixed inset-0 z-50 ${isDarkMode ? 'bg-[#020617]' : 'bg-slate-50'} flex flex-col transition-all duration-500 ${isClosing ? 'portal-exit' : 'portal-enter'}`}>
       <div className="absolute top-0 left-0 right-0 p-4 md:p-6 flex items-center justify-between z-20 pointer-events-none">
         <div className="flex items-center gap-4 pointer-events-auto">
-          <button onClick={handleClose} className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 transition-all shadow-lg group">
-            <i className="fas fa-arrow-left"></i>
+          <button onClick={handleClose} className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 transition-all shadow-lg group hover:bg-white/20" title="Exit to Hub">
+            <i className="fas fa-arrow-left text-slate-300 group-hover:text-white"></i>
           </button>
+          
+          {isPlaying && !showGameOver && (
+            <button 
+              onClick={() => {
+                setIsPaused(prev => !prev);
+                audioService.playClick();
+              }} 
+              className={`w-12 h-12 rounded-2xl ${isPaused ? 'bg-indigo-600 border-indigo-500' : 'bg-white/10 border-white/10'} backdrop-blur-md flex items-center justify-center border transition-all shadow-lg group hover:scale-105`} 
+              title={isPaused ? "Resume Session" : "Pause Session"}
+            >
+              <i className={`fas ${isPaused ? 'fa-play text-white animate-pulse' : 'fa-pause text-indigo-300 group-hover:text-indigo-100'}`}></i>
+            </button>
+          )}
+
           <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl border border-white/10 backdrop-blur-md shadow-xl">
             <Logo size={24} showGlow={false} />
             {isPlaying ? (
@@ -186,6 +219,7 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
             <button 
               onClick={() => { 
                 setIsPlaying(true); 
+                setIsPaused(false);
                 setCurrentScore(0); 
                 audioService.playClick();
               }}
@@ -284,6 +318,56 @@ const GameRunner: React.FC<GameRunnerProps> = ({ game, onClose, onSaveScore, hig
           <div className="w-full h-full flex items-center justify-center animate-in fade-in zoom-in-95 duration-700">{renderGame()}</div>
         )}
       </div>
+
+      {/* Translucent Pause Menu Overlay */}
+      {isPaused && (
+        <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-40 flex items-center justify-center animate-in fade-in duration-300 pointer-events-auto">
+          <div className="text-center p-8 glass-card rounded-[2.5rem] max-w-sm w-full border-2 border-indigo-500/30 shadow-2xl mx-4 transform animate-in zoom-in-95 duration-300 relative overflow-hidden flex flex-col items-center">
+            {/* Ambient Background Glow */}
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 -z-10 pointer-events-none" />
+            
+            <div className="w-20 h-20 rounded-[1.8rem] bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-3xl mb-6 shadow-inner animate-pulse">
+              <i className="fas fa-pause"></i>
+            </div>
+            
+            <h2 className="text-3xl font-black mb-2 tracking-tight uppercase italic dark:text-white text-slate-100">
+              SESSION PAUSED
+            </h2>
+            <p className="text-sm text-slate-400 mb-8 font-medium px-4">
+              Take a breath, adjust your focus, and jump right back in when you're ready.
+            </p>
+            
+            <div className="flex flex-col gap-3 w-full">
+              {/* Resume Button */}
+              <button 
+                onClick={() => {
+                  setIsPaused(false);
+                  audioService.playClick();
+                }}
+                className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-2xl font-black text-lg hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-indigo-500/30 uppercase italic tracking-tighter"
+              >
+                <i className="fas fa-play mr-2 text-sm"></i> RESUME SESSION
+              </button>
+              
+              {/* Restart Button */}
+              <button 
+                onClick={handleRetry}
+                className="w-full py-3.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 rounded-2xl font-bold text-base hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-tight"
+              >
+                <i className="fas fa-sync-alt mr-2 text-sm"></i> Restart Game
+              </button>
+              
+              {/* Return to Hub Button */}
+              <button 
+                onClick={handleClose}
+                className="w-full py-3.5 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded-2xl font-bold text-base hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-tight"
+              >
+                <i className="fas fa-home mr-2 text-sm"></i> Return to Hub
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

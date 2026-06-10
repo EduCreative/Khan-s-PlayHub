@@ -1,13 +1,22 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.1.9 "De-duplicated Sync"  
+**Version:** 3.2.0 "Cyber Snake Arena & Ranked Highlights"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
-Khan's PlayHub is a high-performance, mobile-first Progressive Web App (PWA) that synchronizes your elite scores and profile across the Cloudflare network.
+Khan's PlayHub is an active collection of classic, high-performance, and mobile-friendly games that save your scores and progress.
 
 ---
+
+## 🚀 Recent Enhancements (v3.2.0)
+- **Brand New "Snake Arena" Game!**: A Slither-style survival game where you guide your snake around an endless digital field.
+  - **Eat and Grow**: Collect colorful glowing dots of different values to grow longer and wider.
+  - **Other Snakes (AI Bots)**: Avoid head-on collisions with opponent snakes of active different colors!
+  - **Eliminations**: Trap others to make them crash into you. When they die, they leave high-energy food behind for anyone to eat.
+  - **Boost Mode**: Hold Spacebar or tap the mobile "BOOST" button to dash, using your size strategically.
+  - **Easy, Medium, Hard Difficulties**: Choose your speed and AI intelligence before jumping in.
+- **Ranked Leaderboard Highlighting**: In the global leaderboard, you can now see your score highlighted in custom Indigo color with a neat **"YOU"** badge so you can check your standing at a glance!
 
 ## 🚀 Recent Enhancements (v3.1.9)
 - **Synchronized User Deletion**: Re-engineered user removal inside the Admin Console to physically purge selected player rows and corresponding local/cloud scores synchronously from both central Firestore collection storage and Cloudflare D1 remote database nodes.

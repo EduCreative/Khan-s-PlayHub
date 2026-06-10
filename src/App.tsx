@@ -79,7 +79,7 @@ const App: React.FC = () => {
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [sfxVolume, setSfxVolume] = useState(0.5);
   const [hapticFeedback, setHapticFeedback] = useState(true);
-  const [dataProvider, setDataProvider] = useState<'firebase' | 'cloudflare' | 'hybrid'>('hybrid');
+  const [dataProvider, setDataProvider] = useState<'firebase' | 'cloudflare' | 'hybrid'>('firebase');
   const [workerUrl, setWorkerUrl] = useState('https://khans-playhub-worker.kmasroor50.workers.dev');
   const [syncStatus, setSyncStatus] = useState<'synced' | 'pending' | 'offline'>('synced');
   const [globalRecords, setGlobalRecords] = useState<Record<string, number>>({});
@@ -246,7 +246,7 @@ const App: React.FC = () => {
         const parsed = JSON.parse(savedSettings);
         setSfxVolume(parsed.sfxVolume ?? 0.5);
         setHapticFeedback(parsed.hapticFeedback ?? true);
-        setDataProvider(parsed.dataProvider ?? 'hybrid');
+        setDataProvider(parsed.dataProvider ?? 'firebase');
         setWorkerUrl(parsed.workerUrl || 'https://khans-playhub-worker.kmasroor50.workers.dev');
       }
     } catch (e) { console.error('Failed to parse settings', e); }
