@@ -12,7 +12,7 @@ interface LeaderboardProps {
 }
 
 const SCORING_GUIDE = [
-  { game: "Labyrinth", action: "Level Clear", scoring: "200 / 500 / 1000", note: "Based on difficulty" },
+  { game: "Labyrinth", action: "Level Clear", scoring: "10 / 25 / 50", note: "Based on difficulty" },
   { game: "Word Builder", action: "Bounty / Word", scoring: "100 / 5x Length", note: "Combo & Length bonuses apply" },
   { game: "Grammar Guardian", action: "Correct Answer", scoring: "10 Juice", note: "8s time penalty on miss" },
   { game: "Sudoku", action: "Full Clear", scoring: "up to 2000", note: "Difficulty + Time bonus" },

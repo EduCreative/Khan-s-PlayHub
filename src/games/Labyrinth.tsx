@@ -145,9 +145,10 @@ const Labyrinth: React.FC<{
         playSfx('/sfx/win.mp3', sfxVolume);
         triggerHapticFeedback();
         
-        // Level-based scoring: difficulty multiplier * current level
-        const diffMult = difficulty === 'Easy' ? 200 : difficulty === 'Medium' ? 500 : 1000;
-        const points = diffMult * levelRef.current;
+        // Balanced level-based scoring: base points + gradual cumulative bonus per level
+        const basePoints = difficulty === 'Easy' ? 10 : difficulty === 'Medium' ? 25 : 50;
+        const levelBonus = (levelRef.current - 1) * (difficulty === 'Easy' ? 2 : difficulty === 'Medium' ? 5 : 10);
+        const points = basePoints + levelBonus;
         scoreRef.current += points;
         const newScore = scoreRef.current;
         
