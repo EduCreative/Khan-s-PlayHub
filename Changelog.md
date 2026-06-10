@@ -1,6 +1,15 @@
 
 # Changelog
 
+## [3.2.0] - 2026-06-10
+### Added
+- **Expanded Grammar Questions**: Added a vast dictionary of grammar questions inside Grammar Guardian to minimize question repetition and improve player retention.
+### Fixed
+- **Snake Arena Tablet & Mobile Optimization**: Fixed the "Start Session" button issue in Snake Arena by applying compact responsive paddings, shrinking margins/gaps, and adding beautiful `max-h-[85vh]` overflow-scrolling inside the modal so that everything is perfectly accessible and responsive on all viewport ratios.
+- **Multiple Options Fix in Grammar Guardian**: Enhanced active answer selection UI and prefixed badges (`A`, `B`, `C`, `D`) for Grammar Guardian to fix the visual option similarity and display choices beautifully.
+### Changed
+- **Balanced Labyrinth Score Scaling**: Scaled down the unbalanced, exponential scoring design in Labyrinth (previously rewarding 200/500/1000 per level multiplier) into equivalent and highly competitive reward models matching other micro-games in the Hub.
+
 ## [3.1.9] - 2026-06-07
 ### Changed
 - **Synchronized User Deletion**: Re-engineered user removal inside the Admin Console to systematically remove account records and historical high scores synchronously across both central Firestore collections and multi-regional Cloudflare D1 nodes.

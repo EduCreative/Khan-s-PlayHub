@@ -1149,28 +1149,28 @@ export default function SnakeArena({
   // Keyboard navigation instructions
   return (
     <div 
-      className="relative w-full h-full min-h-[550px] bg-slate-950 flex flex-col items-center justify-center overflow-hidden"
+      className="relative w-full h-full min-h-[400px] bg-slate-950 flex flex-col items-center justify-center overflow-hidden"
       ref={containerRef}
     >
       {gameState === 'lobby' ? (
-        <div className="z-10 text-center max-w-md p-8 bg-slate-900/80 border border-indigo-500/20 rounded-[2.5rem] backdrop-blur-xl shadow-2xl mx-4 relative overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+        <div className="z-10 text-center max-w-md w-full p-5 sm:p-8 bg-slate-900/80 border border-indigo-500/20 rounded-[2rem] sm:rounded-[2.5rem] backdrop-blur-xl shadow-2xl mx-4 relative overflow-y-auto max-h-[85vh] scrollbar-thin animate-in fade-in zoom-in-95 duration-500">
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent pointer-events-none" />
           
-          <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-4xl mb-6 shadow-lg shadow-indigo-500/30">
+          <div className="w-14 h-14 sm:w-20 sm:h-20 mx-auto rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-2xl sm:text-4xl mb-4 sm:mb-6 shadow-lg shadow-indigo-500/30">
             <i className="fas fa-snake text-white"></i>
           </div>
 
-          <h1 className="text-4xl font-extrabold text-white mb-2 tracking-tighter italic uppercase">SNAKE ARENA</h1>
-          <p className="text-sm text-indigo-300 font-semibold uppercase tracking-widest mb-6">Open Arena Survival Duel</p>
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-white mb-1 sm:mb-2 tracking-tighter italic uppercase">SNAKE ARENA</h1>
+          <p className="text-[10px] sm:text-sm text-indigo-300 font-semibold uppercase tracking-widest mb-4 sm:mb-6">Open Arena Survival Duel</p>
           
-          <p className="text-xs text-slate-400 mb-8 leading-relaxed">
+          <p className="text-[11px] sm:text-xs text-slate-400 mb-4 sm:mb-8 leading-relaxed">
             Rule the endless grid! Collect colorful energy dots to grow massive. Hunt down other cyber snakes by baiting them into crashing head-first into your body segments. Boost to evade and conquer!
           </p>
 
-          <div className="flex flex-col gap-6 mb-8 text-left">
+          <div className="flex flex-col gap-4 sm:gap-6 mb-4 sm:mb-8 text-left">
             <div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 block mb-2">Select Arena Difficulty</span>
-              <div className="grid grid-cols-3 gap-2">
+              <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-indigo-400 block mb-2">Select Arena Difficulty</span>
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                 {(['easy', 'medium', 'hard'] as Difficulty[]).map((mode) => (
                   <button
                     key={mode}
@@ -1178,7 +1178,7 @@ export default function SnakeArena({
                       setDifficulty(mode);
                       audioService.playClick();
                     }}
-                    className={`py-3 rounded-xl font-bold uppercase text-xs tracking-wider border transition-all ${
+                    className={`py-2 sm:py-3 rounded-lg sm:rounded-xl font-bold uppercase text-[10px] sm:text-xs tracking-wider border transition-all ${
                       difficulty === mode
                         ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-500/10'
                         : 'bg-slate-950/40 text-slate-400 border-white/5 hover:border-slate-800'
@@ -1190,13 +1190,13 @@ export default function SnakeArena({
               </div>
             </div>
 
-            <div className="bg-slate-950/40 border border-white/5 p-4 rounded-2xl flex items-start gap-3">
-              <i className="fas fa-gamepad text-indigo-400 mt-0.5"></i>
+            <div className="bg-slate-950/40 border border-white/5 p-3 sm:p-4 rounded-xl sm:rounded-2xl flex items-start gap-2 sm:gap-3">
+              <i className="fas fa-gamepad text-indigo-400 mt-0.5 text-xs sm:text-sm"></i>
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-slate-300 uppercase leading-none mb-1">Controls</span>
-                <span className="text-xs text-slate-400 leading-normal">
-                  **Keyboard**: Move cursor or use **W, A, S, D / Arrows** to steer. Hold **SPACEBAR** to fast boost. <br />
-                  **Mobile/Touch**: Drag anywhere on the canvas to steer. Let the snake grow!
+                <span className="text-[9px] sm:text-[10px] font-bold text-slate-300 uppercase leading-none mb-1">Controls</span>
+                <span className="text-[10px] sm:text-xs text-slate-400 leading-normal">
+                  <strong>Keyboard</strong>: Mouse cursor or <strong>W, A, S, D / Arrows</strong> to steer. Hold <strong>SPACE</strong> to boost. <br />
+                  <strong>Mobile/Touch</strong>: Drag anywhere to steer. Boost widget is located on the right.
                 </span>
               </div>
             </div>
@@ -1204,34 +1204,34 @@ export default function SnakeArena({
 
           <button
             onClick={handleStartGame}
-            className="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-2xl font-black text-lg tracking-wide uppercase shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.03] active:scale-[0.98]"
+            className="w-full py-3 sm:py-4 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl sm:rounded-2xl font-black text-sm sm:text-lg tracking-wide uppercase shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             Enter Arena Duel
           </button>
         </div>
       ) : gameState === 'gameover' ? (
-        <div className="z-10 text-center max-w-sm p-8 bg-slate-900/90 border border-rose-500/20 rounded-[2.5rem] backdrop-blur-xl shadow-2xl mx-4 animate-in fade-in zoom-in-95 duration-500">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-rose-500 to-red-600 flex items-center justify-center text-3xl mb-6 shadow-lg shadow-rose-500/30 animate-bounce">
+        <div className="z-10 text-center max-w-sm w-full p-5 sm:p-8 bg-slate-900/90 border border-rose-500/20 rounded-[2rem] sm:rounded-[2.5rem] backdrop-blur-xl shadow-2xl mx-4 relative overflow-y-auto max-h-[85vh] scrollbar-thin animate-in fade-in zoom-in-95 duration-500">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto rounded-2xl bg-gradient-to-tr from-rose-500 to-red-600 flex items-center justify-center text-xl sm:text-3xl mb-4 sm:mb-6 shadow-lg shadow-rose-500/30 animate-bounce">
             <i className="fas fa-skull-crossbones text-white animate-pulse"></i>
           </div>
 
-          <h1 className="text-3xl font-extrabold text-rose-500 mb-2 tracking-tighter uppercase italic">SNAKE CRASHED!</h1>
-          <p className="text-xs text-slate-400 mb-6 font-medium">You smashed head-first into an opponent snake and splayed into cyber energy!</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-rose-500 mb-1 sm:mb-2 tracking-tighter uppercase italic">SNAKE CRASHED!</h1>
+          <p className="text-[11px] sm:text-xs text-slate-400 mb-4 sm:mb-6 font-medium">You smashed head-first into an opponent snake and splayed into cyber energy!</p>
 
-          <div className="bg-slate-950/40 border border-white/5 rounded-2xl p-6 mb-6">
-            <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest block mb-1">Final Score Achieved</span>
-            <p className="text-5xl font-black text-indigo-400 italic tabular-nums mb-4">{score.toLocaleString()}</p>
+          <div className="bg-slate-950/40 border border-white/5 rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6">
+            <span className="text-[9px] sm:text-[10px] font-black uppercase text-slate-500 tracking-widest block mb-1">Final Score Achieved</span>
+            <p className="text-3xl sm:text-5xl font-black text-indigo-400 italic tabular-nums mb-2 sm:mb-4">{score.toLocaleString()}</p>
             
-            <div className="flex items-center justify-between border-t border-white/5 pt-3">
-              <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Your Personal Best</span>
-              <span className="text-sm font-extrabold text-slate-300 tabular-nums">{Math.max(score, highScore).toLocaleString()}</span>
+            <div className="flex items-center justify-between border-t border-white/5 pt-2.5 sm:pt-3">
+              <span className="text-[9px] sm:text-[10px] font-black uppercase text-slate-500 tracking-wider">Your Personal Best</span>
+              <span className="text-xs sm:text-sm font-extrabold text-slate-300 tabular-nums">{Math.max(score, highScore).toLocaleString()}</span>
             </div>
           </div>
 
           <div className="flex flex-col gap-2">
             <button
               onClick={handleStartGame}
-              className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-sm uppercase tracking-wide transition-all active:scale-[0.97]"
+              className="w-full py-3 sm:py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl sm:rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wide transition-all active:scale-[0.97]"
             >
               Re-spawn in Arena
             </button>
@@ -1240,7 +1240,7 @@ export default function SnakeArena({
                 audioService.playClick();
                 setGameState('lobby');
               }}
-              className="w-full py-3 bg-white/5 hover:bg-white/10 text-slate-400 border border-white/5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all"
+              className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-slate-400 border border-white/5 rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest transition-all"
             >
               View Setup Menu
             </button>
