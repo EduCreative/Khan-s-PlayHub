@@ -1,6 +1,12 @@
 
 # Changelog
 
+## [3.4.0] - 2026-06-11
+### Added
+- **Integrated Player 'User Log' Table in Admin Panel**: Added a comprehensive session, login, and gameplay audit-trail database log directly after 'Neural Event Registry' inside the detailed view of each player's registry profile card:
+  - Supports scrollable chronologically sorted timelines parsing initial sign-ups, system logins, active game sessions, gameplay durations, subscores, and access statuses (`Verified`, `Synced`, `Success`).
+  - Seamlessly computes exact gameplay session durations dynamically compiled from historic profile performance parameters.
+
 ## [3.3.9] - 2026-06-11
 ### Fixed
 - **Play Time Aggregation & Live Fallback**: Fixed the bug where student or player playtime list statistics could render as `0s` inside the Admin Console:

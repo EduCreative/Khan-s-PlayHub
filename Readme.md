@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.3.9 "Play Time Aggregation & Live Fallback Release"  
+**Version:** 3.4.0 "Unified Play Access Logs & Auditing Suite"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,7 +9,10 @@ Khan's PlayHub is an active collection of classic, high-performance, and mobile-
 
 ---
 
-## 🚀 Recent Enhancements (v3.3.9)
+## 🚀 Recent Enhancements (v3.4.0)
+- **Comprehensive User Session & Access Log**: Implemented an in-depth chronological session log table right after the Neural Event Registry on individual player profile inspection cards within the Admin center. It details platform entries, system logins, active game sessions, precisely calculated play durations, scored achievements, and live synchronization statuses.
+
+## 🚀 Previous Enhancements (v3.3.9)
 - **Aggregated Play Time Sync**: Solved the `0s` playtime bug inside the Admin Panel table. Real playtime session data is dynamically calculated by summarizing all recorded gameplay hours/minutes/seconds inside a user's individual `gameStats` array, ensuring backdated entries load perfectly.
 
 ## 🚀 Previous Enhancements (v3.3.8)

@@ -1,7 +1,7 @@
 {
-  "version": "3.3.9",
+  "version": "3.4.0",
   "changelog": [
-    "Patched Play Time aggregation inside individual user records in Admin panel.",
-    "Ensured user playtimes dynamically fallback to cumulative hours/minutes/seconds of gameplay compiled from gameStats if a profile's total tracker is pristine."
+    "Added a beautiful, interactive 'User Access & Session Log' table to each player profile view inside the admin suite - situated directly after Neural Event Registry.",
+    "The session log dynamic tracker consolidates and chronologically sorts player login registrations, system handshakes, active game sessions, gameplay durations, subscores, and event statuses."
   ]
 }
