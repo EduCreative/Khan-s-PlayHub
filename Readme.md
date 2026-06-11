@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.3.5 "Zero-Mismatch Release & Synchronized Version Telemetry"  
+**Version:** 3.3.6 "User Chat Moderation Release"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,7 +9,10 @@ Khan's PlayHub is an active collection of classic, high-performance, and mobile-
 
 ---
 
-## 🚀 Recent Enhancements (v3.3.5)
+## 🚀 Recent Enhancements (v3.3.6)
+- **User Chat (Quick Chat) Moderation Tab inside Admin Panel**: Implemented a complete chat log oversight suite under the Admin Console tabs. Allows admins to pull live feeds, apply textual searches, filter statements vs. emojis, make multi-select bulk deletions, and invoke a global chat history wipe with confirmation protection.
+
+## 🚀 Previous Enhancements (v3.3.5)
 - **Top-Left Version and Dynamic Updater Alignment**: Solved the visual version mismatch bug. Replaced the static, deprecated "V3.1.9" tag inside `/index.html`'s layout with "V3.3.5". Re-aligned `App.tsx`'s active constant and `public/version.json` definitions to version 3.3.5, removing false browser-level mismatch warning banners.
 
 ## 🚀 Previous Enhancements (v3.3.4)

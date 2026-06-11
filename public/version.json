@@ -1,7 +1,7 @@
 {
-  "version": "3.3.5",
+  "version": "3.3.6",
   "changelog": [
-    "Fixed the hardcoded v3.1.9 debug-trigger version sitting in the top-left corner of the index.html template.",
-    "Synchronized the client-side CURRENT_VERSION and public/version.json to prevent false Update Available prompts."
+    "Added full, secure User Chat (Quick Chat) Moderation and management suite inside the Admin Panel.",
+    "Provided multi-select bulk deletions, search/filtering of message logs, and a master feed clear command."
   ]
 }

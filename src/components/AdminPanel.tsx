@@ -1,7 +1,9 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { cloud } from '../services/cloud';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
+import { collection, query, getDocs, deleteDoc, doc, orderBy, limit, writeBatch } from 'firebase/firestore';
+import { QuickChat } from '../types';
 import { GAMES } from '../constants';
 import { audioService } from '../services/audioService';
 import { 
@@ -37,13 +39,21 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'games' | 'pwa' | 'migration' | 'system'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'chats' | 'games' | 'pwa' | 'migration' | 'system'>('overview');
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [userScores, setUserScores] = useState<any[]>([]);
   const [loadingUserScores, setLoadingUserScores] = useState(false);
   const [recentScores, setRecentScores] = useState<any[]>([]);
   const [loadingRecentScores, setLoadingRecentScores] = useState(false);
   const [confirmDeleteDeviceId, setConfirmDeleteDeviceId] = useState<string | null>(null);
+
+  // Chat Management state
+  const [quickChats, setQuickChats] = useState<QuickChat[]>([]);
+  const [loadingChats, setLoadingChats] = useState(false);
+  const [chatsSearchText, setChatsSearchText] = useState('');
+  const [chatsTypeFilter, setChatsTypeFilter] = useState<'all' | 'preset' | 'emoji' | 'custom'>('all');
+  const [selectedChatIds, setSelectedChatIds] = useState<string[]>([]);
+  const [showConfirmWipeChats, setShowConfirmWipeChats] = useState(false);
   const [workerUrl, setWorkerUrl] = useState(cloud.getWorkerUrl());
   const [migrationStatus, setMigrationStatus] = useState<{ loading: boolean, result: any | null, error: string | null }>({
     loading: false,
@@ -407,6 +417,95 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
     fetchData();
   }, []);
 
+  // Compute processed chats list (filtered & sorted)
+  const processedChats = useMemo(() => {
+    let filtered = [...quickChats];
+
+    if (chatsSearchText.trim()) {
+      const q = chatsSearchText.toLowerCase();
+      filtered = filtered.filter(chat => 
+        (chat.senderUsername || '').toLowerCase().includes(q) ||
+        (chat.message || '').toLowerCase().includes(q) ||
+        (chat.senderUid || '').toLowerCase().includes(q)
+      );
+    }
+
+    if (chatsTypeFilter !== 'all') {
+      filtered = filtered.filter(chat => chat.type === chatsTypeFilter);
+    }
+
+    return filtered;
+  }, [quickChats, chatsSearchText, chatsTypeFilter]);
+
+  const fetchChats = async () => {
+    try {
+      setLoadingChats(true);
+      const q = query(collection(db, 'quickchats'), orderBy('timestamp', 'desc'), limit(150));
+      const querySnapshot = await getDocs(q);
+      const messages: QuickChat[] = [];
+      querySnapshot.forEach((docSnap) => {
+        messages.push({ id: docSnap.id, ...docSnap.data() } as QuickChat);
+      });
+      setQuickChats(messages);
+    } catch (err: any) {
+      console.error("Error fetching admin chats:", err);
+    } finally {
+      setLoadingChats(false);
+    }
+  };
+
+  // Chats fetching effect
+  useEffect(() => {
+    if (activeTab === 'chats') {
+      fetchChats();
+    }
+  }, [activeTab]);
+
+  const handleDeleteChat = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'quickchats', id));
+      setQuickChats(prev => prev.filter(c => c.id !== id));
+      setSelectedChatIds(prev => prev.filter(cid => cid !== id));
+      audioService.playClick();
+    } catch (err) {
+      console.error("Failed to delete chat message:", err);
+    }
+  };
+
+  const handleBulkDeleteChats = async () => {
+    if (selectedChatIds.length === 0) return;
+    try {
+      const batch = writeBatch(db);
+      selectedChatIds.forEach(id => {
+        batch.delete(doc(db, 'quickchats', id));
+      });
+      await batch.commit();
+      setQuickChats(prev => prev.filter(c => !selectedChatIds.includes(c.id)));
+      setSelectedChatIds([]);
+      audioService.playClick();
+    } catch (err) {
+      console.error("Failed bulk deletion:", err);
+    }
+  };
+
+  const handleWipeAllChats = async () => {
+    try {
+      const q = query(collection(db, 'quickchats'), limit(500));
+      const querySnapshot = await getDocs(q);
+      const batch = writeBatch(db);
+      querySnapshot.forEach((docSnap) => {
+        batch.delete(docSnap.ref);
+      });
+      await batch.commit();
+      setQuickChats([]);
+      setSelectedChatIds([]);
+      setShowConfirmWipeChats(false);
+      audioService.playClick();
+    } catch (err) {
+      console.error("Failed to wipe all quickchats:", err);
+    }
+  };
+
   // Poll recent scores every 15 seconds for the live feed when in overview tab
   useEffect(() => {
     if (activeTab !== 'overview' || loading) return;
@@ -638,7 +737,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
           
           <div className="flex items-center gap-4">
             <div className="flex bg-slate-200 dark:bg-white/5 p-1 rounded-xl border border-slate-300 dark:border-white/10">
-              {(['overview', 'users', 'games', 'pwa', 'migration', 'system'] as const).map(tab => (
+              {(['overview', 'users', 'chats', 'games', 'pwa', 'migration', 'system'] as const).map(tab => (
                 <button
                   key={tab}
                   onClick={() => {
@@ -1814,6 +1913,216 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
               </div>
             )}
 
+            {activeTab === 'chats' && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                {/* Chat Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-card p-6 rounded-3xl border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg">
+                      <i className="fas fa-comments text-lg"></i>
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase italic">User Chats</h3>
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active chat history moderation engine</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      onClick={() => {
+                        audioService.playClick();
+                        if (selectedChatIds.length === processedChats.length && processedChats.length > 0) {
+                          setSelectedChatIds([]);
+                        } else {
+                          setSelectedChatIds(processedChats.map(c => c.id));
+                        }
+                      }}
+                      className="px-4 py-2 text-[10px] rounded-xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 font-bold uppercase tracking-wider"
+                    >
+                      {selectedChatIds.length === processedChats.length && processedChats.length > 0 ? "Deselect All" : "Select All"}
+                    </button>
+                    {selectedChatIds.length > 0 && (
+                      <button
+                        onClick={handleBulkDeleteChats}
+                        className="px-4 py-2 text-[10px] rounded-xl bg-rose-600 text-white font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-rose-600/20 hover:scale-[1.02] active:scale-95 transition-all"
+                      >
+                        <i className="fas fa-trash-alt" />
+                        Delete ({selectedChatIds.length})
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setShowConfirmWipeChats(true)}
+                      className="px-4 py-2 text-[10px] rounded-xl bg-rose-600/10 border border-rose-600/20 text-rose-500 hover:bg-rose-600 hover:text-white font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all"
+                    >
+                      <i className="fas fa-eraser" />
+                      Wipe Logs
+                    </button>
+                  </div>
+                </div>
+
+                {/* Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="relative col-span-2">
+                    <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
+                    <input
+                      type="text"
+                      placeholder="Filter by sender username, message content, or user ID..."
+                      value={chatsSearchText}
+                      onChange={(e) => setChatsSearchText(e.target.value)}
+                      className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl pl-12 pr-6 py-3.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition-all font-bold"
+                    />
+                  </div>
+
+                  <div className="flex gap-3">
+                    <select
+                      value={chatsTypeFilter}
+                      onChange={(e: any) => setChatsTypeFilter(e.target.value)}
+                      className="flex-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 font-bold transition-all"
+                    >
+                      <option value="all">All Message Types</option>
+                      <option value="custom">Custom Text</option>
+                      <option value="preset">Preset Chats</option>
+                      <option value="emoji">Emojis</option>
+                    </select>
+
+                    <button
+                      onClick={() => {
+                        audioService.playClick();
+                        fetchChats();
+                      }}
+                      disabled={loadingChats}
+                      className="px-5 rounded-2xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors flex items-center justify-center shadow-lg shadow-indigo-600/20"
+                      title="Reload chats feed"
+                    >
+                      <i className={`fas fa-sync ${loadingChats ? 'animate-spin' : ''}`}></i>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Chat Feed Table/List */}
+                {loadingChats ? (
+                  <div className="glass-card p-12 rounded-[2.5rem] border-slate-200 dark:border-white/5 flex flex-col items-center justify-center space-y-4">
+                    <i className="fas fa-circle-notch animate-spin text-3xl text-indigo-500" />
+                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest animate-pulse">Syncing chat log streams...</p>
+                  </div>
+                ) : processedChats.length === 0 ? (
+                  <div className="glass-card p-12 rounded-[2.5rem] border-slate-200 dark:border-white/5 text-center">
+                    <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center mx-auto mb-4">
+                      <i className="fas fa-comment-slash text-slate-400" />
+                    </div>
+                    <p className="text-sm font-bold text-slate-500 dark:text-slate-400">No matching chat logs found</p>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Adjust filters or refresh to load newer feeds</p>
+                  </div>
+                ) : (
+                  <div className="glass-card rounded-[2.5rem] border border-slate-200 dark:border-white/5 bg-white/50 dark:bg-slate-900/50 overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="border-b border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+                            <th className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-slate-400 w-12">
+                              <input 
+                                type="checkbox"
+                                checked={selectedChatIds.length === processedChats.length && processedChats.length > 0}
+                                onChange={(e) => {
+                                  audioService.playClick();
+                                  if (e.target.checked) {
+                                    setSelectedChatIds(processedChats.map(c => c.id));
+                                  } else {
+                                    setSelectedChatIds([]);
+                                  }
+                                }}
+                                className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/20 bg-transparent"
+                              />
+                            </th>
+                            <th className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-slate-400">User Profile</th>
+                            <th className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Message Content</th>
+                            <th className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-slate-400 w-32">Type</th>
+                            <th className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Sent Time</th>
+                            <th className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-slate-400 w-24 text-right">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                          {processedChats.map((chat) => {
+                            const isSelected = selectedChatIds.includes(chat.id);
+                            return (
+                              <tr 
+                                key={chat.id} 
+                                className={`hover:bg-slate-100/30 dark:hover:bg-white/[0.01] transition-colors ${isSelected ? 'bg-indigo-500/5' : ''}`}
+                              >
+                                <td className="py-4 px-6">
+                                  <input 
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={(e) => {
+                                      audioService.playClick();
+                                      if (e.target.checked) {
+                                        setSelectedChatIds(prev => [...prev, chat.id]);
+                                      } else {
+                                        setSelectedChatIds(prev => prev.filter(id => id !== chat.id));
+                                      }
+                                    }}
+                                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/20 bg-transparent"
+                                  />
+                                </td>
+                                <td className="py-4 px-6">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-white/10 flex items-center justify-center overflow-hidden">
+                                      {chat.senderAvatar ? (
+                                        <span className="text-base select-none">{chat.senderAvatar}</span>
+                                      ) : (
+                                        <i className="fas fa-user text-slate-400 text-xs" />
+                                      )}
+                                    </div>
+                                    <div>
+                                      <p className="text-xs font-black text-slate-800 dark:text-white">{chat.senderUsername || 'Guest'}</p>
+                                      <p className="text-[9px] font-mono text-slate-400 uppercase tracking-tight max-w-[120px] truncate" title={chat.senderUid}>
+                                        {chat.senderUid}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="py-4 px-6 text-slate-700 dark:text-slate-300">
+                                  <span className="break-all max-w-sm block">
+                                    {chat.message}
+                                  </span>
+                                </td>
+                                <td className="py-4 px-6">
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border ${
+                                    chat.type === 'custom'
+                                      ? 'bg-purple-500/10 text-purple-500 border-purple-500/20'
+                                      : chat.type === 'preset'
+                                      ? 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20'
+                                      : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                  }`}>
+                                    {chat.type || 'custom'}
+                                  </span>
+                                </td>
+                                <td className="py-4 px-6 text-[10px] font-black uppercase text-slate-400 tracking-tight">
+                                  {chat.timestamp ? new Date(chat.timestamp).toLocaleString() : '---'}
+                                </td>
+                                <td className="py-4 px-6 text-right">
+                                  <button
+                                    onClick={() => {
+                                      audioService.playClick();
+                                      handleDeleteChat(chat.id);
+                                    }}
+                                    className="p-1 px-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all"
+                                    title="Delete Message"
+                                  >
+                                    <i className="fas fa-trash-alt" />
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {activeTab === 'migration' && (
               <div className="max-w-2xl mx-auto space-y-8">
                 <div className="glass-card p-8 rounded-[2.5rem] border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5">
@@ -1945,6 +2254,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
           cancelText="Abort"
           onConfirm={() => handleDeleteUser(confirmDeleteDeviceId)}
           onCancel={() => setConfirmDeleteDeviceId(null)}
+        />
+      )}
+
+      {showConfirmWipeChats && (
+        <ConfirmModal 
+          title="Wipe Chat Logs?"
+          message="This action will permanently delete up to 500 active chat messages from the Firestore server. This moderation event cannot be undone."
+          confirmText="Confirm Wipe"
+          cancelText="Abort"
+          onConfirm={handleWipeAllChats}
+          onCancel={() => setShowConfirmWipeChats(false)}
         />
       )}
     </div>

@@ -1,6 +1,14 @@
 
 # Changelog
 
+## [3.3.6] - 2026-06-11
+### Added
+- **User Chat (Quick Chat) Moderation Suite**: Integrated a complete administrative panel section for moderating public quick chat logs from Firestore:
+  - **Dynamic Fetch and Live Synchronizer**: Pull and render up to 150 of the most recent chat events.
+  - **Comprehensive Filters**: Added instant filtering for message source (custom messages vs. preset statements vs. emoji glyphs) and regex search matching (by sender username, message content, or sender UID).
+  - **Multi-Select Bulk Deletions**: Enabled checkable row actions to execute parallel bulk deletions.
+  - **Global Moderation Wipe Command**: Provided a security-audited ledger wipe trigger to scrub the latest transaction records completely, paired with a tactile confirmation safety modal.
+
 ## [3.3.5] - 2026-06-11
 ### Fixed
 - **Synchronized Top-Left Static Version & Dynamic Update Tracker**: Fixed the stale, hardcoded "V3.1.9" tag sitting in the absolute-positioned debug-trigger container of `index.html` by updating it to match the active release. Updated and synchronized the central `package.json`, `App.tsx`, and `public/version.json` references to `v3.3.5`. This prevents false dynamic "Update Available" mismatch pop-ups in client browsers.
