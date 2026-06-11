@@ -374,9 +374,13 @@ class CloudService {
           }
         });
 
+        const computedPlayTimeSum = Object.values(gameStats || {}).reduce((sum: number, stat: any) => sum + (Number(stat.timeSpent) || 0), 0);
+        const finalPlayTime = Math.max(Number(user.playTime) || 0, computedPlayTimeSum);
+
         return {
           ...user,
-          gameStats
+          gameStats,
+          playTime: finalPlayTime
         };
       });
 
@@ -395,6 +399,8 @@ class CloudService {
             };
           });
 
+          const computedPlayTimeSum = Object.values(gameStats || {}).reduce((sum: number, stat: any) => sum + (Number(stat.timeSpent) || 0), 0);
+
           reconciledUsers.push({
             deviceId,
             username: sample.username || 'Anonymous',
@@ -403,7 +409,8 @@ class CloudService {
             bio: 'Scores reconciled from raw gaming database',
             favorites: [],
             achievements: [],
-            gameStats
+            gameStats,
+            playTime: computedPlayTimeSum
           });
         }
       });

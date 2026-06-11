@@ -1,7 +1,7 @@
 {
-  "version": "3.3.8",
+  "version": "3.3.9",
   "changelog": [
-    "Removed Preset Signals from live Chat, leaving exclusively Emojis and Custom live typing.",
-    "Verified live Chat syncing, Firestore integration and reactive updates inside the Admin Panel moderation feeds."
+    "Patched Play Time aggregation inside individual user records in Admin panel.",
+    "Ensured user playtimes dynamically fallback to cumulative hours/minutes/seconds of gameplay compiled from gameStats if a profile's total tracker is pristine."
   ]
 }

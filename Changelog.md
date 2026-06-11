@@ -1,7 +1,11 @@
 
 # Changelog
 
-## [3.3.8] - 2026-06-11
+## [3.3.9] - 2026-06-11
+### Fixed
+- **Play Time Aggregation & Live Fallback**: Fixed the bug where student or player playtime list statistics could render as `0s` inside the Admin Console:
+  - Augmented user loading inside both `getAdminUsers()` (central backend layer) and `processedUsers` (admin panel view memoization filter) to dynamically summarize playtime accumulation across individual custom game sessions stored in `gameStats` on demand.
+  - Ensures seamless fallback data for all legacy or pristine profile records without explicit root duration attributes.
 ### Removed
 - **Preset Message Signals**: Removed the premade quick preset chat statements from the live chat console interface, leaving exclusively tactile Emojis and free-typing Custom messaging triggers.
 

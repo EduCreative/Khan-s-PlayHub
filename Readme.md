@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.3.8 "Clean Chat & Live Moderation Sync"  
+**Version:** 3.3.9 "Play Time Aggregation & Live Fallback Release"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,7 +9,10 @@ Khan's PlayHub is an active collection of classic, high-performance, and mobile-
 
 ---
 
-## 🚀 Recent Enhancements (v3.3.8)
+## 🚀 Recent Enhancements (v3.3.9)
+- **Aggregated Play Time Sync**: Solved the `0s` playtime bug inside the Admin Panel table. Real playtime session data is dynamically calculated by summarizing all recorded gameplay hours/minutes/seconds inside a user's individual `gameStats` array, ensuring backdated entries load perfectly.
+
+## 🚀 Previous Enhancements (v3.3.8)
 - **Refined Chat Interface**: Removed redundant preset text messages from the floating live chat drawer, letting users communicate cleanly via interactive emoji outbursts and custom text broadcasts.
 - **Audited Connection Sync**: Rigorously verified the bidirectional flow of Firestore chat updates, ensuring full real-time synchronicity and instant visibility inside the Admin Panel Moderation View.
 

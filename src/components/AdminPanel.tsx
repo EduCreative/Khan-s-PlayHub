@@ -141,7 +141,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
 
   // Compute processed users list (filtered & sorted)
   const processedUsers = useMemo(() => {
-    let filtered = [...users];
+    let filtered = users.map(u => {
+      const statsPlayTime = Object.values(u.gameStats || {}).reduce((sum: number, stat: any) => sum + (Number(stat.timeSpent) || 0), 0);
+      return {
+        ...u,
+        playTime: Math.max(Number(u.playTime) || 0, statsPlayTime)
+      };
+    });
 
     if (userSearchText.trim()) {
       const q = userSearchText.toLowerCase();
