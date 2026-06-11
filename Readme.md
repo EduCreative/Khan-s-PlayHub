@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.2.1 "Neural Telemetry & Global Distribution Curves"  
+**Version:** 3.2.3 "Neural Telemetry & Standardized Long-Polling"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,7 +9,15 @@ Khan's PlayHub is an active collection of classic, high-performance, and mobile-
 
 ---
 
-## 🚀 Recent Enhancements (v3.2.1)
+## 🚀 Recent Enhancements (v3.2.3)
+- **Resolved mutually exclusive Firestore options conflict**: Stopped passing both `experimentalForceLongPolling` and `experimentalAutoDetectLongPolling` as `true` simultaneously, fixing the startup error in the sandbox preview while maintaining stable force-long-polling capabilities.
+
+## 🚀 Previous Enhancements (v3.2.2)
+- **Firestore Connection Auto-Detect & Exponential Retry Backoff**: Resolved the 10-second WebSocket connection timeouts within the sandboxed preview environment.
+  - **Connection Auto-Detect**: Bypassed delayed WebSocket connection blocks and handshaked immediately over long-polling.
+  - **Resilient Connection Test**: Added a 3-stage exponential retry backoff in `testConnection()` to prevent early false-positive warning logging.
+
+## 🚀 Previous Enhancements (v3.2.1)
 - **Analytical "Global Leaderboard" Trends Dashboard**: Added an advanced, fully interactive Recharts analytical tab inside the platform Hub.
   - **Cognitive Silhouette Radar**: Normalizes user category averages against global player records.
   - **Bell Curve Concentration Curve**: Plots a smooth, animated area curve of player scores with an interactive "YOU ARE HERE" indicator.

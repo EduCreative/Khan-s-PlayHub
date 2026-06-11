@@ -1,6 +1,16 @@
 
 # Changelog
 
+## [3.2.3] - 2026-06-11
+### Fixed
+- **Firestore Parameter Conflict Fix**: Removed the mutually exclusive configuration where `experimentalForceLongPolling` and `experimentalAutoDetectLongPolling` were both set to `true`, resolving the `Uncaught FirebaseError` crash on application startup.
+
+## [3.2.2] - 2026-06-11
+### Fixed
+- **Firestore Connection Timeout Fix**: Resolved active 10-second WebSocket connection delays and backend flakiness inside the sandboxed preview environment:
+  - Enabled long polling during Firestore initialization to bypass sandbox security blocks.
+  - Re-implemented the `testConnection()` sequence to utilize a robust 3-stage exponential retry backoff, preventing early false-positive configuration warnings during initialization.
+
 ## [3.2.1] - 2026-06-10
 ### Added
 - **Global Leaderboard Trends view**: Developed an analytical "Global Leaderboard" sub-view powered by Recharts. It features:

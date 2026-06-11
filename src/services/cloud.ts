@@ -100,11 +100,27 @@ class CloudService {
   }
 
   private async testConnection() {
-    try {
-      await getDocFromServer(doc(db, 'test', 'connection'));
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('the client is offline')) {
-        console.error("Please check your Firebase configuration. ");
+    let retries = 3;
+    let delay = 1000;
+    
+    while (retries > 0) {
+      try {
+        await getDocFromServer(doc(db, 'test', 'connection'));
+        console.log("Firebase connection established successfully.");
+        return; // Success
+      } catch (error) {
+        retries--;
+        if (retries === 0) {
+          if (error instanceof Error && (error.message.includes('the client is offline') || error.message.includes('offline'))) {
+            console.error("Please check your Firebase configuration. ");
+          } else {
+            console.warn("Firebase connection test finished (operating in offline/local fallback mode).");
+          }
+        } else {
+          // Wait and retry
+          await new Promise(resolve => setTimeout(resolve, delay));
+          delay *= 1.5;
+        }
       }
     }
   }
