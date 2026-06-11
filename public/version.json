@@ -1,7 +1,7 @@
 {
-  "version": "3.3.7",
+  "version": "3.3.8",
   "changelog": [
-    "Added absolute database Rank column before the Player column inside the Admin Panel > Users list.",
-    "Fixed live 'Play Time' tracking engine: streamlined activeGame relative timing hooks to accurately accrue gaming session durations securely on game-exits."
+    "Removed Preset Signals from live Chat, leaving exclusively Emojis and Custom live typing.",
+    "Verified live Chat syncing, Firestore integration and reactive updates inside the Admin Panel moderation feeds."
   ]
 }

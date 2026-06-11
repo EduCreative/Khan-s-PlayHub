@@ -1,6 +1,13 @@
 
 # Changelog
 
+## [3.3.8] - 2026-06-11
+### Removed
+- **Preset Message Signals**: Removed the premade quick preset chat statements from the live chat console interface, leaving exclusively tactile Emojis and free-typing Custom messaging triggers.
+
+### Verified
+- **Chat Synchronization**: Audited all Firestore syncing streams, secure reactive updates, and real-time moderator rendering inside the Admin Dashboard Chat view to guarantee instantaneous sync and zero log friction.
+
 ## [3.3.7] - 2026-06-11
 ### Added
 - **Dynamic Leaderboard Rank Column**: Integrated an absolute user scorecard Rank column before the Player column in Admin Panel > Users list. Features stylish, high-contrast visual status badges designed with custom themes for the top three leaderboard performers.

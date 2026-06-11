@@ -2010,7 +2010,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                     >
                       <option value="all">All Message Types</option>
                       <option value="custom">Custom Text</option>
-                      <option value="preset">Preset Chats</option>
+                      <option value="preset">Preset Chats (Legacy)</option>
                       <option value="emoji">Emojis</option>
                     </select>
 

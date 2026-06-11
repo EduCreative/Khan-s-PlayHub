@@ -11,15 +11,6 @@ interface TactileQuickChatProps {
   isDarkMode: boolean;
 }
 
-const PRESET_MESSAGES = [
-  "Let's play and train! 🧠",
-  "Beat my high score! 🎯",
-  "Just ranked up! 👑",
-  "Focus mode: MAX! ⚡",
-  "GG! Outstanding! 🕹️",
-  "Join my challenge! 🔥"
-];
-
 const PRESET_EMOJIS = [
   "🧠", "🎮", "⚡", "🏆", "🔥", "🎯", "👑", "🚀", "👍", "🙌"
 ];
@@ -148,7 +139,7 @@ export const TactileQuickChat: React.FC<TactileQuickChatProps> = ({ userProfile,
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.92 }}
             transition={{ type: "spring", stiffness: 350, damping: 25 }}
-            className="w-[calc(100vw-3rem)] sm:w-[380px] h-[520px] bg-slate-950/95 dark:bg-slate-950/98 backdrop-blur-2xl border-2 border-indigo-500/30 rounded-[2rem] shadow-[0_0_50px_rgba(99,102,241,0.25)] flex flex-col overflow-hidden mb-4 relative"
+            className="w-[calc(100vw-3rem)] sm:w-[380px] h-[480px] bg-slate-950/95 dark:bg-slate-950/98 backdrop-blur-2xl border-2 border-indigo-500/30 rounded-[2rem] shadow-[0_0_50px_rgba(99,102,241,0.25)] flex flex-col overflow-hidden mb-4 relative"
           >
             {/* Header */}
             <div className="p-5 border-b border-indigo-500/10 flex items-center justify-between bg-gradient-to-r from-indigo-950/30 via-transparent to-transparent">
@@ -191,7 +182,7 @@ export const TactileQuickChat: React.FC<TactileQuickChatProps> = ({ userProfile,
                   <div className="h-full flex flex-col items-center justify-center text-center text-slate-600 p-6">
                     <MessageSquare className="w-8 h-8 opacity-20 mb-2 animate-bounce" />
                     <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400/50">No signals logged yet</p>
-                    <p className="text-[9px] mt-1">Tap a reaction preset below to initiate contact!</p>
+                    <p className="text-[9px] mt-1">Type a message or send an emoji to start chatting!</p>
                   </div>
                 ) : (
                   chats.map((chat) => (
@@ -248,25 +239,6 @@ export const TactileQuickChat: React.FC<TactileQuickChatProps> = ({ userProfile,
                     {emoji}
                   </button>
                 ))}
-              </div>
-
-              {/* Quick Preset sentences */}
-              <div>
-                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">
-                  ⚡ Preset Signals
-                </span>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {PRESET_MESSAGES.map((preset, index) => (
-                    <button
-                      key={index}
-                      onClick={() => sendQuickChat(preset, 'preset')}
-                      disabled={isSending}
-                      className="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-indigo-600 hover:text-white border border-white/5 text-left text-[9px] font-bold text-slate-300 transition-all active:scale-95 duration-150 truncate"
-                    >
-                      {preset}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {/* Custom Classic Box Input */}

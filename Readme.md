@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.3.7 "Dynamic Ranking & Absolute Play Time Track"  
+**Version:** 3.3.8 "Clean Chat & Live Moderation Sync"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,7 +9,11 @@ Khan's PlayHub is an active collection of classic, high-performance, and mobile-
 
 ---
 
-## 🚀 Recent Enhancements (v3.3.7)
+## 🚀 Recent Enhancements (v3.3.8)
+- **Refined Chat Interface**: Removed redundant preset text messages from the floating live chat drawer, letting users communicate cleanly via interactive emoji outbursts and custom text broadcasts.
+- **Audited Connection Sync**: Rigorously verified the bidirectional flow of Firestore chat updates, ensuring full real-time synchronicity and instant visibility inside the Admin Panel Moderation View.
+
+## 🚀 Previous Enhancements (v3.3.7)
 - **Absolute Leaderboard Rank Badge Column**: Added a sleek and modern rank designation before the Player column inside the Admin Panel. Celebrates top users with styled custom gold, silver, and bronze badges.
 - **Robust Play Time Tracking Engine**: Completely fixed the background duration calculation hook upon shutting down active games, solving the issue of 0s records.
 
