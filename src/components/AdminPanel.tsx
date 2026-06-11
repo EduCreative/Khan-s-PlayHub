@@ -124,6 +124,21 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
     });
   }, [users]);
 
+  // Compute absolute dynamic ranks based on total score of all users
+  const playerRanks = useMemo(() => {
+    const sortedByScore = [...users].sort((a, b) => {
+      const scoreA = Object.values(a.gameStats || {}).reduce((acc: number, stat: any) => acc + (stat.highScore || 0), 0);
+      const scoreB = Object.values(b.gameStats || {}).reduce((acc: number, stat: any) => acc + (stat.highScore || 0), 0);
+      return scoreB - scoreA;
+    });
+
+    const ranks: Record<string, number> = {};
+    sortedByScore.forEach((user, idx) => {
+      ranks[user.deviceId] = idx + 1;
+    });
+    return ranks;
+  }, [users]);
+
   // Compute processed users list (filtered & sorted)
   const processedUsers = useMemo(() => {
     let filtered = [...users];
@@ -1262,6 +1277,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                         {cleanupMode && (
                           <th className="p-8 w-12 text-center select-none text-slate-450 font-bold">Select</th>
                         )}
+                        <th className="p-8 w-16 text-center select-none text-slate-400 font-bold">Rank</th>
                         <th 
                           className="p-8 cursor-pointer select-none hover:text-indigo-500 transition-colors" 
                           onClick={() => toggleUserSort('username')}
@@ -1309,7 +1325,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                     <tbody className="text-sm">
                       {processedUsers.length === 0 ? (
                         <tr>
-                          <td colSpan={cleanupMode ? 8 : 7} className="p-20 text-center text-slate-500 font-medium italic">No players found match the criteria.</td>
+                          <td colSpan={cleanupMode ? 9 : 8} className="p-20 text-center text-slate-500 font-medium italic">No players found match the criteria.</td>
                         </tr>
                       ) : (
                         processedUsers.map((user) => (
@@ -1348,6 +1364,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                                 />
                               </td>
                             )}
+                            <td className="p-8 text-center select-none" onClick={(e) => e.stopPropagation()}>
+                              <span className={`inline-flex items-center justify-center w-8 h-8 rounded-xl text-[10px] font-black ${
+                                playerRanks[user.deviceId] === 1
+                                  ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
+                                  : playerRanks[user.deviceId] === 2
+                                  ? 'bg-slate-300/20 text-slate-400 border border-slate-300/10'
+                                  : playerRanks[user.deviceId] === 3
+                                  ? 'bg-amber-700/10 text-amber-700 border border-amber-700/20'
+                                  : 'bg-slate-100/30 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 text-slate-500 dark:text-slate-450'
+                              }`}>
+                                #{playerRanks[user.deviceId]}
+                              </span>
+                            </td>
                             <td className="p-8">
                               <div className="flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-xl bg-indigo-600/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">

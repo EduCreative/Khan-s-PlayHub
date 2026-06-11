@@ -26,7 +26,8 @@ const DEFAULT_PROFILE: UserProfile = {
   joinedAt: Date.now(),
   bio: 'Elite Player',
   favorites: [],
-  achievements: []
+  achievements: [],
+  playTime: 0
 };
 
 const App: React.FC = () => {
@@ -35,6 +36,7 @@ const App: React.FC = () => {
   const [quotaExceeded, setQuotaExceeded] = useState(false);
   const lastSyncRef = useRef<Record<string, any>>({});
   const gameStartTimeRef = useRef<number | null>(null);
+  const activeGameIdRef = useRef<string | null>(null);
 
   const isLocalStorageAvailable = React.useMemo(() => {
     try {
@@ -99,7 +101,7 @@ const App: React.FC = () => {
                      (user?.uid === 'v2swNDzVnegsJNo5eNEiLYv6ZYi2') ||
                      (userProfile.role === 'admin');
 
-  const CURRENT_VERSION = '3.3.6';
+  const CURRENT_VERSION = '3.3.7';
 
   // PWA Install Prompt
   useEffect(() => {
@@ -522,13 +524,15 @@ const App: React.FC = () => {
   useEffect(() => {
     if (activeGame) {
       gameStartTimeRef.current = Date.now();
-    } else if (gameStartTimeRef.current) {
+      activeGameIdRef.current = activeGame.id;
+    } else if (gameStartTimeRef.current && activeGameIdRef.current) {
       const endTime = Date.now();
       const durationSeconds = Math.floor((endTime - gameStartTimeRef.current) / 1000);
       gameStartTimeRef.current = null;
+      const gameId = activeGameIdRef.current;
+      activeGameIdRef.current = null;
 
-      if (durationSeconds > 1 && lastSyncRef.current['lastGameId']) {
-        const gameId = lastSyncRef.current['lastGameId'];
+      if (durationSeconds > 1) {
         setUserProfile(prev => {
           const stats = prev.gameStats || {};
           const gameStat = stats[gameId] || { timeSpent: 0, sessions: 0, lastPlayed: 0, highScore: 0 };

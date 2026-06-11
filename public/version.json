@@ -1,7 +1,7 @@
 {
-  "version": "3.3.6",
+  "version": "3.3.7",
   "changelog": [
-    "Added full, secure User Chat (Quick Chat) Moderation and management suite inside the Admin Panel.",
-    "Provided multi-select bulk deletions, search/filtering of message logs, and a master feed clear command."
+    "Added absolute database Rank column before the Player column inside the Admin Panel > Users list.",
+    "Fixed live 'Play Time' tracking engine: streamlined activeGame relative timing hooks to accurately accrue gaming session durations securely on game-exits."
   ]
 }

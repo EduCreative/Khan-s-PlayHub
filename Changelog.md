@@ -1,6 +1,13 @@
 
 # Changelog
 
+## [3.3.7] - 2026-06-11
+### Added
+- **Dynamic Leaderboard Rank Column**: Integrated an absolute user scorecard Rank column before the Player column in Admin Panel > Users list. Features stylish, high-contrast visual status badges designed with custom themes for the top three leaderboard performers.
+
+### Fixed
+- **Play Time Session Tracking Engine**: Patched the gameplay tracking useEffect hook by establishing a persistent activeGameId reference. Duration calculation now correctly triggers upon game exit to reliably increments and sync player playtime, addressing the issue where it previously remained stuck at 0s.
+
 ## [3.3.6] - 2026-06-11
 ### Added
 - **User Chat (Quick Chat) Moderation Suite**: Integrated a complete administrative panel section for moderating public quick chat logs from Firestore:
