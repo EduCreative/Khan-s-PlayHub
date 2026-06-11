@@ -1,8 +1,7 @@
 {
-  "version": "3.3.4",
+  "version": "3.3.5",
   "changelog": [
-    "Re-engineered Quick Chat into a sleek bottom-left floating cyberpunk bubble.",
-    "Completely filtered out non-critical sandboxed Firestore connection warning logs and unhandled rejections.",
-    "Integrated native persistentLocalCache and dual-promise 2-second timeout race prevent sandboxed iframe stalls."
+    "Fixed the hardcoded v3.1.9 debug-trigger version sitting in the top-left corner of the index.html template.",
+    "Synchronized the client-side CURRENT_VERSION and public/version.json to prevent false Update Available prompts."
   ]
 }

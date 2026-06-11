@@ -1,6 +1,10 @@
 
 # Changelog
 
+## [3.3.5] - 2026-06-11
+### Fixed
+- **Synchronized Top-Left Static Version & Dynamic Update Tracker**: Fixed the stale, hardcoded "V3.1.9" tag sitting in the absolute-positioned debug-trigger container of `index.html` by updating it to match the active release. Updated and synchronized the central `package.json`, `App.tsx`, and `public/version.json` references to `v3.3.5`. This prevents false dynamic "Update Available" mismatch pop-ups in client browsers.
+
 ## [3.3.4] - 2026-06-11
 ### Fixed
 - **Deep-Vapor Log Filter & Unhandled Rejection Suppression**: Added a custom, highly responsive console logger filter and a global `unhandledrejection` listener inside `/src/index.tsx`. This intercepts and silently filters out non-critical sandboxed Firestore timeout notices, ensuring diagnostic logging tools run perfectly clean while native offline local persistence synchronizes in the background.
