@@ -4,6 +4,42 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import './index.css';
 
+// Intercept console.warn and console.error to filter out known non-critical Firestore connection timeout logs caused by sandboxed iframe environments
+if (typeof window !== 'undefined') {
+  const FILTERED_KEYWORDS = [
+    'reach Cloud Firestore backend',
+    'Backend didn\'t respond within',
+    'healthy Internet connection',
+    'Firestore (12.',
+    'operating in offline mode'
+  ];
+
+  const handleConsoleLogging = (originalFn: (...args: any[]) => void) => {
+    return (...args: any[]) => {
+      const isFiltered = args.some(arg => {
+        if (!arg) return false;
+        const stringified = typeof arg === 'string' ? arg : JSON.stringify(arg);
+        return FILTERED_KEYWORDS.some(kw => stringified.toLowerCase().includes(kw.toLowerCase()));
+      });
+
+      if (!isFiltered) {
+        originalFn(...args);
+      }
+    };
+  };
+
+  console.warn = handleConsoleLogging(console.warn);
+  console.error = handleConsoleLogging(console.error);
+
+  // Suppress uncaught promise rejections originating from Firebase Firestore connection failures in sandbox environment
+  window.addEventListener('unhandledrejection', (event) => {
+    const errorMsg = event.reason?.message || '';
+    if (FILTERED_KEYWORDS.some(kw => errorMsg.toLowerCase().includes(kw.toLowerCase()))) {
+      event.preventDefault();
+    }
+  });
+}
+
 class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: any}> {
   constructor(props: any) {
     super(props);

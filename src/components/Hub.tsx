@@ -6,6 +6,7 @@ import Logo from './Logo';
 import Leaderboard from './Leaderboard';
 import VisualLeaderboard from './VisualLeaderboard';
 import GlobalLeaderboard from './GlobalLeaderboard';
+import { TactileQuickChat } from './TactileQuickChat';
 import { User } from 'firebase/auth';
 
 import { audioService } from '../services/audioService';
@@ -379,7 +380,7 @@ const Hub: React.FC<HubProps> = ({
             className="px-6 py-2 glass-card border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 cursor-pointer hover:bg-indigo-500/5 transition-all select-none"
           >
             <span className={`w-1.5 h-1.5 rounded-full animate-ping ${syncStatus === 'synced' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-            PlayHub Cloud Protocol Enabled v3.1.9
+            PlayHub Cloud Protocol Enabled v3.3.4
           </span>
           <button onClick={handleAdminClick} className="text-[9px] font-bold text-slate-500/60 hover:text-indigo-500 transition-colors uppercase tracking-widest mt-2">
              <i className="fas fa-terminal mr-2"></i> Access Admin Console
@@ -389,6 +390,7 @@ const Hub: React.FC<HubProps> = ({
           </button>
         </div>
       </footer>
+      <TactileQuickChat userProfile={userProfile} isDarkMode={isDarkMode} />
     </div>
   );
 };

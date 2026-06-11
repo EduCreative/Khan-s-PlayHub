@@ -46,6 +46,21 @@
         "bestChallengerName": { "type": "string", "description": "Username of best challenger" }
       },
       "required": ["id", "gameId", "creatorUid", "creatorUsername", "creatorAvatar", "targetScore", "createdAt"]
+    },
+    "QuickChat": {
+      "title": "QuickChat",
+      "description": "Tactile real-time action preset and reaction messages sent across active players",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Chat unique identifier" },
+        "senderUid": { "type": "string", "description": "Sender User ID" },
+        "senderUsername": { "type": "string", "description": "Username of sender" },
+        "senderAvatar": { "type": "string", "description": "Sender avatar class" },
+        "message": { "type": "string", "description": "Quick check or emoji content" },
+        "timestamp": { "type": "number", "description": "Time the message was sent" },
+        "type": { "type": "string", "enum": ["preset", "emoji", "custom"], "description": "The category of Quick Chat" }
+      },
+      "required": ["id", "senderUid", "senderUsername", "senderAvatar", "message", "timestamp", "type"]
     }
   },
   "firestore": {
@@ -60,6 +75,10 @@
     "/challenges/{challengeId}": {
       "schema": "Challenge",
       "description": "Challenges sent to beat high scores"
+    },
+    "/quickchats/{chatId}": {
+      "schema": "QuickChat",
+      "description": "Real-time high-fives and reactions on the main dashboard"
     }
   }
 }

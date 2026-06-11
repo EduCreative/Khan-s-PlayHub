@@ -87,6 +87,17 @@ service cloud.firestore {
              (!('bestChallengerName' in data) || data.bestChallengerName is string);
     }
 
+    function isValidQuickChat(data) {
+      return data.keys().hasAll(['id', 'senderUid', 'senderUsername', 'senderAvatar', 'message', 'timestamp', 'type']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.senderUid is string && data.senderUid == request.auth.uid &&
+             data.senderUsername is string && data.senderUsername.size() >= 1 && data.senderUsername.size() <= 100 &&
+             data.senderAvatar is string && data.senderAvatar.size() <= 100 &&
+             data.message is string && data.message.size() >= 1 && data.message.size() <= 100 &&
+             data.timestamp is number &&
+             data.type is string && (data.type == 'preset' || data.type == 'emoji' || data.type == 'custom');
+    }
+
     match /profiles/{userId} {
       // Admins can read (get/list) any profile. Owners can read their own.
       allow read: if isAdmin() || isOwner(userId);
@@ -141,6 +152,22 @@ service cloud.firestore {
                     );
                     
       allow delete: if isAdmin();
+    }
+
+    match /quickchats/{chatId} {
+      // Allow synchronized real-time read access to active quick chats for logged-in players
+      allow read: if isAuthenticated();
+      
+      // Allow creation of real-time reactions and high-fives by physical auth profile holder
+      allow create: if isAuthenticated() &&
+                    request.resource.data.senderUid == request.auth.uid &&
+                    isValidQuickChat(request.resource.data);
+                    
+      // Quick chats are immutable once sent
+      allow update: if false;
+      
+      // Admins can delete, or users can clean up their own chats
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.senderUid == request.auth.uid);
     }
 
     // Default deny

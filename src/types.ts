@@ -73,3 +73,13 @@ export interface Challenge {
   bestChallengerName?: string;
 }
 
+export interface QuickChat {
+  id: string;
+  senderUid: string;
+  senderUsername: string;
+  senderAvatar: string;
+  message: string;
+  timestamp: number;
+  type: 'preset' | 'emoji' | 'custom';
+}
+

@@ -105,14 +105,20 @@ class CloudService {
     
     while (retries > 0) {
       try {
-        await getDocFromServer(doc(db, 'test', 'connection'));
+        // Run getDocFromServer with a 2-second timeout race to prevent long stalling in offline/sandboxed environments
+        const connectionPromise = getDocFromServer(doc(db, 'test', 'connection'));
+        const timeoutPromise = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Connection test timed out')), 2000)
+        );
+        
+        await Promise.race([connectionPromise, timeoutPromise]);
         console.log("Firebase connection established successfully.");
         return; // Success
       } catch (error) {
         retries--;
         if (retries === 0) {
-          if (error instanceof Error && (error.message.includes('the client is offline') || error.message.includes('offline'))) {
-            console.error("Please check your Firebase configuration. ");
+          if (error instanceof Error && (error.message.includes('the client is offline') || error.message.includes('offline') || error.message.includes('timeout'))) {
+            console.warn("Firebase connection test finished (operating in offline/local fallback mode due to offline status or timeout).");
           } else {
             console.warn("Firebase connection test finished (operating in offline/local fallback mode).");
           }
