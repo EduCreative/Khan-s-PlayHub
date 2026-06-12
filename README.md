@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.4.0 "Unified Play Access Logs & Auditing Suite"  
+**Version:** 3.4.1 "Snake Arena Intelligent Adversaries & Vibrant Grid Update"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,7 +9,13 @@ Khan's PlayHub is an active collection of classic, high-performance, and mobile-
 
 ---
 
-## 🚀 Recent Enhancements (v3.4.0)
+## 🚀 Recent Enhancements (v3.4.1)
+- **Vibrant Energy Dots**: Expanded the food grid dot palettes to load multiple extra brilliant neon colors (like chartreuse, spring green, fuchsia, electric cyan) with expanded dot densities scaling elegantly across selected difficulty settings.
+- **Armored Enemy Snakes**: Replaced fixed static AI snake initializations with dynamically variable random length boundaries scaling from 4 up to 18 segments total based on chosen arena challenges.
+- **Player-Targeting Cyber Hunters**: Integrated active hunter-tracking state AI. Dangerous tracker snakes are colored with unique, menacing neon red heads and pulsing crimson bodies that actively hone in and speed boost towards the player coordinates to cut them off.
+- **Difficulty Scaled Hostile Fleets**: Reconfigured open arena bot populations and attacker thresholds directly matching Easy, Medium, and Hard selections to scale dynamic difficulty curves naturally.
+
+## 🚀 Previous Enhancements (v3.4.0)
 - **Comprehensive User Session & Access Log**: Implemented an in-depth chronological session log table right after the Neural Event Registry on individual player profile inspection cards within the Admin center. It details platform entries, system logins, active game sessions, precisely calculated play durations, scored achievements, and live synchronization statuses.
 
 ## 🚀 Previous Enhancements (v3.3.9)

@@ -36,6 +36,7 @@ interface Snake {
   isBoosting: boolean;
   pulseTimer: number;
   isDead: boolean;
+  isAttacker?: boolean;
 }
 
 interface Food {
@@ -71,7 +72,17 @@ const FOOD_COLORS = [
   '#fbbf24', // amber
   '#34d399', // emerald
   '#fb923c', // orange
-  '#f472b6'  // pink
+  '#f472b6', // pink
+  '#ff007f', // neon pinkish magenta
+  '#39ff14', // neon fluorescent green
+  '#00ffff', // neon electric cyan
+  '#ff00ff', // fuchsia
+  '#ffff00', // bright yellow
+  '#7fff00', // chartreuse
+  '#00fa9a', // medium spring green
+  '#00bfff', // deep sky blue
+  '#ff1493', // deep pink
+  '#adff2f'  // green yellow
 ];
 
 type Difficulty = 'easy' | 'medium' | 'hard';
@@ -190,14 +201,17 @@ export default function SnakeArena({
   const initializeGame = () => {
     const diff = difficultyRef.current;
     
-    // Config values based on difficulty: only show 2/3 enemy snakes
-    let botCount = 2;
+    // Config values based on difficulty: number of bots and attackers increase with difficulty
+    let botCount = 7;
+    let attackerCount = 2;
     let playerStartLength = 6;
     if (diff === 'easy') {
-      botCount = 2;
+      botCount = 4;
+      attackerCount = 1;
       playerStartLength = 8;
     } else if (diff === 'hard') {
-      botCount = 3;
+      botCount = 10;
+      attackerCount = 4;
       playerStartLength = 5;
     }
 
@@ -248,12 +262,35 @@ export default function SnakeArena({
     // Create AI snakes
     const botsList: Snake[] = [];
     for (let i = 0; i < botCount; i++) {
-      const name = BOT_NAMES[i % BOT_NAMES.length];
-      const botColor = BOT_COLORS[i % BOT_COLORS.length];
+      const isAttacker = i < attackerCount;
+      let name = '';
+      let color = '';
+      let headColor = '';
+
+      if (isAttacker) {
+        const attackerNames = ['RED_STALKER', 'STEALTH_VIPER', 'TERROR_HISS', 'BLOOD_REAPER', 'NIGHTMARE_BOT', 'CRIMSON_FANG'];
+        name = attackerNames[i % attackerNames.length];
+        color = '#ef4444'; // dangerous neon red
+        headColor = '#f87171'; // lighter red warning head
+      } else {
+        name = BOT_NAMES[i % BOT_NAMES.length];
+        const botColor = BOT_COLORS[i % BOT_COLORS.length];
+        color = botColor.body;
+        headColor = botColor.head;
+      }
+
       const rx = Math.random() * ARENA_SIZE;
       const ry = Math.random() * ARENA_SIZE;
       const rAngle = Math.random() * Math.PI * 2;
-      const botLength = diff === 'easy' ? 5 : diff === 'medium' ? 6 : 7;
+
+      // Random length as explicitly requested
+      let minLen = 5;
+      let maxLen = 12;
+      if (diff === 'easy') { minLen = 4; maxLen = 8; }
+      else if (diff === 'medium') { minLen = 6; maxLen = 13; }
+      else { minLen = 8; maxLen = 18; }
+      const botLength = Math.floor(Math.random() * (maxLen - minLen + 1)) + minLen;
+
       const botSpeed = diff === 'easy' ? 1.8 : diff === 'medium' ? 2.8 : 3.8;
 
       const botHist: Position[] = [];
@@ -276,8 +313,8 @@ export default function SnakeArena({
         isPlayer: false,
         x: rx,
         y: ry,
-        color: botColor.body,
-        headColor: botColor.head,
+        color,
+        headColor,
         segments: botSegs,
         trailHistory: botHist,
         angle: rAngle,
@@ -287,13 +324,14 @@ export default function SnakeArena({
         size: 12,
         isBoosting: false,
         pulseTimer: Math.random() * 100,
-        isDead: false
+        isDead: false,
+        isAttacker
       });
     }
 
-    // Spawn rich random foods across the arena: keep it to small colorful objects with fewer counts
+    // Spawn more colorful foods across the arena
     const foodsList: Food[] = [];
-    const startingFoodCount = diff === 'easy' ? 45 : diff === 'medium' ? 40 : 35;
+    const startingFoodCount = diff === 'easy' ? 70 : diff === 'medium' ? 100 : 130;
     for (let f = 0; f < startingFoodCount; f++) {
       foodsList.push({
         x: Math.random() * ARENA_SIZE,
@@ -518,14 +556,45 @@ export default function SnakeArena({
             });
           });
 
-          // Priority B: Hunt closest foods
+          // Priority B: Attack player if bot is an attacker and player is alive and inside range
+          let isAttackingPlayer = false;
+          let playerTargetX = 0;
+          let playerTargetY = 0;
+
+          if (!evasiveAction && bot.isAttacker && player && !player.isDead) {
+            const playerCoords = getWrappedOffsetCoordinates(player.segments[0].x, player.segments[0].y, head.x, head.y);
+            const dx = playerCoords.x - head.x;
+            const dy = playerCoords.y - head.y;
+            const distSq = dx * dx + dy * dy;
+
+            // Attackers can detect the player from a good distance (e.g. 1200 pixels)
+            const attackRange = 1200;
+            if (distSq < attackRange * attackRange) {
+              const dist = Math.sqrt(distSq) || 0.1;
+              // Target slightly ahead of player to intercept them
+              const leadFactor = diff === 'easy' ? 0 : diff === 'medium' ? 10 : 20;
+              const targetX = playerCoords.x + Math.cos(player.angle) * player.speed * leadFactor;
+              const targetY = playerCoords.y + Math.sin(player.angle) * player.speed * leadFactor;
+
+              playerTargetX = targetX - head.x;
+              playerTargetY = targetY - head.y;
+
+              const targetDist = Math.sqrt(playerTargetX * playerTargetX + playerTargetY * playerTargetY) || 0.1;
+              playerTargetX /= targetDist;
+              playerTargetY /= targetDist;
+
+              isAttackingPlayer = true;
+            }
+          }
+
+          // Priority C: Hunt closest foods
           let closestFoodDist = diff === 'easy' ? 150 : diff === 'medium' ? 250 : 400;
           let closestFoodDistSq = closestFoodDist * closestFoodDist;
           let foodTargetX = 0;
           let foodTargetY = 0;
           let foodFound = false;
 
-          if (!evasiveAction) {
+          if (!evasiveAction && !isAttackingPlayer) {
             state.foods.forEach(food => {
               const coords = getWrappedOffsetCoordinates(food.x, food.y, head.x, head.y);
               const dx = coords.x - head.x;
@@ -556,6 +625,17 @@ export default function SnakeArena({
             
             // Sometimes trigger bot speeds boosts to cut out a player or escape!
             if (diff !== 'easy' && Math.random() < 0.4 && bot.segments.length > 7) {
+              bot.isBoosting = true;
+            } else {
+              bot.isBoosting = false;
+            }
+          } else if (isAttackingPlayer) {
+            combinedX = playerTargetX;
+            combinedY = playerTargetY;
+
+            // Attackers boost aggressively when chasing the player!
+            const boostChance = diff === 'easy' ? 0.1 : diff === 'medium' ? 0.35 : 0.65;
+            if (bot.segments.length > 5 && Math.random() < boostChance) {
               bot.isBoosting = true;
             } else {
               bot.isBoosting = false;
@@ -677,20 +757,55 @@ export default function SnakeArena({
         });
       });
 
-      // Clean out dead bots and dynamically spawn replacements to maintain competitive density in the open arena (match 2/3 enemy snakes)
+      // Clean out dead bots and dynamically spawn replacements to maintain competitive density in the open arena
       const aliveBots = state.bots.filter(b => !b.isDead);
-      const targetBotCount = diff === 'easy' ? 2 : diff === 'medium' ? 2 : 3;
+      
+      let targetBotCount = 7;
+      let attackerCount = 2;
+      if (diff === 'easy') {
+        targetBotCount = 4;
+        attackerCount = 1;
+      } else if (diff === 'hard') {
+        targetBotCount = 10;
+        attackerCount = 4;
+      }
+
       const deadBotsCount = Math.max(0, targetBotCount - aliveBots.length);
       
       state.bots = aliveBots;
 
       for (let i = 0; i < deadBotsCount; i++) {
-        const name = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)] + `_${Math.floor(Math.random() * 90 + 10)}`;
-        const botColor = BOT_COLORS[Math.floor(Math.random() * BOT_COLORS.length)];
+        const currentAttackersCount = state.bots.filter(b => b.isAttacker).length;
+        const isAttacker = currentAttackersCount < attackerCount;
+        
+        let name = '';
+        let color = '';
+        let headColor = '';
+
+        if (isAttacker) {
+          const attackerNames = ['RED_STALKER', 'STEALTH_VIPER', 'TERROR_HISS', 'BLOOD_REAPER', 'NIGHTMARE_BOT', 'CRIMSON_FANG'];
+          name = attackerNames[Math.floor(Math.random() * attackerNames.length)] + `_${Math.floor(Math.random() * 90 + 10)}`;
+          color = '#ef4444'; // dangerous neon red
+          headColor = '#f87171'; // lighter red warning head
+        } else {
+          name = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)] + `_${Math.floor(Math.random() * 90 + 10)}`;
+          const botColor = BOT_COLORS[Math.floor(Math.random() * BOT_COLORS.length)];
+          color = botColor.body;
+          headColor = botColor.head;
+        }
+
         const rx = Math.random() * ARENA_SIZE;
         const ry = Math.random() * ARENA_SIZE;
         const rAngle = Math.random() * Math.PI * 2;
-        const botLength = diff === 'easy' ? 5 : diff === 'medium' ? 6 : 7;
+
+        // Random length as explicitly requested
+        let minLen = 5;
+        let maxLen = 12;
+        if (diff === 'easy') { minLen = 4; maxLen = 8; }
+        else if (diff === 'medium') { minLen = 6; maxLen = 13; }
+        else { minLen = 8; maxLen = 18; }
+        const botLength = Math.floor(Math.random() * (maxLen - minLen + 1)) + minLen;
+
         const botSpeed = diff === 'easy' ? 1.8 : diff === 'medium' ? 2.8 : 3.8;
 
         const botHist: Position[] = [];
@@ -713,8 +828,8 @@ export default function SnakeArena({
           isPlayer: false,
           x: rx,
           y: ry,
-          color: botColor.body,
-          headColor: botColor.head,
+          color,
+          headColor,
           segments: botSegs,
           trailHistory: botHist,
           angle: rAngle,
@@ -724,7 +839,8 @@ export default function SnakeArena({
           size: 12,
           isBoosting: false,
           pulseTimer: Math.random() * 100,
-          isDead: false
+          isDead: false,
+          isAttacker
         });
       }
 
@@ -810,7 +926,7 @@ export default function SnakeArena({
 
       // Filter eaten foods, replenish randomized normal fruits
       state.foods = state.foods.filter((_, idx) => !eatenIdxs.has(idx));
-      const targetNormalCount = diff === 'easy' ? 45 : diff === 'medium' ? 40 : 35;
+      const targetNormalCount = diff === 'easy' ? 70 : diff === 'medium' ? 100 : 130;
       
       while (state.foods.filter(f => f.type === 'fruit').length < targetNormalCount) {
         state.foods.push({

@@ -1,6 +1,14 @@
 
 # Changelog
 
+## [3.4.1] - 2026-06-12
+### Added
+- **Snake Arena Adversary Steering and High-Density Grid Upgrades**: Added deep strategic updates to the Snake Arena gameplay:
+  - **Deeper Color Palette**: Integrated a larger set of high-contrast fluorescent neon food dot colors (such as medium spring green, electric cyan, fuchsia, chartreuse) to enhance board vibrance.
+  - **Randomized Enemy Snake Lengths**: Configured bot snake sizes to spawn at heterogeneous variable lengths ranging from 4 up to 18 segment nodes depending on the difficulty selection.
+  - **Seek-and-Destroy Hunter Bots**: Engineered a high-threat "Attacker" robot state colored with a dedicated crimson red body and warning light-red head that actively plans chase angles, tracks coordinates, and speed-boosts to intercept the player's movements.
+  - **Difficulty-Responsive Fleet Density**: Scaled bot crowds and attacker quotas dynamically based on easy (4 bots, 1 attacker), medium (7 bots, 2 attackers), and hard (10 bots, 4 attackers) challenges.
+
 ## [3.4.0] - 2026-06-11
 ### Added
 - **Integrated Player 'User Log' Table in Admin Panel**: Added a comprehensive session, login, and gameplay audit-trail database log directly after 'Neural Event Registry' inside the detailed view of each player's registry profile card:
