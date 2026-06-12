@@ -27,7 +27,7 @@ export const TactileQuickChat: React.FC<TactileQuickChatProps> = ({ userProfile,
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const componentMountedTime = useRef<number>(Date.now());
 
-  // Real-time listener for curated emojis from Firestore
+  // Real-time listener for curated emojis from Firestore (strictly 16 elements, padded with default fallbacks)
   useEffect(() => {
     const q = query(collection(db, 'emojis'), orderBy('timestamp', 'asc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -38,51 +38,22 @@ export const TactileQuickChat: React.FC<TactileQuickChatProps> = ({ userProfile,
           dbEmojis.push({ id: docSnap.id, char: data.char });
         }
       });
-      if (dbEmojis.length > 0) {
-        setEmojis(dbEmojis);
-      } else {
-        setEmojis(DEFAULT_EMOJIS.map((e, idx) => ({ id: `default-${idx}`, char: e })));
-      }
+
+      // Map to 16 absolute visual slots. Fill with DEFAULT_EMOJIS if missing.
+      const padded: { id: string, char: string }[] = Array.from({ length: 16 }).map((_, idx) => {
+        const dbEmoji = dbEmojis[idx];
+        return {
+          id: dbEmoji?.id || `default-${idx}`,
+          char: dbEmoji?.char || DEFAULT_EMOJIS[idx]
+        };
+      });
+      setEmojis(padded);
     }, (error) => {
       console.warn("Operating with local default emojis fallback:", error);
       setEmojis(DEFAULT_EMOJIS.map((e, idx) => ({ id: `default-${idx}`, char: e })));
     });
     return () => unsubscribe();
   }, []);
-
-  // System Custom listener for real-time live events (Milestones, Leaderboard updates)
-  useEffect(() => {
-    const handleLobbyMessage = (event: Event) => {
-      const customEvObj = event as CustomEvent;
-      if (customEvObj?.detail) {
-        const { sender, message, type } = customEvObj.detail;
-        
-        const newSysChat: QuickChat = {
-          id: `sys-${Date.now()}-${Math.random()}`,
-          senderUid: 'system',
-          senderUsername: sender || '📢 SYSTEM',
-          senderAvatar: 'fa-robot',
-          message: message || '',
-          timestamp: Date.now(),
-          type: type || 'custom'
-        };
-
-        // Cache system notification in local state so it pops up in console
-        setChats(prev => {
-          const next = [...prev, newSysChat];
-          return next.slice(-45);
-        });
-
-        if (!isOpen) {
-          setUnreadCount(u => u + 1);
-        }
-        audioService.playClick();
-      }
-    };
-
-    window.addEventListener('lobby-broadcast', handleLobbyMessage);
-    return () => window.removeEventListener('lobby-broadcast', handleLobbyMessage);
-  }, [isOpen]);
 
   // Listen to Firestore Realtime Messages (Strictly Online Live Server for absolute authenticity)
   useEffect(() => {
@@ -282,14 +253,14 @@ export const TactileQuickChat: React.FC<TactileQuickChatProps> = ({ userProfile,
             {/* Controls panel */}
             <div className="p-4 border-t border-indigo-500/10 bg-slate-950 flex flex-col gap-3.5">
               
-              {/* Emojis Stream layout (Exactly 2 rows, no scrolling) */}
-              <div className="flex flex-wrap gap-1.5 justify-start max-h-[74px] overflow-hidden">
+              {/* Emojis Stream layout (Exactly 8 columns x 2 rows, fixed-size no scrolling) */}
+              <div className="grid grid-cols-8 gap-1.5 w-full h-[68px] overflow-hidden">
                 {emojis.slice(0, 16).map((emoji) => (
                   <button
                     key={emoji.id}
                     onClick={() => sendQuickChat(emoji.char, 'emoji')}
                     disabled={isSending || !auth.currentUser}
-                    className="w-10 h-8 rounded-lg bg-white/5 hover:bg-indigo-600 disabled:hover:bg-white/5 hover:text-white transition-all text-base flex items-center justify-center shrink-0 active:scale-95 cursor-pointer border border-white/5 disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="aspect-square w-full rounded-lg bg-white/5 hover:bg-indigo-600 disabled:hover:bg-white/5 hover:text-white transition-all text-sm sm:text-base flex items-center justify-center active:scale-95 cursor-pointer border border-white/5 disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     {emoji.char}
                   </button>
