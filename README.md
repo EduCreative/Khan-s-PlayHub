@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.4.1 "Snake Arena Intelligent Adversaries & Vibrant Grid Update"  
+**Version:** 3.4.2 "Snake Arena Orbital Power-ups & Glowing HUD Update"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,13 +9,13 @@ Khan's PlayHub is an active collection of classic, high-performance, and mobile-
 
 ---
 
-## 🚀 Recent Enhancements (v3.4.1)
-- **Vibrant Energy Dots**: Expanded the food grid dot palettes to load multiple extra brilliant neon colors (like chartreuse, spring green, fuchsia, electric cyan) with expanded dot densities scaling elegantly across selected difficulty settings.
-- **Armored Enemy Snakes**: Replaced fixed static AI snake initializations with dynamically variable random length boundaries scaling from 4 up to 18 segments total based on chosen arena challenges.
-- **Player-Targeting Cyber Hunters**: Integrated active hunter-tracking state AI. Dangerous tracker snakes are colored with unique, menacing neon red heads and pulsing crimson bodies that actively hone in and speed boost towards the player coordinates to cut them off.
-- **Difficulty Scaled Hostile Fleets**: Reconfigured open arena bot populations and attacker thresholds directly matching Easy, Medium, and Hard selections to scale dynamic difficulty curves naturally.
+## 🚀 Recent Enhancements (v3.4.2)
+- **Satisfying 'Speed Boost' (Neon Green Dots)**: Added collectible lime-green dots radiating a pulsing cyber aura. Eating a Speed Boost grants a 1.5x basic speed multiplier (and 2.0x boost acceleration) for 8 full seconds, allowing players to sprint seamlessly without shrinking or losing segments!
+- **God-like 'Invincibility' (Golden Yellow Dots)**: Added legendary golden metallic power-ups. When collected, they activate a 15px glowing golden protective forcefield around the head. For 8 seconds, the player is immune to head-first collisions against opponent snakes!
+- **Active Real-world Timers HUD**: Designed high-contrast top-left active power-up tracking bars displaying neon colored count-pings and real-time second hand tickers synchronized to React dispatch schedules.
+- **Upgraded Snake Shaders**: Modified player segment textures to glow with custom dual-amber gold gradients during invincibility, and mint core glows when speed boosted.
 
-## 🚀 Previous Enhancements (v3.4.0)
+## 🚀 Previous Enhancements (v3.4.1)
 - **Comprehensive User Session & Access Log**: Implemented an in-depth chronological session log table right after the Neural Event Registry on individual player profile inspection cards within the Admin center. It details platform entries, system logins, active game sessions, precisely calculated play durations, scored achievements, and live synchronization statuses.
 
 ## 🚀 Previous Enhancements (v3.3.9)

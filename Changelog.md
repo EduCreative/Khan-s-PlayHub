@@ -1,6 +1,14 @@
 
 # Changelog
 
+## [3.4.2] - 2026-06-12
+### Added
+- **Snake Arena Power-ups, Head Orbits, and Action Countdown HUD**: Augmented Snake Arena with dynamic collectible power-ups:
+  - **Speed Boost (Neon Green Dot)**: Sprinkles glowing neon-green speed pills with unique halos. Grants 1.5x velocity and 2.1x boost acceleration, and locks body segment count (no shrinkage when accelerating!) for 8 seconds.
+  - **Invincibility (Golden Metallic Dot)**: spawns golden glowing points triggering dynamic 8-second invulnerability, complete with a beautiful gold orbit halo circling the player's head. Player passes safely through enemies on head-first crashes!
+  - **Power-up State Countdowns Panel**: Designed stylized real-time active power-up trackers positioned elegantly at the top-left section of the screen with neon pulsations.
+  - **Cosmetic Snake Shaders**: Modified player segment rendering to reflect active states with distinct custom textures (golden colors under invincibility, electric mint colors under speed boost).
+
 ## [3.4.1] - 2026-06-12
 ### Added
 - **Snake Arena Adversary Steering and High-Density Grid Upgrades**: Added deep strategic updates to the Snake Arena gameplay:

@@ -45,7 +45,7 @@ interface Food {
   color: string;
   size: number;
   value: number;
-  type: 'fruit' | 'carcass';
+  type: 'fruit' | 'carcass' | 'powerup_speed' | 'powerup_invincible';
   pulseTimer: number;
 }
 
@@ -101,6 +101,14 @@ export default function SnakeArena({
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(0);
   const [topSnakes, setTopSnakes] = useState<{ name: string; score: number; isPlayer: boolean }[]>([]);
+
+  // Powerup state variables for UI/HUD
+  const [activePowerUpSpeed, setActivePowerUpSpeed] = useState<number>(0);
+  const [activePowerUpInvincible, setActivePowerUpInvincible] = useState<number>(0);
+
+  // Powerup timing references
+  const powerUpSpeedTimerRef = useRef<number>(0);
+  const powerUpInvincibleTimerRef = useRef<number>(0);
 
   // Refs for loop values (ensures continuous loop doesn't read stale state)
   const isPlayingRef = useRef(false);
@@ -218,6 +226,10 @@ export default function SnakeArena({
     // Reset components
     scoreRef.current = 0;
     setScore(0);
+    setActivePowerUpSpeed(0);
+    setActivePowerUpInvincible(0);
+    powerUpSpeedTimerRef.current = 0;
+    powerUpInvincibleTimerRef.current = 0;
     entities.current.particles = [];
 
     // Create Player Snake
@@ -344,6 +356,34 @@ export default function SnakeArena({
       });
     }
 
+    // Spawn initial power-ups
+    const initialSpeedCount = diff === 'easy' ? 3 : diff === 'medium' ? 4 : 5;
+    const initialInvCount = diff === 'easy' ? 1 : diff === 'medium' ? 2 : 3;
+
+    for (let i = 0; i < initialSpeedCount; i++) {
+      foodsList.push({
+        x: Math.random() * ARENA_SIZE,
+        y: Math.random() * ARENA_SIZE,
+        color: '#39ff14', // Neon fluorescent green
+        size: 6.0,
+        value: 5,
+        type: 'powerup_speed',
+        pulseTimer: Math.random() * 100
+      });
+    }
+
+    for (let i = 0; i < initialInvCount; i++) {
+      foodsList.push({
+        x: Math.random() * ARENA_SIZE,
+        y: Math.random() * ARENA_SIZE,
+        color: '#fbbf24', // Golden metallic yellow
+        size: 7.0,
+        value: 10,
+        type: 'powerup_invincible',
+        pulseTimer: Math.random() * 100
+      });
+    }
+
     entities.current.player = playerSnake;
     entities.current.bots = botsList;
     entities.current.foods = foodsList;
@@ -400,6 +440,20 @@ export default function SnakeArena({
       // Safety guard
       if (!player) return;
 
+      // Decrement power-up timers
+      if (powerUpSpeedTimerRef.current > 0) {
+        powerUpSpeedTimerRef.current--;
+      }
+      if (powerUpInvincibleTimerRef.current > 0) {
+        powerUpInvincibleTimerRef.current--;
+      }
+
+      // Smoothly update React UI states for powerups on change boundaries
+      const currSecSpeed = Math.max(0, Math.ceil(powerUpSpeedTimerRef.current / 60));
+      const currSecInvMs = Math.max(0, Math.ceil(powerUpInvincibleTimerRef.current / 60));
+      setActivePowerUpSpeed(prev => prev !== currSecSpeed ? currSecSpeed : prev);
+      setActivePowerUpInvincible(prev => prev !== currSecInvMs ? currSecInvMs : prev);
+
       const diff = difficultyRef.current;
 
       // ----------------------------------------
@@ -450,13 +504,15 @@ export default function SnakeArena({
       const wantsBoost = (isBoostingPressed.current || touchState.current.active && keysPressed.current['space']) && player.segments.length > 5;
       player.isBoosting = wantsBoost;
 
-      const baseSpeed = diff === 'easy' ? 2.5 : diff === 'medium' ? 3.5 : 4.5;
-      const targetSpeed = wantsBoost ? baseSpeed * 1.8 : baseSpeed;
+      const hasSpeedPowerUp = powerUpSpeedTimerRef.current > 0;
+      const speedPowerUpMultiplier = hasSpeedPowerUp ? 1.5 : 1.0;
+      const baseSpeed = (diff === 'easy' ? 2.5 : diff === 'medium' ? 3.5 : 4.5) * speedPowerUpMultiplier;
+      const targetSpeed = wantsBoost ? baseSpeed * (hasSpeedPowerUp ? 2.1 : 1.8) : baseSpeed;
       player.speed += (targetSpeed - player.speed) * 0.1;
 
       // Make player consumption when boosting (creates booster food trail in arena)
-      if (wantsBoost && Math.random() < 0.15) {
-        // Lose segment
+      if (wantsBoost && Math.random() < 0.15 && !hasSpeedPowerUp) {
+        // Lose segment if power-up is not active!
         if (player.segments.length > 6) {
           const tail = player.segments[player.segments.length - 1];
           // Spawn food at the tail segment position
@@ -722,6 +778,11 @@ export default function SnakeArena({
             const triggerDist = headRadius + otherSegmentRadius;
 
             if (distSq < triggerDist * triggerDist) {
+              // If target is the player and they are invincible, ignore the death!
+              if (target.isPlayer && powerUpInvincibleTimerRef.current > 0) {
+                return;
+              }
+
               // Collided! Sunder / crash & Die!
               target.isDead = true;
 
@@ -912,6 +973,19 @@ export default function SnakeArena({
               scoreRef.current = newS;
               setScore(newS);
 
+              // Activate power-ups if eaten!
+              if (food.type === 'powerup_speed') {
+                powerUpSpeedTimerRef.current = 480; // 8 seconds
+                if (audioService && sfxVolume > 0) {
+                  audioService.playSuccess(); // play success feedback sound
+                }
+              } else if (food.type === 'powerup_invincible') {
+                powerUpInvincibleTimerRef.current = 480; // 8 seconds
+                if (audioService && sfxVolume > 0) {
+                  audioService.playSuccess(); // play success feedback sound
+                }
+              }
+
               if (onScoreUpdateRef.current) {
                 onScoreUpdateRef.current(newS);
               }
@@ -936,6 +1010,34 @@ export default function SnakeArena({
           size: 2.0 + Math.random() * 2.5,
           value: 1 + Math.floor(Math.random() * 2),
           type: 'fruit',
+          pulseTimer: Math.random() * 100
+        });
+      }
+
+      // Replenish power-ups
+      const targetSpeedCount = diff === 'easy' ? 3 : diff === 'medium' ? 4 : 5;
+      const targetInvCount = diff === 'easy' ? 1 : diff === 'medium' ? 2 : 3;
+
+      while (state.foods.filter(f => f.type === 'powerup_speed').length < targetSpeedCount) {
+        state.foods.push({
+          x: Math.random() * ARENA_SIZE,
+          y: Math.random() * ARENA_SIZE,
+          color: '#39ff14', // Neon fluorescent green for speed boost
+          size: 6.0,
+          value: 5,
+          type: 'powerup_speed',
+          pulseTimer: Math.random() * 100
+        });
+      }
+
+      while (state.foods.filter(f => f.type === 'powerup_invincible').length < targetInvCount) {
+        state.foods.push({
+          x: Math.random() * ARENA_SIZE,
+          y: Math.random() * ARENA_SIZE,
+          color: '#fbbf24', // Golden metallic yellow
+          size: 7.0,
+          value: 10,
+          type: 'powerup_invincible',
           pulseTimer: Math.random() * 100
         });
       }
@@ -1011,20 +1113,40 @@ export default function SnakeArena({
         
         // Pulsate neon size slightly
         food.pulseTimer += 0.08;
-        const currentSize = food.size + Math.sin(food.pulseTimer) * 0.4;
+        const currentSize = food.size + Math.max(0.3, Math.sin(food.pulseTimer) * (food.type !== 'fruit' && food.type !== 'carcass' ? 1.2 : 0.4));
         const radius = Math.max(1.5, currentSize);
         
+        // Add glowing shadow effect only for special power-ups
+        const isPowerUp = food.type === 'powerup_speed' || food.type === 'powerup_invincible';
+        if (isPowerUp) {
+          ctx.shadowBlur = 16;
+          ctx.shadowColor = food.color;
+        }
+
         // Outer high-contrast black rim adds high visibility against grid
         ctx.beginPath();
         ctx.arc(coords.x, coords.y, radius + 1.2, 0, Math.PI * 2);
         ctx.fillStyle = '#0f172a';
         ctx.fill();
         
-        // Inner bright colored core (no shadowBlur for performance boost)
+        // Inner bright colored core
         ctx.beginPath();
         ctx.arc(coords.x, coords.y, radius, 0, Math.PI * 2);
         ctx.fillStyle = food.color;
         ctx.fill();
+
+        if (isPowerUp) {
+          ctx.shadowBlur = 0; // reset shadow immediately for performance
+
+          // Draw an extra pulsing outer orbital halo
+          ctx.beginPath();
+          ctx.arc(coords.x, coords.y, radius * 1.8, 0, Math.PI * 2);
+          ctx.strokeStyle = food.color;
+          ctx.lineWidth = 1.5;
+          ctx.globalAlpha = 0.4 + Math.sin(food.pulseTimer * 1.5) * 0.2;
+          ctx.stroke();
+          ctx.globalAlpha = 1.0;
+        }
 
         // Shimmer glint
         ctx.beginPath();
@@ -1107,15 +1229,43 @@ export default function SnakeArena({
           ctx.fillStyle = '#1e293b'; // off-black plate outline
           ctx.fill();
 
+          // Draw an extra golden forcefield orbit around head under invincibility
+          if (snake.isPlayer && i === 0 && powerUpInvincibleTimerRef.current > 0) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(drawnSeg.x, drawnSeg.y, drawRadius * 2.2, 0, Math.PI * 2);
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 2.5;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#fbbf24';
+            ctx.globalAlpha = 0.5 + Math.sin(Date.now() * 0.015) * 0.3;
+            ctx.stroke();
+            ctx.restore();
+          }
+
           // Inner colorful glowing node segment
           ctx.beginPath();
           ctx.arc(drawnSeg.x, drawnSeg.y, Math.max(2, drawRadius - 0.5), 0, Math.PI * 2);
-          if (i === 0) {
-            ctx.fillStyle = snake.headColor;
+          
+          if (snake.isPlayer) {
+            if (powerUpInvincibleTimerRef.current > 0) {
+              const isEven = i % 2 === 0;
+              ctx.fillStyle = i === 0 ? '#f59e0b' : (isEven ? '#fbbf24' : '#f59e0b'); // Amber-gold metallic duo
+              ctx.shadowBlur = 10;
+              ctx.shadowColor = '#fbbf24';
+            } else if (powerUpSpeedTimerRef.current > 0) {
+              const isEven = i % 2 === 0;
+              ctx.fillStyle = i === 0 ? '#10b981' : (isEven ? '#34d399' : '#10b981'); // Emerald cyber green
+              ctx.shadowBlur = 10;
+              ctx.shadowColor = '#10b981';
+            } else {
+              ctx.fillStyle = i === 0 ? snake.headColor : (i % 2 === 0 ? snake.color : snake.headColor);
+            }
           } else {
-            ctx.fillStyle = i % 2 === 0 ? snake.color : snake.headColor;
+            ctx.fillStyle = i === 0 ? snake.headColor : (i % 2 === 0 ? snake.color : snake.headColor);
           }
           ctx.fill();
+          ctx.shadowBlur = 0; // reset shadow for optimization
 
           // Tech light-glare specular dot for 3D metallic sphere look
           ctx.beginPath();
@@ -1377,6 +1527,39 @@ export default function SnakeArena({
       {/* Live HUD statistics */}
       {gameState === 'playing' && (
         <>
+          {/* Active Powerups Overlay Panel */}
+          <div className="absolute top-4 left-4 flex flex-col gap-2.5 pointer-events-none select-none z-10">
+            {activePowerUpSpeed > 0 && (
+              <div className="flex items-center gap-3 bg-slate-950/85 border border-[#39ff14]/30 rounded-2xl px-4 py-2.5 backdrop-blur-md shadow-[0_0_15px_rgba(57,255,20,0.15)] transition-all animate-pulse duration-1000">
+                <div className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#39ff14] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#39ff14]"></span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-0.5">Power-up</span>
+                  <span className="text-[11px] font-black text-[#39ff14] uppercase tracking-wider leading-none">Speed Boost</span>
+                </div>
+                <div className="ml-2 h-6 w-px bg-white/10" />
+                <span className="ml-1 font-mono text-xs font-black text-slate-200 tabular-nums">{activePowerUpSpeed}s</span>
+              </div>
+            )}
+
+            {activePowerUpInvincible > 0 && (
+              <div className="flex items-center gap-3 bg-slate-950/85 border border-[#fbbf24]/30 rounded-2xl px-4 py-2.5 backdrop-blur-md shadow-[0_0_15px_rgba(251,191,36,0.15)] transition-all animate-pulse duration-1000">
+                <div className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#fbbf24] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#fbbf24]"></span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-0.5">Power-up</span>
+                  <span className="text-[11px] font-black text-[#fbbf24] uppercase tracking-wider leading-none">Invincibility</span>
+                </div>
+                <div className="ml-2 h-6 w-px bg-white/10" />
+                <span className="ml-1 font-mono text-xs font-black text-slate-200 tabular-nums">{activePowerUpInvincible}s</span>
+              </div>
+            )}
+          </div>
+
           {/* Top scoreboard (Slither style multiplayer list mockup) */}
           <div className="absolute top-4 right-4 bg-slate-950/80 border border-white/5 rounded-2xl p-4 backdrop-blur-md shadow-2xl pointer-events-auto min-w-[170px] max-w-[220px] select-none text-left">
             <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest block mb-2 border-b border-white/10 pb-1.5"><i className="fas fa-crown mr-1"></i> Leaderboard</span>
