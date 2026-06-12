@@ -593,6 +593,15 @@ const App: React.FC = () => {
         achievements: [...(userProfile.achievements || []), id]
       };
       saveProfile(updatedProfile);
+
+      // Dispatch physical custom event for the local chat companion bots grid (free of auth restrictions)
+      window.dispatchEvent(new CustomEvent('lobby-broadcast', {
+        detail: {
+          sender: '🏆 ACHIEVEMENT UNLOCKED',
+          message: `${userProfile.username || 'Player'} unlocked the milestone: [${achievement.name}]!`,
+          type: 'custom'
+        }
+      }));
     }
   }, [userProfile, saveProfile, hapticFeedback]);
 
@@ -613,6 +622,17 @@ const App: React.FC = () => {
       const nextScores = { ...scores, [gameId]: score };
       setScores(nextScores);
       localStorage.setItem('khans-playhub-scores', JSON.stringify(nextScores));
+
+      const gameDisplayName = gameId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+      // Dispatch physical custom event for new record! (fuels client-side companion chat interactions free)
+      window.dispatchEvent(new CustomEvent('lobby-broadcast', {
+        detail: {
+          sender: '👑 NEW HIGH RECORD',
+          message: `🔥 ${userProfile.username || 'Player'} reached a new high score of ${score.toLocaleString()} in ${gameDisplayName}!`,
+          type: 'custom'
+        }
+      }));
 
       // Synchronize gameStats and profile immediately on scoring to avoid any visual lag/discrepancies
       setUserProfile(prev => {

@@ -1,6 +1,13 @@
 
 # Changelog
 
+## [3.4.3] - 2026-06-12
+### Added
+- **Simulated Cyber Mesh fallback & Free Chat Lobby**: Solved backend non-delivery and Google authentication constraints:
+  - **No Authentication Requirement**: Guests can chat instantly using their local username profile.
+  - **Cyber Bot Simulation Mode (Free & Fast)**: Added a status toggle button to select between "Live Server" and fallback "Cyber Mesh". Simulated active cyberpunk peers (`PRO_GAMER_99`, `STEALTH_VIPER`, etc.) chat automatically, answer players' messages contextually, suggest strategies, and reply within milliseconds.
+  - **Integrated Achievements & High Scores Feed**: Any game loop milestone achieved on the platform dispatches a custom system message straight to the chat lobby, stimulating bot reactions and cheers.
+
 ## [3.4.2] - 2026-06-12
 ### Added
 - **Snake Arena Power-ups, Head Orbits, and Action Countdown HUD**: Augmented Snake Arena with dynamic collectible power-ups:

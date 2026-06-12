@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.4.2 "Snake Arena Orbital Power-ups & Glowing HUD Update"  
+**Version:** 3.4.3 "Simulated Cyber Mesh & Free Chat Lobby Update"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,7 +9,12 @@ Khan's PlayHub is an active collection of classic, high-performance, and mobile-
 
 ---
 
-## 🚀 Recent Enhancements (v3.4.2)
+## 🚀 Recent Enhancements (v3.4.3)
+- **Innovative "Cyber Mesh" Free Fallback Chat**: Eradicated the requirement for Google Login authentication blocks and Firestore delivery lag for guests. Chatters can toggle a physical high-contrast switch in the drawer to engage either with the live server or a 100% free, reactive, zero-latency local cyberpunk chatbot lobby!
+- **Dynamic Interactive Chatbots**: Added simulated companions (PRO_GAMER_99, STEALTH_VIPER, CHIP_CHAMP) that autonomously discuss retro games, share strategy coordinates, and reply instantly with clever emojis or game-specific comments to user custom messages.
+- **Organic Milestones Feed**: Interconnected all game loops in the hub using the CustomEvent lobby system. Beating a high score or unlocking an achievement dispatches an automatic bulletin broadcast to the chat console, triggering realistic Bot cheers and congrats!
+
+## 🚀 Previous Enhancements (v3.4.2)
 - **Satisfying 'Speed Boost' (Neon Green Dots)**: Added collectible lime-green dots radiating a pulsing cyber aura. Eating a Speed Boost grants a 1.5x basic speed multiplier (and 2.0x boost acceleration) for 8 full seconds, allowing players to sprint seamlessly without shrinking or losing segments!
 - **God-like 'Invincibility' (Golden Yellow Dots)**: Added legendary golden metallic power-ups. When collected, they activate a 15px glowing golden protective forcefield around the head. For 8 seconds, the player is immune to head-first collisions against opponent snakes!
 - **Active Real-world Timers HUD**: Designed high-contrast top-left active power-up tracking bars displaying neon colored count-pings and real-time second hand tickers synchronized to React dispatch schedules.
