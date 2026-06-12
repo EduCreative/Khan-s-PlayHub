@@ -29,8 +29,20 @@ interface FirestoreErrorInfo {
 }
 
 function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  const isQuota = errorMessage.toLowerCase().includes('quota exceeded') || 
+                  errorMessage.toLowerCase().includes('resource-exhausted') || 
+                  errorMessage.toLowerCase().includes('quota-exceeded');
+  
+  if (isQuota) {
+    localStorage.setItem('firestore_quota_exceeded_today', 'true');
+    window.dispatchEvent(new CustomEvent('firestore-quota-exceeded', {
+      detail: { error: errorMessage }
+    }));
+  }
+
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: errorMessage,
     authInfo: {
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,

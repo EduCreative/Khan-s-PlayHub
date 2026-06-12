@@ -103,6 +103,22 @@ const App: React.FC = () => {
 
   const CURRENT_VERSION = '3.4.0';
 
+  // Listen for Firestore Quota Exceeded event
+  useEffect(() => {
+    if (localStorage.getItem('firestore_quota_exceeded_today') === 'true') {
+      setQuotaExceeded(true);
+    }
+
+    const handleQuota = () => {
+      setQuotaExceeded(true);
+    };
+
+    window.addEventListener('firestore-quota-exceeded', handleQuota);
+    return () => {
+      window.removeEventListener('firestore-quota-exceeded', handleQuota);
+    };
+  }, []);
+
   // PWA Install Prompt
   useEffect(() => {
     // Detect iframe
@@ -767,18 +783,53 @@ const App: React.FC = () => {
       <main className="relative z-10 w-full min-h-screen">
         {/* Quota Warning */}
         {quotaExceeded && (
-          <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-md animate-in slide-in-from-bottom-10">
-            <div className="bg-rose-500 text-white p-4 rounded-2xl shadow-2xl flex items-center gap-4 border-2 border-rose-400">
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                <i className="fas fa-exclamation-triangle"></i>
+          <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-md animate-in slide-in-from-bottom-10">
+            <div className="bg-slate-950/95 backdrop-blur-md text-white p-5 rounded-3xl shadow-[0_20px_50px_rgba(244,63,94,0.3)] border-2 border-rose-500 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+                  <i className="fas fa-shield-alt text-lg"></i>
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-black uppercase italic tracking-wider text-rose-400">Firestore Quota Exceeded</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Daily limit reached</p>
+                </div>
+                <button 
+                  onClick={() => {
+                    setQuotaExceeded(false);
+                    localStorage.removeItem('firestore_quota_exceeded_today');
+                  }} 
+                  className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-all"
+                >
+                  <i className="fas fa-times"></i>
+                </button>
               </div>
-              <div className="flex-1">
-                <p className="text-xs font-black uppercase italic tracking-tighter leading-none mb-1">Cloud Quota Exceeded</p>
-                <p className="text-[10px] font-bold opacity-90 leading-tight">Daily write limit reached. Scores will be saved locally and synced tomorrow.</p>
+              
+              <div className="space-y-2">
+                <p className="text-[10px] text-slate-300 leading-relaxed font-medium">
+                  The application's free database has hit its daily operations limit. Don't worry! Khan's PlayHub is seamlessly operating in <strong className="text-rose-400">Offline Local Fallback Mode</strong>. Your highscores and profile modifications are secured in your local browser storage and will sync automatically once the quota breaks reset tomorrow.
+                </p>
+                <div className="p-3 rounded-xl bg-white/5 border border-white/5 space-y-1.5">
+                  <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">Developer Actions:</p>
+                  <div className="flex flex-col gap-1 text-[9px] font-bold">
+                    <a 
+                      href="https://console.firebase.google.com/project/gen-lang-client-0357339368/firestore/databases/ai-studio-684201d8-55ba-4823-86b1-bbbd13881e82/data?openUpgradeDialog=true"
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-rose-400 hover:text-rose-300 underline flex items-center gap-1 transition-all"
+                    >
+                      <i className="fas fa-external-link-alt"></i> Clean up or Upgrade Firestore Database
+                    </a>
+                    <a 
+                      href="https://firebase.google.com/pricing#cloud-firestore"
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-indigo-400 hover:text-indigo-300 underline flex items-center gap-1 transition-all"
+                    >
+                      <i className="fas fa-external-link-alt"></i> View Spark Plan & Free Daily Limits Info
+                    </a>
+                  </div>
+                </div>
               </div>
-              <button onClick={() => setQuotaExceeded(false)} className="text-white/60 hover:text-white">
-                <i className="fas fa-times"></i>
-              </button>
             </div>
           </div>
         )}
