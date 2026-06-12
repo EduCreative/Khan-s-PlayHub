@@ -70,19 +70,94 @@ const App: React.FC = () => {
   const [challengeInvitation, setChallengeInvitation] = useState<any | null>(null);
   const [activeChallenge, setActiveChallenge] = useState<any | null>(null);
   const [filter, setFilter] = useState<Category | 'All' | 'Favorites' | 'Leaderboard' | 'Visual Leaderboard' | 'Global Leaderboard'>('All');
-  const [scores, setScores] = useState<Record<string, number>>({});
-  const [userProfile, setUserProfile] = useState<UserProfile>(DEFAULT_PROFILE);
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  
+  const [scores, setScores] = useState<Record<string, number>>(() => {
+    try {
+      const savedScores = localStorage.getItem('khans-playhub-scores');
+      return savedScores ? JSON.parse(savedScores) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const [userProfile, setUserProfile] = useState<UserProfile>(() => {
+    try {
+      const savedProfile = localStorage.getItem('khans-playhub-profile');
+      if (savedProfile) {
+        return JSON.parse(savedProfile);
+      }
+    } catch {}
+    return DEFAULT_PROFILE;
+  });
+
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    try {
+      const savedTheme = localStorage.getItem('khans-playhub-theme');
+      if (savedTheme) return savedTheme === 'dark';
+    } catch {}
+    return true;
+  });
+
   const [showExitConfirm, setShowExitConfirm] = useState(false);
-  const [showTutorial, setShowTutorial] = useState(false);
+  
+  const [showTutorial, setShowTutorial] = useState(() => {
+    try {
+      return !localStorage.getItem('khans-playhub-tutorial-complete');
+    } catch {
+      return true;
+    }
+  });
+
   const [showProfileSetup, setShowProfileSetup] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
-  const [sfxVolume, setSfxVolume] = useState(0.5);
-  const [hapticFeedback, setHapticFeedback] = useState(true);
-  const [dataProvider, setDataProvider] = useState<'firebase' | 'cloudflare' | 'hybrid'>('firebase');
-  const [workerUrl, setWorkerUrl] = useState('https://khans-playhub-worker.kmasroor50.workers.dev');
+
+  const [sfxVolume, setSfxVolume] = useState(() => {
+    try {
+      const savedSettings = localStorage.getItem('khans-playhub-settings');
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        return parsed.sfxVolume ?? 0.5;
+      }
+    } catch {}
+    return 0.5;
+  });
+
+  const [hapticFeedback, setHapticFeedback] = useState(() => {
+    try {
+      const savedSettings = localStorage.getItem('khans-playhub-settings');
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        return parsed.hapticFeedback ?? true;
+      }
+    } catch {}
+    return true;
+  });
+
+  const [dataProvider, setDataProvider] = useState<'firebase' | 'cloudflare' | 'hybrid'>(() => {
+    try {
+      const savedSettings = localStorage.getItem('khans-playhub-settings');
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        return parsed.dataProvider ?? 'firebase';
+      }
+    } catch {}
+    return 'firebase';
+  });
+
+  const [workerUrl, setWorkerUrl] = useState(() => {
+    try {
+      const savedSettings = localStorage.getItem('khans-playhub-settings');
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        return parsed.workerUrl || 'https://khans-playhub-worker.kmasroor50.workers.dev';
+      }
+    } catch {}
+    return 'https://khans-playhub-worker.kmasroor50.workers.dev';
+  });
+
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'synced' | 'pending' | 'offline'>('synced');
   const [globalRecords, setGlobalRecords] = useState<Record<string, number>>({});
   const [isSyncing, setIsSyncing] = useState(false);
@@ -101,7 +176,7 @@ const App: React.FC = () => {
                      (user?.uid === 'v2swNDzVnegsJNo5eNEiLYv6ZYi2') ||
                      (userProfile.role === 'admin');
 
-  const CURRENT_VERSION = '3.4.0';
+  const CURRENT_VERSION = '3.5.0';
 
   // Listen for Firestore Quota Exceeded event
   useEffect(() => {
@@ -240,35 +315,7 @@ const App: React.FC = () => {
     audioService.setVolume(sfxVolume);
   }, [sfxVolume]);
 
-  // Initialize state from localStorage - ONLY ONCE
-  useEffect(() => {
-    if (!isLocalStorageAvailable) return;
-    try {
-      const savedScores = localStorage.getItem('khans-playhub-scores');
-      if (savedScores) setScores(JSON.parse(savedScores));
-    } catch (e) { console.error('Failed to parse scores', e); }
-    
-    const savedTheme = localStorage.getItem('khans-playhub-theme');
-    if (savedTheme) setIsDarkMode(savedTheme === 'dark');
 
-    try {
-      const savedProfile = localStorage.getItem('khans-playhub-profile');
-      if (savedProfile) {
-        setUserProfile(JSON.parse(savedProfile));
-      }
-    } catch (e) { console.error('Failed to parse profile', e); }
-
-    try {
-      const savedSettings = localStorage.getItem('khans-playhub-settings');
-      if (savedSettings) {
-        const parsed = JSON.parse(savedSettings);
-        setSfxVolume(parsed.sfxVolume ?? 0.5);
-        setHapticFeedback(parsed.hapticFeedback ?? true);
-        setDataProvider(parsed.dataProvider ?? 'firebase');
-        setWorkerUrl(parsed.workerUrl || 'https://khans-playhub-worker.kmasroor50.workers.dev');
-      }
-    } catch (e) { console.error('Failed to parse settings', e); }
-  }, []);
 
   // Parse Challenge URL Parameters
   useEffect(() => {
@@ -460,6 +507,8 @@ const App: React.FC = () => {
   }, []);
 
   const handleLogin = async () => {
+    if (isLoggingIn || !isAuthReady) return;
+    setIsLoggingIn(true);
     try {
       const provider = new GoogleAuthProvider();
       // Add custom parameters to force account selection if needed
@@ -474,10 +523,18 @@ const App: React.FC = () => {
       if (e.code === 'auth/unauthorized-domain') {
         alert(`Authentication Error: This domain (${window.location.hostname}) is not authorized in your Firebase Console. \n\nPlease add it to: \nFirebase Console > Authentication > Settings > Authorized domains`);
       } else if (e.code === 'auth/popup-blocked') {
-        alert('Login Popup Blocked: Please allow popups for this site to sign in.');
+        alert('Login Popup Blocked: Please allow popups for this site, or click the link icon next to settings to open the app in a new tab.');
+      } else if (e.code === 'auth/cancelled-popup-request') {
+        console.warn('Authentication popup cancelled: Concurrent requests prevented.');
+      } else if (e.code === 'auth/popup-closed-by-user') {
+        console.info('Authentication popup was closed by user.');
+      } else if (e.message?.includes('INTERNAL ASSERTION FAILED')) {
+        console.warn('Firebase internal promise resolution failure inside sandboxed frame. Please open the app in a new tab to bypass iframe sandbox restrictions.');
       } else {
         alert(`Login Failed: ${e.message}`);
       }
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -920,6 +977,7 @@ const App: React.FC = () => {
             onLogin={handleLogin}
             onLogout={handleLogout}
             isAuthReady={isAuthReady}
+            isLoggingIn={isLoggingIn}
             updateStatus={updateStatus}
             updateProgress={updateProgress}
             appUpdate={appUpdate}

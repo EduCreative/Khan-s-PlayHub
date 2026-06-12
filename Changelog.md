@@ -1,6 +1,16 @@
 
 # Changelog
 
+## [3.5.0] - 2026-06-12
+### Fixed
+- **Optimized startup sequence and eliminated redundant boot-up renders**:
+  - Implemented React lazy state initializers (`useState(() => { ... })`) to synchronously extract `scores`, `userProfile`, `isDarkMode`, `showTutorial`, and global configuration metrics directly from `localStorage` during the initial rendering mount context.
+  - Eliminated the redundant post-mount initialization `useEffect` block, completely mitigating serial state update rendering streams (resolving the excessive "App Rendering..." console warnings).
+- **Hardened Firebase Authentication inside sandboxed iframes & throttled overlapping requests**:
+  - Integrated `isLoggingIn` state tracking to instantly deactivate the Sign In selector and display a smooth visual spinning loader, preventing duplicate overlapping clicks which triggered double `signInWithPopup` popup streams.
+  - Resolved `auth/cancelled-popup-request` and `auth/popup-closed-by-user` failure bubbles, gracefully logging them inside diagnostic telemetry rather than letting them crash with global unresolved promise exceptions (`INTERNAL ASSERTION FAILED: Pending promise was never set`).
+  - Added clean viewport alerts recommending standalone windows to bypass browser sandbox blocks if iframe popups are actively suppressed by the browser.
+
 ## [3.4.3] - 2026-06-12
 ### Added
 - **Simulated Cyber Mesh fallback & Free Chat Lobby**: Solved backend non-delivery and Google authentication constraints:

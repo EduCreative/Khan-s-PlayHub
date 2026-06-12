@@ -37,6 +37,7 @@ interface HubProps {
   onLogin: () => void;
   onLogout: () => void;
   isAuthReady: boolean;
+  isLoggingIn?: boolean;
   updateStatus: 'idle' | 'checking' | 'downloading' | 'ready';
   updateProgress: number;
   appUpdate: { version: string; changelog: string[] } | null;
@@ -45,7 +46,7 @@ interface HubProps {
 
 const Hub: React.FC<HubProps> = ({ 
   games, onSelectGame, filter, setFilter, highScores, globalRecords, userProfile, isDarkMode, syncStatus, onSyncAll, onToggleTheme, onOpenProfile, onToggleFavorite, onUpdateGlobalRecord, onOpenAdmin, isAdmin, onOpenSettings, onOpenPrivacy, canInstall, isInstalled, onInstall,
-  user, onLogin, onLogout, isAuthReady, updateStatus, updateProgress, appUpdate, onChallenge
+  user, onLogin, onLogout, isAuthReady, isLoggingIn = false, updateStatus, updateProgress, appUpdate, onChallenge
 }) => {
   const [vClickCount, setVClickCount] = useState(0);
   const [adminClickCount, setAdminClickCount] = useState(0);
@@ -231,10 +232,24 @@ const Hub: React.FC<HubProps> = ({
           {isAuthReady && !user && (
             <button 
               onClick={onLogin}
-              className="px-6 h-12 md:h-14 rounded-2xl bg-indigo-600 text-white font-black uppercase italic tracking-tighter shadow-xl hover:bg-indigo-500 transition-all flex items-center gap-2"
+              disabled={isLoggingIn}
+              className={`px-6 h-12 md:h-14 rounded-2xl font-black uppercase italic tracking-tighter shadow-xl transition-all flex items-center gap-2 ${
+                isLoggingIn 
+                  ? 'bg-slate-400 dark:bg-slate-700 text-slate-200 dark:text-slate-400 cursor-not-allowed opacity-75' 
+                  : 'bg-indigo-600 text-white hover:bg-indigo-500'
+              }`}
             >
-              <i className="fab fa-google"></i>
-              <span className="hidden sm:inline">Sign In</span>
+              {isLoggingIn ? (
+                <>
+                  <i className="fas fa-spinner animate-spin"></i>
+                  <span className="hidden sm:inline">Signing In...</span>
+                </>
+              ) : (
+                <>
+                  <i className="fab fa-google"></i>
+                  <span className="hidden sm:inline">Sign In</span>
+                </>
+              )}
             </button>
           )}
 

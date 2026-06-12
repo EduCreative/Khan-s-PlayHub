@@ -1,7 +1,7 @@
 {
-  "version": "3.4.0",
+  "version": "3.5.0",
   "changelog": [
-    "Added a beautiful, interactive 'User Access & Session Log' table to each player profile view inside the admin suite - situated directly after Neural Event Registry.",
-    "The session log dynamic tracker consolidates and chronologically sorts player login registrations, system handshakes, active game sessions, gameplay durations, subscores, and event statuses."
+    "Optimized initial loading sequences by implementing lazy state initializers for scores, profile parameters, theme, and game settings, reducing boot-up rendering cycles.",
+    "Resolved Firebase sandboxed Auth popup failures by introducing a double-click throttle check on Google Sign In, gracefully isolating and handling cancellable cross-frame auth requests."
   ]
 }

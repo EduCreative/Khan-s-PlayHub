@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.4.3 "Simulated Cyber Mesh & Free Chat Lobby Update"  
+**Version:** 3.5.0 "Performance & Authentication Stability Patch"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,7 +9,12 @@ Khan's PlayHub is an active collection of classic, high-performance, and mobile-
 
 ---
 
-## 🚀 Recent Enhancements (v3.4.3)
+## 🚀 Recent Enhancements (v3.5.0)
+- **Zero-Friction Lazy Initializers**: Transitioned scores, profiles, visual theme flags, PWA indicators, and game settings to run synchronously inside React constructor state functions. This guarantees values are fetched from `localStorage` on the very first paint, cutting out post-mount update loops and improving initial loading times.
+- **Double-Click Authentication Throttle**: Integrated explicit visual loading spinners and disabled button statuses upon logging in, eradicates double popup trigger schedules.
+- **Improved Sandboxed Iframe Handling**: Gracefully handles and catches `auth/cancelled-popup-request` and closed popups instead of allowing Firebase Auth to crash with unhandled exception hooks in sandboxed web views.
+
+## 🚀 Previous Enhancements (v3.4.3)
 - **Innovative "Cyber Mesh" Free Fallback Chat**: Eradicated the requirement for Google Login authentication blocks and Firestore delivery lag for guests. Chatters can toggle a physical high-contrast switch in the drawer to engage either with the live server or a 100% free, reactive, zero-latency local cyberpunk chatbot lobby!
 - **Dynamic Interactive Chatbots**: Added simulated companions (PRO_GAMER_99, STEALTH_VIPER, CHIP_CHAMP) that autonomously discuss retro games, share strategy coordinates, and reply instantly with clever emojis or game-specific comments to user custom messages.
 - **Organic Milestones Feed**: Interconnected all game loops in the hub using the CustomEvent lobby system. Beating a high score or unlocking an achievement dispatches an automatic bulletin broadcast to the chat console, triggering realistic Bot cheers and congrats!
