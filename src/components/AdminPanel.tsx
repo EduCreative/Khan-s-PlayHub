@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { cloud } from '../services/cloud';
 import { auth, db } from '../firebase';
-import { collection, query, getDocs, deleteDoc, doc, orderBy, limit, writeBatch, updateDoc } from 'firebase/firestore';
+import { collection, query, getDocs, deleteDoc, doc, orderBy, limit, writeBatch, updateDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { QuickChat } from '../types';
 import { GAMES } from '../constants';
 import { audioService } from '../services/audioService';
@@ -39,13 +39,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'chats' | 'games' | 'pwa' | 'migration' | 'system'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'chats' | 'emojis' | 'games' | 'pwa' | 'migration' | 'system'>('overview');
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [userScores, setUserScores] = useState<any[]>([]);
   const [loadingUserScores, setLoadingUserScores] = useState(false);
   const [recentScores, setRecentScores] = useState<any[]>([]);
   const [loadingRecentScores, setLoadingRecentScores] = useState(false);
   const [confirmDeleteDeviceId, setConfirmDeleteDeviceId] = useState<string | null>(null);
+
+  // Emoji Management states
+  const [adminEmojis, setAdminEmojis] = useState<{ id: string, char: string, timestamp: number }[]>([]);
+  const [newEmojiChar, setNewEmojiChar] = useState('');
+  const [editingEmojiId, setEditingEmojiId] = useState<string | null>(null);
+  const [editingEmojiChar, setEditingEmojiChar] = useState('');
 
   // Chat Management state
   const [quickChats, setQuickChats] = useState<QuickChat[]>([]);
@@ -492,6 +498,23 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
     }
   }, [activeTab]);
 
+  // Emojis subscribe effect
+  useEffect(() => {
+    if (activeTab === 'emojis') {
+      const q = query(collection(db, 'emojis'), orderBy('timestamp', 'asc'));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const list: any[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        setAdminEmojis(list);
+      }, (err) => {
+        console.error("Failed to load emojis for administrator:", err);
+      });
+      return () => unsubscribe();
+    }
+  }, [activeTab]);
+
   const handleDeleteChat = async (id: string) => {
     try {
       await deleteDoc(doc(db, 'quickchats', id));
@@ -512,6 +535,46 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
     } catch (err: any) {
       console.error("Failed to edit chat message:", err);
       alert("Failed to edit chat message: " + err.message);
+    }
+  };
+
+  const handleAddEmoji = async (char: string) => {
+    if (!char.trim()) return;
+    try {
+      audioService.playClick();
+      const docId = `emoji-${Date.now()}-${Math.random()}`;
+      await setDoc(doc(db, 'emojis', docId), {
+        char: char.trim(),
+        timestamp: Date.now()
+      });
+      setNewEmojiChar('');
+    } catch (err: any) {
+      console.error("Failed to add emoji:", err);
+      alert("Error adding emoji: " + err.message);
+    }
+  };
+
+  const handleEditEmoji = async (id: string, newChar: string) => {
+    if (!newChar.trim()) return;
+    try {
+      audioService.playClick();
+      await updateDoc(doc(db, 'emojis', id), {
+        char: newChar.trim()
+      });
+      setEditingEmojiId(null);
+    } catch (err: any) {
+      console.error("Failed to edit emoji:", err);
+      alert("Error editing emoji: " + err.message);
+    }
+  };
+
+  const handleDeleteEmoji = async (id: string) => {
+    try {
+      audioService.playClick();
+      await deleteDoc(doc(db, 'emojis', id));
+    } catch (err: any) {
+      console.error("Failed to delete emoji:", err);
+      alert("Error deleting emoji: " + err.message);
     }
   };
 
@@ -803,15 +866,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
           </div>
           
           <div className="flex items-center gap-4">
-            <div className="flex bg-slate-200 dark:bg-white/5 p-1 rounded-xl border border-slate-300 dark:border-white/10">
-              {(['overview', 'users', 'chats', 'games', 'pwa', 'migration', 'system'] as const).map(tab => (
+            <div className="flex bg-slate-200 dark:bg-white/5 p-1 rounded-xl border border-slate-300 dark:border-white/10 flex-wrap gap-1">
+              {(['overview', 'users', 'chats', 'emojis', 'games', 'pwa', 'migration', 'system'] as const).map(tab => (
                 <button
                   key={tab}
                   onClick={() => {
                     setActiveTab(tab);
                     audioService.playNav();
                   }}
-                  className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all relative flex items-center gap-1.5 ${activeTab === tab ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                  className={`px-3.5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all relative flex items-center gap-1.5 ${activeTab === tab ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                 >
                   <span>{tab}</span>
                   {tab === 'system' && discrepancyList.length > 0 && (
@@ -2166,6 +2229,126 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                       )}
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'emojis' && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-card p-6 rounded-3xl border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg">
+                      <i className="fas fa-smile text-lg"></i>
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase italic">Chat Preset Emojis</h3>
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-indigo-400">Curate reactions instantly inside the chat FAB</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 bg-slate-100 dark:bg-white/5 p-3 rounded-2xl border border-slate-200 dark:border-white/10">
+                    <form 
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleAddEmoji(newEmojiChar);
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <input
+                        type="text"
+                        maxLength={4}
+                        placeholder="Add emoji (e.g. 🔥)"
+                        value={newEmojiChar}
+                        onChange={(e) => setNewEmojiChar(e.target.value)}
+                        className="bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                      <button
+                        type="submit"
+                        className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase text-[10px] tracking-widest cursor-pointer shadow-md shadow-indigo-500/20 transition-all flex items-center gap-1.5"
+                      >
+                        <i className="fas fa-plus" /> Add Preset
+                      </button>
+                    </form>
+                  </div>
+                </div>
+
+                <div className="glass-card rounded-3xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900 overflow-hidden shadow-xl">
+                  <div className="p-6 border-b border-slate-200 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-white/[0.02]">
+                    <div className="flex flex-col gap-0.5">
+                      <h4 className="text-sm font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Active Live Reactions ({adminEmojis.length})</h4>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">Only the first 16 emojis populate the 2 lines in physical panel</p>
+                    </div>
+                  </div>
+
+                  {adminEmojis.length === 0 ? (
+                    <div className="p-16 text-center text-slate-500">
+                      <i className="fas fa-laugh-beam text-4xl mb-4 text-slate-300 dark:text-slate-700 animate-pulse" />
+                      <p className="text-xs font-black uppercase tracking-widest text-slate-400">No custom presets in db</p>
+                      <p className="text-[10px] mt-1">Default backup list (16 classics) is currently loaded inside client panels.</p>
+                    </div>
+                  ) : (
+                    <div className="p-6 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+                      {adminEmojis.map((emoji) => (
+                        <div 
+                          key={emoji.id}
+                          className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex flex-col items-center justify-center relative group transition-all hover:bg-slate-100 dark:hover:bg-white/10 hover:border-indigo-500/30"
+                        >
+                          {editingEmojiId === emoji.id ? (
+                            <div className="flex flex-col items-center gap-2 w-full">
+                              <input
+                                type="text"
+                                maxLength={4}
+                                value={editingEmojiChar}
+                                onChange={(e) => setEditingEmojiChar(e.target.value)}
+                                className="w-12 text-center bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/10 rounded-lg py-1 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                autoFocus
+                              />
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => handleEditEmoji(emoji.id, editingEmojiChar)}
+                                  className="p-1 px-2 rounded bg-emerald-500 text-white text-[8px] font-bold uppercase tracking-widest hover:bg-emerald-600 transition-all cursor-pointer"
+                                  title="Save"
+                                >
+                                  <i className="fas fa-check" />
+                                </button>
+                                <button
+                                  onClick={() => setEditingEmojiId(null)}
+                                  className="p-1 px-2 rounded bg-slate-500 text-white text-[8px] font-bold uppercase tracking-widest hover:bg-slate-600 transition-all cursor-pointer"
+                                  title="Cancel"
+                                >
+                                  <i className="fas fa-times" />
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="text-4xl my-2 select-none filter drop-shadow animate-in zoom-in duration-200">{emoji.char}</div>
+                              
+                              <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  onClick={() => {
+                                    setEditingEmojiId(emoji.id);
+                                    setEditingEmojiChar(emoji.char);
+                                  }}
+                                  className="p-1 px-2 rounded bg-indigo-500/10 border border-indigo-500/20 text-indigo-500 hover:bg-indigo-500 hover:text-white text-[8px] font-bold uppercase tracking-widest transition-all cursor-pointer"
+                                  title="Edit Emoji"
+                                >
+                                  <i className="fas fa-edit" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteEmoji(emoji.id)}
+                                  className="p-1 px-2 rounded bg-rose-500/10 border border-rose-505/20 text-rose-500 hover:bg-rose-505 hover:text-white text-[8px] font-bold uppercase tracking-widest transition-all cursor-pointer"
+                                  title="Delete Emoji"
+                                >
+                                  <i className="fas fa-trash-alt" />
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}

@@ -167,8 +167,8 @@ service cloud.firestore {
     }
 
     match /quickchats/{chatId} {
-      // Allow synchronized real-time read access to active quick chats for logged-in players
-      allow read: if isAuthenticated();
+      // Allow synchronized real-time read access to active quick chats for all players including guests
+      allow read: if true;
       
       // Allow creation of real-time reactions and high-fives by physical auth profile holder
       allow create: if isAuthenticated() && !isUserBanned() &&
@@ -180,6 +180,13 @@ service cloud.firestore {
       
       // Admins can delete, or users can clean up their own chats
       allow delete: if isAdmin() || (isAuthenticated() && resource.data.senderUid == request.auth.uid);
+    }
+
+    match /emojis/{emojiId} {
+      // Anyone can load the custom admin-curated emojis
+      allow read: if true;
+      // Only administrators can edit/curate emojis
+      allow write: if isAdmin();
     }
 
     // Default deny
