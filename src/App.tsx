@@ -723,6 +723,42 @@ const App: React.FC = () => {
     );
   }
 
+  if (userProfile && userProfile.isBanned) {
+    return (
+      <div className="min-h-screen relative overflow-hidden bg-slate-900 text-white selection:bg-rose-500 selection:text-white flex flex-col justify-center items-center p-6 text-center">
+        <div className="fixed inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
+        <div className="relative z-10 glass-card max-w-lg p-10 rounded-[2.5rem] border border-rose-500/20 bg-rose-950/20 backdrop-blur-md flex flex-col items-center">
+          <div className="w-20 h-20 rounded-[2rem] bg-rose-500 flex items-center justify-center text-white text-3xl mb-8 animate-pulse shadow-2xl shadow-rose-500/50">
+            <i className="fas fa-user-slash" />
+          </div>
+          <h1 className="text-3xl font-black text-rose-500 italic uppercase tracking-tighter mb-2">Account Terminated</h1>
+          <p className="text-xs font-black text-rose-400 uppercase tracking-[0.2em] mb-6">State Violation Enforced</p>
+          <div className="w-full h-px bg-rose-500/15 mb-6" />
+          <p className="text-slate-300 text-sm leading-relaxed mb-8 font-medium">
+            This account associated with <span className="font-mono text-rose-300 bg-rose-500/10 px-1.5 py-0.5 rounded">{userProfile.email || userProfile.username}</span> has been permanently suspended by Khan's PlayHub administrators due to activity violations. 
+          </p>
+          <div className="bg-rose-500/5 border border-rose-500/10 rounded-2xl p-4 w-full mb-8">
+            <p className="text-[10px] font-black uppercase text-rose-400 tracking-wider mb-1">Violation Status Code</p>
+            <p className="text-xs font-mono text-rose-300">403_FORBIDDEN_PROFILE_BLACKLIST</p>
+          </div>
+          {auth.currentUser && (
+            <button 
+              onClick={async () => {
+                await signOut(auth);
+                setUserProfile(DEFAULT_PROFILE);
+                setUser(null);
+                window.location.reload();
+              }}
+              className="py-3 px-8 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold uppercase text-xs tracking-wider transition-all border border-slate-700 hover:border-slate-600 active:scale-95"
+            >
+              Sign Out Session
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen relative overflow-hidden bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-white selection:bg-indigo-500 selection:text-white transition-colors duration-500">
       <div className="fixed inset-0 bg-grid-pattern opacity-100 pointer-events-none" />

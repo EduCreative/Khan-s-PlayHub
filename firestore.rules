@@ -44,8 +44,14 @@ service cloud.firestore {
     function isAdmin() {
       return request.auth != null && (
         request.auth.uid == "v2swNDzVnegsJNo5eNEiLYv6ZYi2" || 
-        request.auth.token.email.lower() == "kmasroor50@gmail.com"
+        request.auth.token.get('email', '') == "kmasroor50@gmail.com"
       );
+    }
+
+    function isUserBanned() {
+      return request.auth != null && 
+             exists(/databases/$(database)/documents/profiles/$(request.auth.uid)) && 
+             get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.get('isBanned', false) == true;
     }
     
     function isValidEmail(email) {
@@ -60,7 +66,9 @@ service cloud.firestore {
              (!('email' in data) || (data.email == null || isValidEmail(data.email))) &&
              (!('bio' in data) || (data.bio is string && data.bio.size() <= 200)) &&
              (!('favorites' in data) || (data.favorites is list && data.favorites.size() <= 50)) &&
-             (!('achievements' in data) || (data.achievements is list && data.achievements.size() <= 100));
+             (!('achievements' in data) || (data.achievements is list && data.achievements.size() <= 100)) &&
+             (!('role' in data) || (data.role is string && (data.role == 'user' || data.role == 'admin'))) &&
+             (!('isBanned' in data) || data.isBanned is bool);
     }
 
     function isValidScore(data) {
@@ -103,11 +111,14 @@ service cloud.firestore {
       allow read: if isAdmin() || isOwner(userId);
       
       // Only owner can create their own profile, or admin can create any (for migration)
-      allow create: if (isOwner(userId) || isAdmin()) && isValidProfile(request.resource.data);
+      allow create: if (isOwner(userId) || isAdmin()) && isValidProfile(request.resource.data) &&
+                      (isAdmin() || request.resource.data.get('isBanned', false) == false) &&
+                      (isAdmin() || request.resource.data.get('role', 'user') == 'user');
       
       // Owner or Admin can update
       allow update: if (isOwner(userId) || isAdmin()) && isValidProfile(request.resource.data) &&
                       (isAdmin() || request.resource.data.joinedAt == resource.data.joinedAt) &&
+                      (isAdmin() || request.resource.data.get('isBanned', false) == resource.data.get('isBanned', false)) &&
                       (isAdmin() || !('role' in request.resource.data) || request.resource.data.role == resource.data.role);
       
       allow delete: if isAdmin();
@@ -118,11 +129,11 @@ service cloud.firestore {
       allow read: if true;
       
       // Only owner can write their own scores, or admin can write any score (for migration)
-      allow create: if isAuthenticated() && 
+      allow create: if isAuthenticated() && !isUserBanned() && 
                       (request.resource.data.deviceId == request.auth.uid || isAdmin()) &&
                       isValidScore(request.resource.data);
                       
-      allow update: if isAuthenticated() && 
+      allow update: if isAuthenticated() && !isUserBanned() && 
                       (resource.data.deviceId == request.auth.uid || isAdmin()) &&
                       (request.resource.data.deviceId == request.auth.uid || isAdmin()) &&
                       request.resource.data.gameId == resource.data.gameId &&
@@ -134,14 +145,15 @@ service cloud.firestore {
     match /challenges/{challengeId} {
       allow read: if true;
       
-      allow create: if isAuthenticated() && 
+      allow create: if isAuthenticated() && !isUserBanned() && 
                     (request.resource.data.creatorUid == request.auth.uid || isAdmin()) &&
                     isValidChallenge(request.resource.data);
                     
       allow update: if (
                       isAdmin() ||
-                      (request.auth != null && resource.data.creatorUid == request.auth.uid && isValidChallenge(request.resource.data)) ||
+                      (request.auth != null && !isUserBanned() && resource.data.creatorUid == request.auth.uid && isValidChallenge(request.resource.data)) ||
                       (
+                        !isUserBanned() &&
                         isValidChallenge(request.resource.data) &&
                         request.resource.data.id == resource.data.id &&
                         request.resource.data.gameId == resource.data.gameId &&
@@ -159,12 +171,12 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       
       // Allow creation of real-time reactions and high-fives by physical auth profile holder
-      allow create: if isAuthenticated() &&
+      allow create: if isAuthenticated() && !isUserBanned() &&
                     request.resource.data.senderUid == request.auth.uid &&
                     isValidQuickChat(request.resource.data);
                     
-      // Quick chats are immutable once sent
-      allow update: if false;
+      // Quick chats can be moderated and updated by Admins
+      allow update: if isAdmin();
       
       // Admins can delete, or users can clean up their own chats
       allow delete: if isAdmin() || (isAuthenticated() && resource.data.senderUid == request.auth.uid);

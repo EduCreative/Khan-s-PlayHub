@@ -26,6 +26,7 @@ export interface UserProfile {
   joinedAt: number;
   achievements: string[]; // IDs of unlocked achievements
   role?: 'admin' | 'user';
+  isBanned?: boolean;
   playTime?: number; // Total seconds on platform
   gameStats?: Record<string, {
     timeSpent: number;

@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { cloud } from '../services/cloud';
 import { auth, db } from '../firebase';
-import { collection, query, getDocs, deleteDoc, doc, orderBy, limit, writeBatch } from 'firebase/firestore';
+import { collection, query, getDocs, deleteDoc, doc, orderBy, limit, writeBatch, updateDoc } from 'firebase/firestore';
 import { QuickChat } from '../types';
 import { GAMES } from '../constants';
 import { audioService } from '../services/audioService';
@@ -54,6 +54,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
   const [chatsTypeFilter, setChatsTypeFilter] = useState<'all' | 'preset' | 'emoji' | 'custom'>('all');
   const [selectedChatIds, setSelectedChatIds] = useState<string[]>([]);
   const [showConfirmWipeChats, setShowConfirmWipeChats] = useState(false);
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editingMessageText, setEditingMessageText] = useState('');
   const [workerUrl, setWorkerUrl] = useState(cloud.getWorkerUrl());
   const [migrationStatus, setMigrationStatus] = useState<{ loading: boolean, result: any | null, error: string | null }>({
     loading: false,
@@ -459,6 +461,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
   }, [quickChats, chatsSearchText, chatsTypeFilter]);
 
   const fetchChats = async () => {
+    if (!auth.currentUser) {
+      console.log("No authenticated user session found. Skipping admin chats fetch.");
+      return;
+    }
     try {
       setLoadingChats(true);
       const q = query(collection(db, 'quickchats'), orderBy('timestamp', 'desc'), limit(150));
@@ -469,7 +475,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
       });
       setQuickChats(messages);
     } catch (err: any) {
-      console.error("Error fetching admin chats:", err);
+      if (err instanceof Error && err.message.toLowerCase().includes('permission')) {
+        console.warn("Permission denied for admin chats fetch. You may not be authorized.");
+      } else {
+        console.error("Error fetching admin chats:", err);
+      }
     } finally {
       setLoadingChats(false);
     }
@@ -490,6 +500,42 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
       audioService.playClick();
     } catch (err) {
       console.error("Failed to delete chat message:", err);
+    }
+  };
+
+  const handleEditChat = async (id: string, newMessage: string) => {
+    try {
+      await updateDoc(doc(db, 'quickchats', id), { message: newMessage });
+      setQuickChats(prev => prev.map(c => c.id === id ? { ...c, message: newMessage } : c));
+      setEditingChatId(null);
+      audioService.playClick();
+    } catch (err: any) {
+      console.error("Failed to edit chat message:", err);
+      alert("Failed to edit chat message: " + err.message);
+    }
+  };
+
+  const handleBanUser = async (deviceId: string) => {
+    try {
+      await updateDoc(doc(db, 'profiles', deviceId), { isBanned: true });
+      setUsers((prev: any[]) => prev.map(u => u.deviceId === deviceId ? { ...u, isBanned: true } : u));
+      setSelectedUser((prev: any) => prev && prev.deviceId === deviceId ? { ...prev, isBanned: true } : prev);
+      audioService.playClick();
+    } catch (err: any) {
+      console.error("Failed to ban player:", err);
+      alert("Failed to ban player: " + err.message);
+    }
+  };
+
+  const handleUnbanUser = async (deviceId: string) => {
+    try {
+      await updateDoc(doc(db, 'profiles', deviceId), { isBanned: false });
+      setUsers((prev: any[]) => prev.map(u => u.deviceId === deviceId ? { ...u, isBanned: false } : u));
+      setSelectedUser((prev: any) => prev && prev.deviceId === deviceId ? { ...prev, isBanned: false } : prev);
+      audioService.playClick();
+    } catch (err: any) {
+      console.error("Failed to unban player:", err);
+      alert("Failed to unban player: " + err.message);
     }
   };
 
@@ -1389,7 +1435,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                                   <i className={`fas ${user.avatar || 'fa-user'}`}></i>
                                 </div>
                                 <div className="flex flex-col">
-                                  <span className="font-bold text-slate-900 dark:text-white">{user.username}</span>
+                                  <span className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    {user.username}
+                                    {user.isBanned && (
+                                      <span className="px-1.5 py-0.5 rounded bg-rose-500 text-white text-[8px] font-black uppercase tracking-wider">
+                                        Banned
+                                      </span>
+                                    )}
+                                  </span>
                                   <span className="text-[9px] text-slate-500 uppercase font-bold tracking-tighter">{user.email || 'NO EMAIL LINKED'}</span>
                                 </div>
                               </div>
@@ -1471,7 +1524,29 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                           <span className="font-bold text-slate-500">ACHIEVEMENTS</span>
                           <span className="font-bold text-indigo-500">{selectedUser.achievements?.length || 0}</span>
                         </div>
+                        <div className="flex justify-between items-center text-[10px]">
+                          <span className="font-bold text-slate-500">STATUS</span>
+                          <span className={`font-black uppercase tracking-wider ${selectedUser.isBanned ? 'text-rose-500' : 'text-emerald-500'}`}>
+                            {selectedUser.isBanned ? 'Banned' : 'Active'}
+                          </span>
+                        </div>
                       </div>
+
+                      {selectedUser.isBanned ? (
+                        <button
+                          onClick={() => handleUnbanUser(selectedUser.deviceId)}
+                          className="w-full mt-6 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold uppercase text-[10px] tracking-wider transition-all shadow-lg hover:shadow-emerald-600/25 active:scale-95 flex items-center justify-center gap-1.5"
+                        >
+                          <i className="fas fa-check-circle" /> Unban Player
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleBanUser(selectedUser.deviceId)}
+                          className="w-full mt-6 py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold uppercase text-[10px] tracking-wider transition-all shadow-lg hover:shadow-rose-600/25 active:scale-95 flex items-center justify-center gap-1.5"
+                        >
+                          <i className="fas fa-ban" /> Ban Player
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -2264,9 +2339,42 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                                   </div>
                                 </td>
                                 <td className="py-4 px-6 text-slate-700 dark:text-slate-300">
-                                  <span className="break-all max-w-sm block">
-                                    {chat.message}
-                                  </span>
+                                  {editingChatId === chat.id ? (
+                                    <div className="flex items-center gap-2 max-w-xs md:max-w-md">
+                                      <input
+                                        type="text"
+                                        value={editingMessageText}
+                                        onChange={(e) => setEditingMessageText(e.target.value)}
+                                        className="flex-1 bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') {
+                                            handleEditChat(chat.id, editingMessageText);
+                                          } else if (e.key === 'Escape') {
+                                            setEditingChatId(null);
+                                          }
+                                        }}
+                                        autoFocus
+                                      />
+                                      <button
+                                        onClick={() => handleEditChat(chat.id, editingMessageText)}
+                                        className="p-1 px-2 rounded bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest transition-all hover:bg-emerald-600"
+                                        title="Save Changes"
+                                      >
+                                        <i className="fas fa-check" />
+                                      </button>
+                                      <button
+                                        onClick={() => setEditingChatId(null)}
+                                        className="p-1 px-2 rounded bg-slate-500 text-white text-[10px] font-black uppercase tracking-widest transition-all hover:bg-slate-600"
+                                        title="Cancel"
+                                      >
+                                        <i className="fas fa-times" />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <span className="break-all max-w-sm block">
+                                      {chat.message}
+                                    </span>
+                                  )}
                                 </td>
                                 <td className="py-4 px-6">
                                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border ${
@@ -2283,16 +2391,31 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                                   {chat.timestamp ? new Date(chat.timestamp).toLocaleString() : '---'}
                                 </td>
                                 <td className="py-4 px-6 text-right">
-                                  <button
-                                    onClick={() => {
-                                      audioService.playClick();
-                                      handleDeleteChat(chat.id);
-                                    }}
-                                    className="p-1 px-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all"
-                                    title="Delete Message"
-                                  >
-                                    <i className="fas fa-trash-alt" />
-                                  </button>
+                                  <div className="flex items-center justify-end gap-2">
+                                    {editingChatId !== chat.id && (
+                                      <button
+                                        onClick={() => {
+                                          audioService.playClick();
+                                          setEditingChatId(chat.id);
+                                          setEditingMessageText(chat.message);
+                                        }}
+                                        className="p-1 px-2.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-500 hover:bg-indigo-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all"
+                                        title="Edit Message"
+                                      >
+                                        <i className="fas fa-edit" />
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={() => {
+                                        audioService.playClick();
+                                        handleDeleteChat(chat.id);
+                                      }}
+                                      className="p-1 px-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all"
+                                      title="Delete Message"
+                                    >
+                                      <i className="fas fa-trash-alt" />
+                                    </button>
+                                  </div>
                                 </td>
                               </tr>
                             );
