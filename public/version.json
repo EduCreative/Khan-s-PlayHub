@@ -1,7 +1,8 @@
 {
-  "version": "3.5.0",
+  "version": "3.5.1",
   "changelog": [
-    "Optimized initial loading sequences by implementing lazy state initializers for scores, profile parameters, theme, and game settings, reducing boot-up rendering cycles.",
-    "Resolved Firebase sandboxed Auth popup failures by introducing a double-click throttle check on Google Sign In, gracefully isolating and handling cancellable cross-frame auth requests."
+    "Integrated colorful vector Google G logo on the Sign-In button and moved it next to the Profile button for standard streamlined action flows.",
+    "Engineered manual Sync Cloud button next to user Profile, putting players in control of when scores and custom metadata are written to Firestore, reducing background read/write transactions to zero.",
+    "Mitigated redundant console.log prints to streamline web app performance."
   ]
 }

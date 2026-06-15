@@ -31,8 +31,6 @@ const DEFAULT_PROFILE: UserProfile = {
 };
 
 const App: React.FC = () => {
-  console.log("App Rendering...");
-  
   const [quotaExceeded, setQuotaExceeded] = useState(false);
   const lastSyncRef = useRef<Record<string, any>>({});
   const gameStartTimeRef = useRef<number | null>(null);
@@ -159,6 +157,21 @@ const App: React.FC = () => {
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'synced' | 'pending' | 'offline'>('synced');
+  const [hasUnsyncedChanges, setHasUnsyncedChanges] = useState(() => {
+    try {
+      const saved = localStorage.getItem('khans-playhub-has-unsynced');
+      return saved === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('khans-playhub-has-unsynced', hasUnsyncedChanges ? 'true' : 'false');
+    } catch {}
+  }, [hasUnsyncedChanges]);
+
   const [globalRecords, setGlobalRecords] = useState<Record<string, number>>({});
   const [isSyncing, setIsSyncing] = useState(false);
   const [recentAchievement, setRecentAchievement] = useState<Achievement | null>(null);
@@ -176,7 +189,7 @@ const App: React.FC = () => {
                      (user?.uid === 'v2swNDzVnegsJNo5eNEiLYv6ZYi2') ||
                      (userProfile.role === 'admin');
 
-  const CURRENT_VERSION = '3.5.0';
+  const CURRENT_VERSION = '3.5.1';
 
   // Listen for Firestore Quota Exceeded event
   useEffect(() => {
@@ -432,19 +445,23 @@ const App: React.FC = () => {
   }, [isDarkMode]);
 
   const syncAllScores = React.useCallback(async () => {
-    if (!navigator.onLine || isSyncing || !auth.currentUser || quotaExceeded) return;
+    if (!navigator.onLine || isSyncing || !auth.currentUser) return;
     
     setIsSyncing(true);
     setSyncStatus('pending');
     
     try {
+      // Sync user profile to the cloud
+      const profileSuccess = await cloud.syncProfile(userProfile);
+      
       const gameIds = Object.keys(scores);
-      let allSuccess = true;
+      let allSuccess = profileSuccess;
       
       for (const gameId of gameIds) {
         const success = await cloud.syncScore(gameId, scores[gameId], userProfile);
-        if (!success) allSuccess = false;
-        else {
+        if (!success) {
+          allSuccess = false;
+        } else {
           // Update global record if we beat it
           setGlobalRecords(prev => ({
             ...prev,
@@ -454,17 +471,21 @@ const App: React.FC = () => {
       }
       
       setSyncStatus(allSuccess ? 'synced' : 'offline');
-      if (allSuccess) audioService.playSuccess();
+      setHasUnsyncedChanges(!allSuccess);
+      if (allSuccess) {
+        audioService.playSuccess();
+        setQuotaExceeded(false);
+      }
     } catch (e: any) {
       console.error('Sync All Failed:', e);
-      if (e.message.includes('resource-exhausted') || e.message.includes('Quota exceeded')) {
+      if (e.message?.includes('resource-exhausted') || e.message?.includes('Quota exceeded')) {
         setQuotaExceeded(true);
       }
       setSyncStatus('offline');
     } finally {
       setIsSyncing(false);
     }
-  }, [scores, isSyncing, userProfile, quotaExceeded]);
+  }, [scores, isSyncing, userProfile]);
 
   // Auth Listener
   useEffect(() => {
@@ -491,19 +512,15 @@ const App: React.FC = () => {
             const initialProfile = { ...userProfile, email: firebaseUser.email || '' };
             await cloud.syncProfile(initialProfile);
           }
-          // We call syncAllScores here. Since it's inside the callback, 
-          // we don't necessarily need it in the dependency array of useEffect
-          // if we're okay with it being the version from the first render 
-          // or we can use a ref.
-          syncAllScores();
+          // Do not automatically write-sync scores to save Firestore write quota
+          setSyncStatus('synced');
+          setHasUnsyncedChanges(false);
         } catch (err) {
           console.error("Auth callback error:", err);
         }
       }
     });
     return () => unsubscribe();
-    // Removed syncAllScores from dependencies to prevent infinite loop
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleLogin = async () => {
@@ -573,25 +590,9 @@ const App: React.FC = () => {
   const saveProfile = React.useCallback(async (updated: UserProfile) => {
     setUserProfile(updated);
     localStorage.setItem('khans-playhub-profile', JSON.stringify(updated));
-    
-    if (quotaExceeded) return;
-
-    setSyncStatus('pending');
-    try {
-      const success = await cloud.syncProfile(updated);
-      setSyncStatus(success ? 'synced' : 'offline');
-      if (success) {
-        audioService.playSuccess();
-        if (hapticFeedback) audioService.vibrate([10, 50, 10]);
-      }
-    } catch (e: any) {
-      console.error('Profile Sync Failed:', e);
-      if (e.message.includes('resource-exhausted') || e.message.includes('Quota exceeded')) {
-        setQuotaExceeded(true);
-      }
-      setSyncStatus('offline');
-    }
-  }, [hapticFeedback, quotaExceeded]);
+    setHasUnsyncedChanges(true);
+    setSyncStatus('offline');
+  }, []);
 
   // Gameplay Time Tracking
   useEffect(() => {
@@ -727,33 +728,10 @@ const App: React.FC = () => {
       });
     }
 
-    // Always attempt to sync if the score is at least the current high score
-    // This handles cases where local data exists but cloud data is missing or failed previously
-    const now = Date.now();
-    const lastSync = lastSyncRef.current[gameId] || 0;
-    const shouldSync = metadata?.final || (now - lastSync > 30000); // Sync on game over or every 30s
-
-    if (shouldSync && score >= currentHigh && navigator.onLine && !quotaExceeded) {
-      setSyncStatus('pending');
-      try {
-        const success = await cloud.syncScore(gameId, score, userProfile);
-        setSyncStatus(success ? 'synced' : 'offline');
-        if (success) {
-          lastSyncRef.current[gameId] = now;
-          audioService.playSuccess();
-          // Update global record if we beat it
-          setGlobalRecords(prev => ({
-            ...prev,
-            [gameId]: Math.max(prev[gameId] || 0, score)
-          }));
-        }
-      } catch (e: any) {
-        console.error('Sync failed', e);
-        if (e.message.includes('resource-exhausted') || e.message.includes('Quota exceeded')) {
-          setQuotaExceeded(true);
-        }
-        setSyncStatus('offline');
-      }
+    // Local-only score marking - flags changes as unsynced so players can manually push with the visual Sync button
+    if (score >= currentHigh) {
+      setHasUnsyncedChanges(true);
+      setSyncStatus('offline');
     }
 
     // Challenge Play log update
@@ -982,6 +960,7 @@ const App: React.FC = () => {
             updateProgress={updateProgress}
             appUpdate={appUpdate}
             onChallenge={handleOpenChallengeDialog}
+            hasUnsyncedChanges={hasUnsyncedChanges}
           />
         )}
       </main>

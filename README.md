@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.5.0 "Performance & Authentication Stability Patch"  
+**Version:** 3.5.1 "User-Directed Cloud Synchronization & Vibrant Branding"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,10 +9,13 @@ Khan's PlayHub is an active collection of classic, high-performance, and mobile-
 
 ---
 
-## 🚀 Recent Enhancements (v3.5.0)
+## 🚀 Recent Enhancements (v3.5.1)
+- **User-Directed Cloud Sync Button**: Added a premium on-demand manual synchronization button next to the profile avatar. Standard gameplay scores and profile modifications are stored locally without immediate auto-sync Firestore server write spikes. The button illuminates beautifully (glowing Indigo gradient with red alert ping) when offline changes exist, putting the player in full control.
+- **Official Colorful Google 'G' Branding**: Rebuilt the Google Sign-In trigger with a clean vector-rendered official colorful G logo inside a white badge and aligned it adjacent to the profile button in the primary header.
+- **Optimized Console Output**: Cleared redundant component-rendering log diagnostics to improve browser logging cleanliness.
+
+## 🚀 Previous Enhancements (v3.5.0)
 - **Zero-Friction Lazy Initializers**: Transitioned scores, profiles, visual theme flags, PWA indicators, and game settings to run synchronously inside React constructor state functions. This guarantees values are fetched from `localStorage` on the very first paint, cutting out post-mount update loops and improving initial loading times.
-- **Double-Click Authentication Throttle**: Integrated explicit visual loading spinners and disabled button statuses upon logging in, eradicates double popup trigger schedules.
-- **Improved Sandboxed Iframe Handling**: Gracefully handles and catches `auth/cancelled-popup-request` and closed popups instead of allowing Firebase Auth to crash with unhandled exception hooks in sandboxed web views.
 
 ## 🚀 Previous Enhancements (v3.4.3)
 - **Innovative "Cyber Mesh" Free Fallback Chat**: Eradicated the requirement for Google Login authentication blocks and Firestore delivery lag for guests. Chatters can toggle a physical high-contrast switch in the drawer to engage either with the live server or a 100% free, reactive, zero-latency local cyberpunk chatbot lobby!

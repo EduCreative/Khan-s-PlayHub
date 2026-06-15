@@ -1,6 +1,20 @@
 
 # Changelog
 
+## [3.5.1] - 2026-06-15
+### Added
+- **Manual 'Sync Cloud' On-Demand Action Button**:
+  - Engineered a premium, interactive manual synchronization button positioned elegantly right next to the player's profile avatar.
+  - Keeps standard high scores and user profile modifications local in `localStorage` + React state instantly, resulting in zero latency, zero spontaneous database self-rendering calls, and absolutely zero automatic Firestore writes during normal gameplay.
+  - Equips the Sync Cloud button with responsive visual telemetry states: tranquil emerald-colored borders for `'Synced'`, an amber spinner for `'Syncing...'`, and a glowing indigo gradient background with a crimson pulsing alert bead when unsynced changes exist.
+- **Vibrant Multi-Colored Google Sign-In Branding**:
+  - Replaced the plain, monochrome Google icon with a pixel-perfect, vector-rendered official multi-colored Google 'G' brand mark SVG inside a clean white badge.
+  - Relocated the sign-in prompt adjacent to the profile button, keeping access entry paths intuitively side-by-side in the hub header.
+
+### Fixed
+- **Clean Console Diagnostic Logs**:
+  - Purged redundant `"App Rendering..."` debug print logs, enhancing runtime console cleanliness.
+
 ## [3.5.0] - 2026-06-12
 ### Fixed
 - **Optimized startup sequence and eliminated redundant boot-up renders**:
