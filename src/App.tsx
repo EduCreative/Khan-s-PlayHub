@@ -200,7 +200,7 @@ const App: React.FC = () => {
                      (user?.uid === 'v2swNDzVnegsJNo5eNEiLYv6ZYi2') ||
                      (userProfile.role === 'admin');
 
-  const CURRENT_VERSION = '3.5.4';
+  const CURRENT_VERSION = '3.5.5';
 
   // Listen for Firestore Quota Exceeded event
   useEffect(() => {
@@ -254,6 +254,21 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchGlobalRecords = async () => {
       if (forceOfflineMode) return;
+
+      try {
+        const cached = localStorage.getItem('khans-playhub-global-records-cache');
+        if (cached) {
+          const { timestamp, records } = JSON.parse(cached);
+          // Cache validity: 12 hours (43,200,000 milliseconds)
+          if (Date.now() - timestamp < 43200000 && Object.keys(records).length > 0) {
+            setGlobalRecords(records);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to parse global records cache', err);
+      }
+
       const records: Record<string, number> = {};
       // Fetch in parallel to be faster
       await Promise.all(GAMES.map(async (game) => {
@@ -267,6 +282,13 @@ const App: React.FC = () => {
         }
       }));
       setGlobalRecords(records);
+
+      try {
+        localStorage.setItem('khans-playhub-global-records-cache', JSON.stringify({
+          timestamp: Date.now(),
+          records
+        }));
+      } catch {}
     };
     fetchGlobalRecords();
   }, [forceOfflineMode]);
@@ -478,10 +500,19 @@ const App: React.FC = () => {
           allSuccess = false;
         } else {
           // Update global record if we beat it
-          setGlobalRecords(prev => ({
-            ...prev,
-            [gameId]: Math.max(prev[gameId] || 0, scores[gameId])
-          }));
+          setGlobalRecords(prev => {
+            const updated = {
+              ...prev,
+              [gameId]: Math.max(prev[gameId] || 0, scores[gameId])
+            };
+            try {
+              localStorage.setItem('khans-playhub-global-records-cache', JSON.stringify({
+                timestamp: Date.now(),
+                records: updated
+              }));
+            } catch {}
+            return updated;
+          });
         }
       }
       
@@ -691,10 +722,19 @@ const App: React.FC = () => {
   }, [saveProfile, hapticFeedback]);
 
   const updateGlobalRecord = React.useCallback((gameId: string, score: number) => {
-    setGlobalRecords(prev => ({
-      ...prev,
-      [gameId]: Math.max(prev[gameId] || 0, score)
-    }));
+    setGlobalRecords(prev => {
+      const updated = {
+        ...prev,
+        [gameId]: Math.max(prev[gameId] || 0, score)
+      };
+      try {
+        localStorage.setItem('khans-playhub-global-records-cache', JSON.stringify({
+          timestamp: Date.now(),
+          records: updated
+        }));
+      } catch {}
+      return updated;
+    });
   }, []);
 
   const unlockAchievement = React.useCallback((id: string) => {

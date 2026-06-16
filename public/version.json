@@ -1,7 +1,7 @@
 {
-  "version": "3.5.4",
+  "version": "3.5.5",
   "changelog": [
-    "Consolidated Visual Leaderboard and Global Leaderboard views at the footer of the unified Leaderboards hub, streamlining workspace aesthetics.",
-    "Introduced an interactive cyberpunk 'Game Toppers Board' rendering record holders, peak score achievements, and dates for every playable sector dynamically."
+    "Lazy-loaded Quick Chat Firestore real-time listeners, executing subscription connections only when the console drawer is actively open, slashing idle load.",
+    "Integrated a robust 12-hour localStorage cache for global high scores, bypassing up to 12 parallel boot-up queries per session and conserving daily read quotas."
   ]
 }

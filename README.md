@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.5.4 "Dynamic Game Toppers Board & Clean Telemetry Consolidation"  
+**Version:** 3.5.5 "Lazy-Loaded Chat Console & Daily Firestore Fetch Caching"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,12 +9,12 @@ Khan's PlayHub is an active collection of classic, high-performance, and mobile-
 
 ---
 
-## 🚀 Recent Enhancements (v3.5.4)
-- **Unified Leaderboards Space**: Cleaned up header/subcategory clutter by removing separate 'Visual Leaderboard' and 'Global Leaderboard' filter tabs, grouping all player telemetry dashboards into a single intuitive space.
-- **Side-by-Side Game Toppers Board**: Added a dynamic sector status panel that queries overall database scores, identifying and presenting the peak record holder's name, max score, and exact date for every playable micro-game.
-- **Deep Integrated Telemetry Charts**: Embedded both performance radar distributions and player concentration histograms beautifully at the bottom of the Leaderboard view for comprehensive, hassle-free comparative analytics.
+## 🚀 Recent Enhancements (v3.5.5)
+- **On-Demand Lazy-Loaded Chat Drawer**: Shifted the real-time curated emoji listener and active room message listener to start up only when the Quick Chat console drawer is actually expanded. Collapsing the drawer immediately tears down active connections, saving massive reads.
+- **12-Hour Local Storage Caching**: Configured a local cache for global top-score records, preventing up to 12 separate parallel database queries when loading or refreshing the app.
+- **Smart Cache Synchronization**: Auto-refreshes the high-score state and updates local storage records dynamically whenever a manual "Sync All" execution succeeds.
 
-## 🚀 Previous Enhancements (v3.5.3)
+## 🚀 Previous Enhancements (v3.5.4)
 - **Manual 'Toggle Offline Mode' Option**: Engineered a manual toggle in settings that forces the application to completely ignore background cloud database connections.
 - **Improved Data Conservation & Control**: Prevents redundant Firestore profile fetches on boot-up, skips active challenge play updates, and silences parallel global record calls for full offline gameplay.
 - **Visual Offline Feedback**: Integrates subtle visual airplane mode icons, custom indicators, and dynamic online/offline state translations across the app.

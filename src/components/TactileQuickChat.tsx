@@ -29,8 +29,15 @@ export const TactileQuickChat: React.FC<TactileQuickChatProps> = ({ userProfile,
 
   // Real-time listener for curated emojis from Firestore (strictly 16 elements, padded with default fallbacks)
   useEffect(() => {
+    if (!isOpen) {
+      // Pre-populate with standard defaults when closed to prevent layout shift on hover
+      const defaults = DEFAULT_EMOJIS.map((e, idx) => ({ id: `default-${idx}`, char: e }));
+      setEmojis(defaults);
+      return;
+    }
+
     const q = query(collection(db, 'emojis'), orderBy('timestamp', 'asc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot( q, (snapshot) => {
       const dbEmojis: { id: string, char: string }[] = [];
       snapshot.forEach((docSnap) => {
         const data = docSnap.data();
@@ -53,10 +60,12 @@ export const TactileQuickChat: React.FC<TactileQuickChatProps> = ({ userProfile,
       setEmojis(DEFAULT_EMOJIS.map((e, idx) => ({ id: `default-${idx}`, char: e })));
     });
     return () => unsubscribe();
-  }, []);
+  }, [isOpen]);
 
-  // Listen to Firestore Realtime Messages (Strictly Online Live Server for absolute authenticity)
+  // Listen to Firestore Realtime Messages (Strictly Active when open for maximum data conservation)
   useEffect(() => {
+    if (!isOpen) return;
+
     const q = query(
       collection(db, 'quickchats'),
       orderBy('timestamp', 'desc'),
@@ -71,10 +80,7 @@ export const TactileQuickChat: React.FC<TactileQuickChatProps> = ({ userProfile,
       
       const chronological = messages.reverse();
       setChats(prev => {
-        if (!isOpen && prev.length > 0 && chronological.length > prev.length) {
-          const newCount = chronological.filter(m => !prev.some(p => p.id === m.id)).length;
-          setUnreadCount(u => u + newCount);
-        }
+        // Since we are open, we don't increase unreadCount
         return chronological;
       });
       setIsOffline(false);
