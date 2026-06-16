@@ -69,7 +69,7 @@ const Hub: React.FC<HubProps> = ({
     ? []
     : games.filter(g => g.category === filter);
 
-  const categories = ['All', 'Favorites', 'Leaderboard', 'Visual Leaderboard', 'Global Leaderboard', ...Object.values(Category)];
+  const categories = ['All', 'Favorites', 'Leaderboard', ...Object.values(Category)];
 
   const totalScore = Object.values(highScores).reduce((sum, s) => sum + s, 0);
 
@@ -361,11 +361,10 @@ const Hub: React.FC<HubProps> = ({
           onUpdateGlobalRecord={onUpdateGlobalRecord} 
           currentUser={user}
           userProfile={userProfile}
+          globalRecords={globalRecords}
+          highScores={highScores}
+          isDarkMode={isDarkMode}
         />
-      ) : filter === 'Visual Leaderboard' ? (
-        <VisualLeaderboard games={games} globalRecords={globalRecords} isDarkMode={isDarkMode} onBack={() => setFilter('All')} />
-      ) : filter === 'Global Leaderboard' ? (
-        <GlobalLeaderboard games={games} highScores={highScores} userProfile={userProfile} isDarkMode={isDarkMode} onBack={() => setFilter('All')} />
       ) : (
         <div id="games-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 min-h-[400px]">
           {filteredGames.map((game: Game, idx: number) => (
@@ -408,7 +407,7 @@ const Hub: React.FC<HubProps> = ({
             className="px-6 py-2 glass-card border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 cursor-pointer hover:bg-indigo-500/5 transition-all select-none"
           >
             <span className={`w-1.5 h-1.5 rounded-full animate-ping ${syncStatus === 'synced' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-            PlayHub Cloud Protocol Enabled v3.5.3
+            PlayHub Cloud Protocol Enabled v3.5.4
           </span>
           <button onClick={handleAdminClick} className="text-[9px] font-bold text-slate-500/60 hover:text-indigo-500 transition-colors uppercase tracking-widest mt-2">
              <i className="fas fa-terminal mr-2"></i> Access Admin Console

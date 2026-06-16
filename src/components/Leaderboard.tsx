@@ -1,14 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { cloud } from '../services/cloud';
-import { Game } from '../types';
+import { Game, UserProfile } from '../types';
 import { audioService } from '../services/audioService';
+import VisualLeaderboard from './VisualLeaderboard';
+import GlobalLeaderboard from './GlobalLeaderboard';
 
 interface LeaderboardProps {
   games: Game[];
   onUpdateGlobalRecord?: (gameId: string, score: number) => void;
   currentUser?: { uid: string } | null;
-  userProfile?: { username: string; avatar: string };
+  userProfile: UserProfile;
+  globalRecords: Record<string, number>;
+  highScores: Record<string, number>;
+  isDarkMode: boolean;
 }
 
 const SCORING_GUIDE = [
@@ -35,12 +40,19 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({
   onBack, 
   onUpdateGlobalRecord,
   currentUser,
-  userProfile
+  userProfile,
+  globalRecords,
+  highScores,
+  isDarkMode
 }) => {
   const [selectedGameId, setSelectedGameId] = useState<string>('all');
   const [scores, setScores] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+
+  // States for the Game Toppers Board next to the Leaderboard
+  const [gameToppers, setGameToppers] = useState<Record<string, any>>({});
+  const [toppersLoading, setToppersLoading] = useState(false);
 
   useEffect(() => {
     if (selectedGameId) {
@@ -54,6 +66,54 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({
       });
     }
   }, [selectedGameId, onUpdateGlobalRecord]);
+
+  useEffect(() => {
+    // If user turned on forceOfflineMode, do not query live Firestore records
+    const isOffline = localStorage.getItem('khans-playhub-settings')?.includes('"forceOfflineMode":true');
+    if (isOffline) return;
+
+    const fetchToppers = async () => {
+      setToppersLoading(true);
+      try {
+        let scoresList: any[] = [];
+        const provider = cloud.getDataProvider();
+        const workerUrl = cloud.getWorkerUrl();
+
+        if (provider === 'cloudflare' && workerUrl) {
+          try {
+            const baseUrl = workerUrl.endsWith('/') ? workerUrl.slice(0, -1) : workerUrl;
+            const res = await fetch(`${baseUrl}/admin/all-scores`);
+            if (res.ok) scoresList = await res.json();
+          } catch (e) {
+            console.warn('Cloudflare fetch for toppers failed, falling back to Firebase:', e);
+          }
+        }
+
+        if (scoresList.length === 0) {
+          const { db } = await import('../firebase');
+          const { collection, getDocs } = await import('firebase/firestore');
+          const snapshot = await getDocs(collection(db, 'scores'));
+          scoresList = snapshot.docs.map(doc => doc.data());
+        }
+
+        const toppersMap: Record<string, any> = {};
+        scoresList.forEach(s => {
+          if (!s.gameId) return;
+          const existing = toppersMap[s.gameId];
+          if (!existing || (s.score || 0) > (existing.score || 0)) {
+            toppersMap[s.gameId] = s;
+          }
+        });
+        setGameToppers(toppersMap);
+      } catch (err) {
+        console.error('Error fetching game toppers:', err);
+      } finally {
+        setToppersLoading(false);
+      }
+    };
+
+    fetchToppers();
+  }, []);
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
@@ -157,89 +217,180 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({
         </div>
       )}
 
-      <div className="glass-card rounded-[2rem] border-2 border-slate-200 dark:border-indigo-500/10 overflow-hidden shadow-2xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
-                <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Rank</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Player</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">
-                  {selectedGameId === 'all' ? 'Total Juice' : 'Juice'}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={3} className="px-6 py-12 text-center">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Syncing with Cloud...</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : scores.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="px-6 py-12 text-center">
-                    <p className="text-slate-500 font-medium italic">No neural data recorded for this sector yet.</p>
-                  </td>
-                </tr>
-              ) : (
-                scores.map((s, idx) => {
-                  const isCurrentUser = (currentUser && s.deviceId && s.deviceId === currentUser.uid) ||
-                                        (userProfile && s.username === userProfile.username && s.avatar === userProfile.avatar);
-
-                  return (
-                    <tr 
-                      key={idx} 
-                      className={`border-b transition-colors group relative ${
-                        isCurrentUser 
-                          ? 'bg-indigo-500/10 dark:bg-indigo-500/20 border-indigo-500/20 dark:border-indigo-500/30 font-semibold' 
-                          : 'border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5'
-                      }`}
-                    >
-                      <td className="px-6 py-4">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black italic ${
-                          idx === 0 ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30' :
-                          idx === 1 ? 'bg-slate-300 text-slate-700' :
-                          idx === 2 ? 'bg-orange-400 text-white' :
-                          isCurrentUser ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/20' :
-                          'text-slate-400'
-                        }`}>
-                          {idx + 1}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column: Traditional Selected Game Leaderboard */}
+        <div className="lg:col-span-7 flex flex-col gap-4">
+          <div className="glass-card rounded-[2rem] border-2 border-slate-200 dark:border-indigo-500/10 overflow-hidden shadow-2xl">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Rank</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Player</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">
+                      {selectedGameId === 'all' ? 'Total Juice' : 'Juice'}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={3} className="px-6 py-12 text-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Syncing with Cloud...</p>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform ${
-                            isCurrentUser ? 'bg-indigo-500/25 ring-2 ring-indigo-500/50' : 'bg-indigo-500/10'
-                          }`}>
-                            <i className={`fas ${s.avatar || 'fa-user-ninja'} text-xs`}></i>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className={`font-black uppercase italic ${isCurrentUser ? 'text-indigo-600 dark:text-indigo-300' : 'text-slate-700 dark:text-slate-200'}`}>
-                              {s.username || 'Anonymous'}
-                            </span>
-                            {isCurrentUser && (
-                              <span className="text-[8px] font-black tracking-widest bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-2 py-0.5 rounded-[6px] shadow-sm uppercase leading-none">
-                                YOU
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <span className={`text-xl font-black tabular-nums ${isCurrentUser ? 'text-indigo-700 dark:text-indigo-300 contrast-125' : 'text-indigo-600 dark:text-indigo-400'}`}>
-                          {(s.score || 0).toLocaleString()}
-                        </span>
                       </td>
                     </tr>
+                  ) : scores.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="px-6 py-12 text-center">
+                        <p className="text-slate-500 font-medium italic">No neural data recorded for this sector yet.</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    scores.map((s, idx) => {
+                      const isCurrentUser = (currentUser && s.deviceId && s.deviceId === currentUser.uid) ||
+                                            (userProfile && s.username === userProfile.username && s.avatar === userProfile.avatar);
+
+                      return (
+                        <tr 
+                          key={idx} 
+                          className={`border-b transition-colors group relative ${
+                            isCurrentUser 
+                              ? 'bg-indigo-500/10 dark:bg-indigo-500/20 border-indigo-500/20 dark:border-indigo-500/30 font-semibold' 
+                              : 'border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5'
+                          }`}
+                        >
+                          <td className="px-6 py-4">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black italic ${
+                              idx === 0 ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30' :
+                              idx === 1 ? 'bg-slate-300 text-slate-700' :
+                              idx === 2 ? 'bg-orange-400 text-white' :
+                              isCurrentUser ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/20' :
+                              'text-slate-400'
+                            }`}>
+                              {idx + 1}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform ${
+                                isCurrentUser ? 'bg-indigo-500/25 ring-2 ring-indigo-500/50' : 'bg-indigo-500/10'
+                              }`}>
+                                <i className={`fas ${s.avatar || 'fa-user-ninja'} text-xs`}></i>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`font-black uppercase italic ${isCurrentUser ? 'text-indigo-600 dark:text-indigo-300' : 'text-slate-700 dark:text-slate-200'}`}>
+                                  {s.username || 'Anonymous'}
+                                </span>
+                                {isCurrentUser && (
+                                  <span className="text-[8px] font-black tracking-widest bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-2 py-0.5 rounded-[6px] shadow-sm uppercase leading-none">
+                                    YOU
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <span className={`text-xl font-black tabular-nums ${isCurrentUser ? 'text-indigo-700 dark:text-indigo-300 contrast-125' : 'text-indigo-600 dark:text-indigo-400'}`}>
+                              {(s.score || 0).toLocaleString()}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Game Toppers Board */}
+        <div className="lg:col-span-5">
+          <div id="game-toppers-board" className="glass-card rounded-[2rem] border-2 border-slate-200 dark:border-indigo-500/10 flex flex-col overflow-hidden shadow-2xl">
+            <div className="p-6 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
+              <h3 className="text-lg font-black uppercase italic text-slate-900 dark:text-white flex items-center gap-2">
+                <i className="fas fa-crown text-amber-500 animate-bounce"></i>
+                Game Toppers Board
+              </h3>
+              <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1">Peak Record Holders per Sector</p>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto max-h-[512px] divide-y divide-slate-100 dark:divide-white/5 p-2">
+              {toppersLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-3">
+                  <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Recalibrating Peak Data...</p>
+                </div>
+              ) : games.length === 0 ? (
+                <div className="p-8 text-center text-slate-400 italic">No sectors registered.</div>
+              ) : (
+                games.map(game => {
+                  const topper = gameToppers[game.id];
+                  const hasTopper = !!topper;
+                  
+                  return (
+                    <div key={game.id} className="p-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-all rounded-2xl flex items-center justify-between gap-3 group">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center text-xs shrink-0 border border-amber-500/20 group-hover:scale-110 transition-transform">
+                          <i className={`fas ${game.icon || 'fa-gamepad'}`}></i>
+                        </div>
+                        <div>
+                          <h4 className="font-black uppercase italic text-xs text-slate-800 dark:text-slate-200 leading-tight">{game.name}</h4>
+                          {hasTopper ? (
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <div className="w-4 h-4 rounded-full bg-indigo-500/25 flex items-center justify-center text-[8px] text-indigo-500">
+                                <i className={`fas ${topper.avatar || 'fa-user'} text-[8px]`}></i>
+                              </div>
+                              <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-tight">{topper.username}</span>
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-none block mt-0.5">Unclaimed sector</span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="text-right shrink-0">
+                        {hasTopper ? (
+                          <>
+                            <span className="font-mono text-xs font-black text-amber-500 dark:text-amber-400 block tracking-tight">{(topper.score || 0).toLocaleString()}</span>
+                            <span className="text-[8px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-tight block">
+                              {topper.timestamp ? new Date(topper.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-[8px] font-black py-0.5 px-2 rounded-md bg-slate-100 dark:bg-white/5 text-slate-400 uppercase tracking-widest border border-slate-200 dark:border-white/5">VACANT</span>
+                        )}
+                      </div>
+                    </div>
                   );
                 })
               )}
-            </tbody>
-          </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Inline Section: Visual & Advanced Global Analytics at the bottom */}
+      <div className="mt-12 flex flex-col gap-10 pt-10 border-t border-slate-200 dark:border-white/10">
+        <div>
+          <h2 className="text-2xl font-black uppercase italic text-slate-900 dark:text-white flex items-center gap-3">
+            <i className="fas fa-chart-bar text-indigo-500 animate-pulse"></i>
+            Interactive Telemetry & Metrics
+          </h2>
+          <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Advanced distribution models and comparative charts</p>
+        </div>
+        
+        {/* Visual Leaderboard */}
+        <div className="border border-slate-200 dark:border-indigo-500/10 rounded-[2.5rem] overflow-hidden bg-slate-50/50 dark:bg-slate-900/10">
+          <VisualLeaderboard games={games} globalRecords={globalRecords} isDarkMode={isDarkMode} />
+        </div>
+
+        {/* Global Leaderboard Analysis */}
+        <div className="border border-slate-200 dark:border-indigo-500/10 rounded-[2.5rem] overflow-hidden bg-slate-50/50 dark:bg-slate-900/10">
+          <GlobalLeaderboard games={games} highScores={highScores} userProfile={userProfile} isDarkMode={isDarkMode} />
         </div>
       </div>
     </div>

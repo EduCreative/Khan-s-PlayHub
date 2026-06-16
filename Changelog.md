@@ -1,6 +1,15 @@
 
 # Changelog
 
+## [3.5.4] - 2026-06-16
+### Added
+- **Dynamic side-by-side 'Game Toppers Board'**:
+  - Designed an interactive board that groups real global database high scores across all users on mount, dynamically selecting and displaying the top scorer's name, peak score, and exact chronological date for every micro-game.
+  - Implemented high-contrast responsive layouts that sit side-by-side with the traditional selected-game records on desktop displays and wrap cleanly on mobile screens.
+  - Configured custom visual crown icons and animated loading states for high aesthetic polish.
+- **Visual & Advanced Global Telemetry Consolidation**:
+  - Consolidated the separate 'Visual Leaderboard' (radar & bar charts) and 'Global Leaderboard' (progression trends & histograms) views to sit inline at the footer of the unified Leaderboard page, clearing UI button cluster clutter on the main navigation.
+
 ## [3.5.3] - 2026-06-16
 ### Added
 - **Manual 'Toggle Offline Mode' Option in Settings**:

@@ -1,7 +1,7 @@
 {
-  "version": "3.5.3",
+  "version": "3.5.4",
   "changelog": [
-    "Integrated a manual toggle for Offline Mode in user Settings blocks that bypasses all active background cloud synchronizations, conserving valuable network data on-demand.",
-    "Engineered local offline-safe behavior transitions for lead boards, authenticated listener profiles, and active play session queries."
+    "Consolidated Visual Leaderboard and Global Leaderboard views at the footer of the unified Leaderboards hub, streamlining workspace aesthetics.",
+    "Introduced an interactive cyberpunk 'Game Toppers Board' rendering record holders, peak score achievements, and dates for every playable sector dynamically."
   ]
 }

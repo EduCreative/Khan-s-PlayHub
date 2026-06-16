@@ -200,7 +200,7 @@ const App: React.FC = () => {
                      (user?.uid === 'v2swNDzVnegsJNo5eNEiLYv6ZYi2') ||
                      (userProfile.role === 'admin');
 
-  const CURRENT_VERSION = '3.5.3';
+  const CURRENT_VERSION = '3.5.4';
 
   // Listen for Firestore Quota Exceeded event
   useEffect(() => {
