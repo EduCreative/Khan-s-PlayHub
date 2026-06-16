@@ -90,7 +90,7 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 }
 
 class CloudService {
-  private provider: 'firebase' | 'cloudflare' | 'hybrid' = 'firebase';
+  private provider: 'firebase' | 'cloudflare' | 'hybrid' = 'cloudflare';
   private workerUrl: string = 'https://khans-playhub-worker.kmasroor50.workers.dev';
 
   constructor() {

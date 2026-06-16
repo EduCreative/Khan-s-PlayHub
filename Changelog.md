@@ -1,6 +1,20 @@
 
 # Changelog
 
+## [3.5.6] - 2026-06-16
+### Changed
+- **Cloudflare D1 Database Priority Routing**:
+  - Reconfigured the default data provider to **Cloudflare D1 Mode**, instantly routing all active game plays, high score saves, and leaderboard queries away from Firestore to resolve daily API quota constraints.
+  - Implemented automatic localStorage migration that shifts players from Firestore defaults to Cloudflare D1 cleanly without requiring any manual settings configuration.
+  - Improved helper texts inside the Settings Modal to recommend Cloudflare D1 for optimal zero-latency and quota-safe game sessions.
+
+## [3.5.5] - 2026-06-16
+### Added
+- **On-Demand Lazy-Loaded Chat Drawer**:
+  - Re-engineered the Firestore Quick Chat to establish Firestore subscriptions only when the visual console drawer is actively clicked open, tearing them down instantly when closed to prevent background read spikes.
+- **12-Hour Local Storage Caching**:
+  - Configured local high-score caching that reduces initial startup reads from 12 parallel Firestore queries per user load to a single local cache hit, auto-syncing only during explicit manual sync commands.
+
 ## [3.5.4] - 2026-06-16
 ### Added
 - **Dynamic side-by-side 'Game Toppers Board'**:

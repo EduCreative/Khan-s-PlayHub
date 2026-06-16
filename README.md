@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.5.5 "Lazy-Loaded Chat Console & Daily Firestore Fetch Caching"  
+**Version:** 3.5.6 "Cloudflare D1 Priority Storage & Quota-Safe Telemetry"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,12 +9,12 @@ Khan's PlayHub is an active collection of classic, high-performance, and mobile-
 
 ---
 
-## 🚀 Recent Enhancements (v3.5.5)
-- **On-Demand Lazy-Loaded Chat Drawer**: Shifted the real-time curated emoji listener and active room message listener to start up only when the Quick Chat console drawer is actually expanded. Collapsing the drawer immediately tears down active connections, saving massive reads.
-- **12-Hour Local Storage Caching**: Configured a local cache for global top-score records, preventing up to 12 separate parallel database queries when loading or refreshing the app.
-- **Smart Cache Synchronization**: Auto-refreshes the high-score state and updates local storage records dynamically whenever a manual "Sync All" execution succeeds.
+## 🚀 Recent Enhancements (v3.5.6)
+- **Cloudflare D1 Primary Storage Routing**: Changed the default active storage provider to Cloudflare D1. High score entries, game boards, and leaderboard records default to Cloudflare Workers to protect Firestore free quotas.
+- **Zero-Config Profile State Migrators**: Automatically migrates cached settings in user local storage to cloudflare defaults upon app load, seamlessly ensuring a safe, quota-free session for all players.
+- **Enhanced Storage Informational Prompts**: Highlighted optimal storage configurations directly in the Settings drawer so players can toggle between offline and custom databases safely.
 
-## 🚀 Previous Enhancements (v3.5.4)
+## 🚀 Previous Enhancements (v3.5.5)
 - **Manual 'Toggle Offline Mode' Option**: Engineered a manual toggle in settings that forces the application to completely ignore background cloud database connections.
 - **Improved Data Conservation & Control**: Prevents redundant Firestore profile fetches on boot-up, skips active challenge play updates, and silences parallel global record calls for full offline gameplay.
 - **Visual Offline Feedback**: Integrates subtle visual airplane mode icons, custom indicators, and dynamic online/offline state translations across the app.

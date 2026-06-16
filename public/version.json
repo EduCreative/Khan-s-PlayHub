@@ -1,7 +1,7 @@
 {
-  "version": "3.5.5",
+  "version": "3.5.6",
   "changelog": [
-    "Lazy-loaded Quick Chat Firestore real-time listeners, executing subscription connections only when the console drawer is actively open, slashing idle load.",
-    "Integrated a robust 12-hour localStorage cache for global high scores, bypassing up to 12 parallel boot-up queries per session and conserving daily read quotas."
+    "Prioritized Cloudflare D1 as the default premium data engine, routing live game telemetry entirely away from Firestore reads/writes to secure zero-latency offline & online operations.",
+    "Engineered seamless background localStorage priority state migration and explicit selection overrides within the database settings pane."
   ]
 }

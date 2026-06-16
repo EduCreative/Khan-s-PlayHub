@@ -167,12 +167,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
               )}
               
-              <p className="text-[9px] text-slate-500 font-medium italic">
+              <p className="text-[9px] text-slate-500 font-medium italic leading-relaxed">
                 {dataProvider === 'hybrid' 
-                  ? 'Hybrid mode writes to both Firestore and D1, and reads from Cloudflare if available.' 
+                  ? 'Hybrid Mode writes to both Firestore and D1, and reads from Cloudflare D1 if available.' 
                   : dataProvider === 'cloudflare' 
-                  ? 'Cloudflare mode uses D1 for all operations. Requires a valid Worker URL.'
-                  : 'Firebase mode uses Firestore for all operations.'}
+                  ? 'Cloudflare D1 Mode (Recommended): Uses fast Cloudflare workers for all live player operations, completely preventing Firestore daily quota limit errors.'
+                  : 'Firebase Mode: Uses Firestore for all operations (Subject to free-tier daily read/write limits).'}
               </p>
             </div>
           )}

@@ -138,10 +138,14 @@ const App: React.FC = () => {
       const savedSettings = localStorage.getItem('khans-playhub-settings');
       if (savedSettings) {
         const parsed = JSON.parse(savedSettings);
-        return parsed.dataProvider ?? 'firebase';
+        if (!parsed.hasExplicitlyChosenProvider) {
+          // Force database priority default switch to D1 to resolve daily Firestore read limits instantly
+          return 'cloudflare';
+        }
+        return parsed.dataProvider ?? 'cloudflare';
       }
     } catch {}
-    return 'firebase';
+    return 'cloudflare';
   });
 
   const [workerUrl, setWorkerUrl] = useState(() => {
@@ -200,7 +204,7 @@ const App: React.FC = () => {
                      (user?.uid === 'v2swNDzVnegsJNo5eNEiLYv6ZYi2') ||
                      (userProfile.role === 'admin');
 
-  const CURRENT_VERSION = '3.5.5';
+  const CURRENT_VERSION = '3.5.6';
 
   // Listen for Firestore Quota Exceeded event
   useEffect(() => {
@@ -470,7 +474,8 @@ const App: React.FC = () => {
       hapticFeedback,
       dataProvider,
       workerUrl,
-      forceOfflineMode
+      forceOfflineMode,
+      hasExplicitlyChosenProvider: true
     }));
     cloud.configure(dataProvider, workerUrl);
   }, [sfxVolume, hapticFeedback, dataProvider, workerUrl, forceOfflineMode]);
