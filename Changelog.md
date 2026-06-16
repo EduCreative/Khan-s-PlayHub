@@ -1,6 +1,16 @@
 
 # Changelog
 
+## [3.5.2] - 2026-06-16
+### Fixed
+- **Mobile Responsive Header Wrapping**:
+  - Refactored the hub header action button track using a robust, wrapping flexbox layout.
+  - Adjusted button dimensions dynamically on small screens (from `14x14` down to `10x10`) so that the Profile button, Sync Cloud option, and other core utilities wrap gracefully without being pushed off-screen or occluded.
+- **Removed Duplicate Admin Action Entry**:
+  - Eliminated the redundant `>_ Admin` button from the main header action row while keeping the elegant badges and standard consoles fully intact.
+- **Top-Left & Footer Version Standardization**:
+  - Synchronized the developer diagnostic flag on the top-left and the footer protocol tag to consistently refer to `v3.5.2`.
+
 ## [3.5.1] - 2026-06-15
 ### Added
 - **Manual 'Sync Cloud' On-Demand Action Button**:

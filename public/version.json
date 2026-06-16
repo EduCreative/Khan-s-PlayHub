@@ -1,8 +1,8 @@
 {
-  "version": "3.5.1",
+  "version": "3.5.2",
   "changelog": [
-    "Integrated colorful vector Google G logo on the Sign-In button and moved it next to the Profile button for standard streamlined action flows.",
-    "Engineered manual Sync Cloud button next to user Profile, putting players in control of when scores and custom metadata are written to Firestore, reducing background read/write transactions to zero.",
-    "Mitigated redundant console.log prints to streamline web app performance."
+    "Refactored header action-group using wrapping responsive flexbox and resized icon-triggers for maximum mobile accessibility, preventing Profile button occlusion.",
+    "Purged duplicate Admin access buttons from the primary action track to streamline workspace options.",
+    "Propagated consistent v3.5.2 designations to both top-left diagnostic flags and bottom footer signatures."
   ]
 }

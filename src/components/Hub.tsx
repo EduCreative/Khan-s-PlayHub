@@ -164,7 +164,7 @@ const Hub: React.FC<HubProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-center md:justify-end gap-1.5 md:gap-3 w-full md:w-auto">
           <div className="hidden sm:flex flex-col items-end mr-2 group relative">
             <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
               Total Juice <i className="fas fa-circle-info text-[6px] opacity-50"></i>
@@ -176,8 +176,8 @@ const Hub: React.FC<HubProps> = ({
               Sum of your high scores across all games
             </div>
           </div>
-          <button id="profile-btn" onClick={onOpenProfile} className="flex items-center gap-3 px-4 h-12 md:h-14 rounded-2xl bg-indigo-600 text-white shadow-xl hover:bg-indigo-500 transition-all active:scale-95 border-2 border-indigo-400/20">
-             <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-white/20 flex items-center justify-center"><i className={`fas ${userProfile.avatar} text-xs`}></i></div>
+          <button id="profile-btn" onClick={onOpenProfile} className="flex items-center gap-2 px-3 md:px-4 h-10 md:h-14 rounded-xl md:rounded-2xl bg-indigo-600 text-white shadow-xl hover:bg-indigo-500 transition-all active:scale-95 border-2 border-indigo-400/20 shrink-0">
+             <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-white/20 flex items-center justify-center"><i className={`fas ${userProfile.avatar} text-xs`}></i></div>
              <span className="hidden md:block font-black uppercase italic tracking-tighter text-sm">{userProfile.username}</span>
           </button>
 
@@ -186,7 +186,7 @@ const Hub: React.FC<HubProps> = ({
               id="google-signin-btn"
               onClick={onLogin}
               disabled={isLoggingIn}
-              className={`flex items-center gap-2 px-3 md:px-4 h-12 md:h-14 rounded-2xl font-black uppercase italic tracking-tighter shadow-xl transition-all active:scale-95 border-2 ${
+              className={`flex items-center gap-2 px-3 md:px-4 h-10 md:h-14 rounded-xl md:rounded-2xl font-black uppercase italic tracking-tighter shadow-xl transition-all active:scale-95 border-2 shrink-0 ${
                 isLoggingIn 
                   ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 border-transparent cursor-not-allowed opacity-75' 
                   : 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-400/20 shadow-indigo-500/10'
@@ -200,7 +200,7 @@ const Hub: React.FC<HubProps> = ({
                 </>
               ) : (
                 <>
-                  <div className="w-6 h-6 rounded-lg bg-white flex items-center justify-center p-1 shadow-sm shrink-0">
+                  <div className="w-5 h-5 md:w-6 md:h-6 rounded-lg bg-white flex items-center justify-center p-1 shadow-sm shrink-0">
                     <svg className="w-full h-full" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                       <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -219,7 +219,7 @@ const Hub: React.FC<HubProps> = ({
               id="header-sync-btn"
               onClick={onSyncAll}
               disabled={syncStatus === 'pending'}
-              className={`flex items-center gap-2 px-3 md:px-4 h-12 md:h-14 rounded-2xl font-black uppercase italic tracking-tighter shadow-xl transition-all active:scale-95 border-2 ${
+              className={`flex items-center gap-2 px-2.5 md:px-4 h-10 md:h-14 rounded-xl md:rounded-2xl font-black uppercase italic tracking-tighter shadow-xl transition-all active:scale-95 border-2 shrink-0 ${
                 syncStatus === 'synced' && !hasUnsyncedChanges
                   ? 'bg-emerald-600/10 border-emerald-500/20 text-emerald-500 dark:text-emerald-400 hover:bg-emerald-600/20 shadow-emerald-500/5' 
                   : syncStatus === 'pending'
@@ -238,49 +238,38 @@ const Hub: React.FC<HubProps> = ({
             </button>
           )}
 
-          <button id="leaderboard-header-btn" onClick={() => setFilter('Leaderboard')} className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-lg shadow-xl border-2 transition-all ${filter === 'Leaderboard' ? 'bg-amber-500 border-amber-400 text-white' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500'}`} title="Global Leaderboards">
+          <button id="leaderboard-header-btn" onClick={() => setFilter('Leaderboard')} className={`w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center text-base md:text-lg shadow-xl border-2 transition-all shrink-0 ${filter === 'Leaderboard' ? 'bg-amber-500 border-amber-400 text-white' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500'}`} title="Global Leaderboards">
             <i className="fas fa-trophy"></i>
           </button>
-          <button id="theme-toggle" onClick={onToggleTheme} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700" title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
+          <button id="theme-toggle" onClick={onToggleTheme} className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-base md:text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 shrink-0" title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
              <i className={`fas ${isDarkMode ? 'fa-sun text-amber-400' : 'fa-moon text-indigo-600'}`}></i>
           </button>
-          <button id="share-btn" onClick={handleShare} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all" title="Share this app">
+          <button id="share-btn" onClick={handleShare} className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-base md:text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all shrink-0" title="Share this app">
             <i className="fas fa-share-alt text-emerald-500"></i>
           </button>
           
           {canInstall && (
-            <button id="install-btn" onClick={onInstall} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all animate-bounce" title="Install App">
+            <button id="install-btn" onClick={onInstall} className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-base md:text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all animate-bounce shrink-0" title="Install App">
               <i className="fas fa-download text-indigo-500"></i>
             </button>
           )}
           {window.self !== window.top && (
             <button 
               onClick={() => window.open(window.location.href, '_blank')}
-              className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all"
+              className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-base md:text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all shrink-0"
               title="Open in New Tab to Install"
             >
               <i className="fas fa-external-link-alt text-indigo-500"></i>
             </button>
           )}
-          <button id="settings-btn" onClick={onOpenSettings} className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all" title="App Settings">
+          <button id="settings-btn" onClick={onOpenSettings} className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-base md:text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all shrink-0" title="App Settings">
             <i className="fas fa-cog text-slate-500"></i>
           </button>
-
-          {isAdmin && (
-            <button 
-              onClick={onOpenAdmin}
-              className="px-4 h-12 md:h-14 rounded-2xl bg-rose-600 text-white flex items-center gap-3 shadow-xl border-2 border-white/20 hover:bg-rose-500 transition-all animate-in zoom-in duration-500"
-              title="Open Admin Console"
-            >
-              <i className="fas fa-terminal"></i>
-              <span className="font-black uppercase italic tracking-tighter text-xs">Admin</span>
-            </button>
-          )}
 
           {user && (
             <button 
               onClick={onLogout}
-              className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all"
+              className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-base md:text-lg shadow-xl border-2 border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all shrink-0"
               title="Sign Out"
             >
               <i className="fas fa-sign-out-alt text-rose-500"></i>
@@ -419,7 +408,7 @@ const Hub: React.FC<HubProps> = ({
             className="px-6 py-2 glass-card border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 cursor-pointer hover:bg-indigo-500/5 transition-all select-none"
           >
             <span className={`w-1.5 h-1.5 rounded-full animate-ping ${syncStatus === 'synced' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-            PlayHub Cloud Protocol Enabled v3.4.0
+            PlayHub Cloud Protocol Enabled v3.5.2
           </span>
           <button onClick={handleAdminClick} className="text-[9px] font-bold text-slate-500/60 hover:text-indigo-500 transition-colors uppercase tracking-widest mt-2">
              <i className="fas fa-terminal mr-2"></i> Access Admin Console
