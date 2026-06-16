@@ -505,11 +505,35 @@ const App: React.FC = () => {
               favorites: Array.isArray(cloudProfile.favorites) ? cloudProfile.favorites : [],
               achievements: Array.isArray(cloudProfile.achievements) ? cloudProfile.achievements : []
             };
+
+            let updated = false;
+            // Autofill display name if not set or if it is the default placeholder name
+            if ((!sanitizedProfile.username || sanitizedProfile.username === 'New Player' || sanitizedProfile.username.trim() === '') && firebaseUser.displayName) {
+              sanitizedProfile.username = firebaseUser.displayName;
+              updated = true;
+            }
+            // Autofill email matches if empty or unregistered
+            if ((!sanitizedProfile.email || sanitizedProfile.email.trim() === '') && firebaseUser.email) {
+              sanitizedProfile.email = firebaseUser.email;
+              updated = true;
+            }
+
             setUserProfile(sanitizedProfile);
             localStorage.setItem('khans-playhub-profile', JSON.stringify(sanitizedProfile));
+
+            if (updated) {
+              // Automatically sync the autofilled fields back to the cloud database
+              await cloud.syncProfile(sanitizedProfile);
+            }
           } else {
-            // Create initial profile in Firestore if it doesn't exist
-            const initialProfile = { ...userProfile, email: firebaseUser.email || '' };
+            // Create initial profile in Firestore if it doesn't exist, utilizing Google payload details
+            const initialProfile = {
+              ...userProfile,
+              username: firebaseUser.displayName || userProfile.username || 'New Player',
+              email: firebaseUser.email || userProfile.email || ''
+            };
+            setUserProfile(initialProfile);
+            localStorage.setItem('khans-playhub-profile', JSON.stringify(initialProfile));
             await cloud.syncProfile(initialProfile);
           }
           // Do not automatically write-sync scores to save Firestore write quota
