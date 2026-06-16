@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.5.2 "Responsive Mobile Optimization & Clean Header Controls"  
+**Version:** 3.5.3 "Manual Offline Mode Setting & Data Conservation Toggle"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,12 +9,12 @@ Khan's PlayHub is an active collection of classic, high-performance, and mobile-
 
 ---
 
-## 🚀 Recent Enhancements (v3.5.2)
-- **Responsive Mobile Wrapping**: Converted the header navigation action buttons into a wrap-safe flex layer with reduced small-device dimensions (from `14` to `10`), fully preventing Profile and Sync button occlusion on compact mobile screens.
-- **De-cluttered Header Control Track**: Excised duplicate `>_ Admin` controller links from the right button bar, standardizing console entry on the dedicated branding title badges.
-- **Top-to-Bottom Version Alignment**: Propagated uniform `v3.5.2` labels to the top-left engineering indicator and the bottom-center cloud protocol status tags.
+## 🚀 Recent Enhancements (v3.5.3)
+- **Manual 'Toggle Offline Mode' Option**: Engineered a manual toggle in settings that forces the application to completely ignore background cloud database connections.
+- **Improved Data Conservation & Control**: Prevents redundant Firestore profile fetches on boot-up, skips active challenge play updates, and silences parallel global record calls for full offline gameplay.
+- **Visual Offline Feedback**: Integrates subtle visual airplane mode icons, custom indicators, and dynamic online/offline state translations across the app.
 
-## 🚀 Previous Enhancements (v3.5.1)
+## 🚀 Previous Enhancements (v3.5.2)
 - **User-Directed Cloud Sync Button**: Added a premium on-demand manual synchronization button next to the profile avatar. Standard gameplay scores and profile modifications are stored locally without immediate auto-sync Firestore server write spikes. The button illuminates beautifully (glowing Indigo gradient with red alert ping) when offline changes exist, putting the player in full control.
 - **Official Colorful Google 'G' Branding**: Rebuilt the Google Sign-In trigger with a clean vector-rendered official colorful G logo inside a white badge and aligned it adjacent to the profile button in the primary header.
 - **Optimized Console Output**: Cleared redundant component-rendering log diagnostics to improve browser logging cleanliness.

@@ -42,6 +42,7 @@ export interface AppSettings {
   reducedMotion: boolean;
   dataProvider: 'firebase' | 'cloudflare' | 'hybrid';
   workerUrl: string;
+  forceOfflineMode?: boolean;
 }
 
 export interface Game {

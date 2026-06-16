@@ -1,6 +1,15 @@
 
 # Changelog
 
+## [3.5.3] - 2026-06-16
+### Added
+- **Manual 'Toggle Offline Mode' Option in Settings**:
+  - Implemented an interactive toggle button for forced Offline Mode inside the user `SettingsModal`.
+  - Disables background database connection queries, global record fetch promises, active challenge play updates, and initial profile Firestore queries, allowing complete data conservation and quiet local-first sessions on-demand.
+  - Composed aesthetic transition cues, assigning a physical airplane-mode flight path icon and warning tags for visual transparency.
+- **Top-Left Header & Footer Protocols Versioned**:
+  - Incremented target and diagnostic protocol designations from `3.5.2` directly to `3.5.3`.
+
 ## [3.5.2] - 2026-06-16
 ### Fixed
 - **Mobile Responsive Header Wrapping**:

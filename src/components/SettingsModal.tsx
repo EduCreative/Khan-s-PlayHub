@@ -18,13 +18,15 @@ interface SettingsModalProps {
   onInstall: () => void;
   isInIframe: boolean;
   isAdmin?: boolean;
+  forceOfflineMode: boolean;
+  onToggleOfflineMode: (val: boolean) => void;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ 
   sfxVolume, hapticFeedback, isDarkMode, dataProvider, workerUrl,
   onUpdateSfx, onUpdateHaptic, onUpdateDataProvider, onUpdateWorkerUrl,
   onToggleTheme, onClose, canInstall, isInstalled, onInstall, isInIframe,
-  isAdmin
+  isAdmin, forceOfflineMode, onToggleOfflineMode
 }) => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-300">
@@ -99,6 +101,26 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 className={`w-14 h-8 rounded-full transition-all relative ${hapticFeedback ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'}`}
               >
                 <div className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-sm transition-all ${hapticFeedback ? 'left-7' : 'left-1'}`} />
+              </button>
+            </div>
+
+            {/* Offline Mode Toggle */}
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+              <div className="flex items-center gap-4">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${forceOfflineMode ? 'bg-amber-500/20 text-amber-500' : 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-400'}`}>
+                  <i className={`fas ${forceOfflineMode ? 'fa-plane' : 'fa-wifi'}`}></i>
+                </div>
+                <div>
+                  <p className="font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">Offline Mode</p>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{forceOfflineMode ? 'CONSERVING DATA' : 'CLOUD CONNECTED'}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => onToggleOfflineMode(!forceOfflineMode)}
+                className={`w-14 h-8 rounded-full transition-all relative ${forceOfflineMode ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-700'}`}
+                title="Toggle manual offline mode to ignore cloud sync and conserve data"
+              >
+                <div className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-sm transition-all ${forceOfflineMode ? 'left-7' : 'left-1'}`} />
               </button>
             </div>
           </div>

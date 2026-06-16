@@ -155,6 +155,17 @@ const App: React.FC = () => {
     return 'https://khans-playhub-worker.kmasroor50.workers.dev';
   });
 
+  const [forceOfflineMode, setForceOfflineMode] = useState<boolean>(() => {
+    try {
+      const savedSettings = localStorage.getItem('khans-playhub-settings');
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        return parsed.forceOfflineMode ?? false;
+      }
+    } catch {}
+    return false;
+  });
+
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'synced' | 'pending' | 'offline'>('synced');
   const [hasUnsyncedChanges, setHasUnsyncedChanges] = useState(() => {
@@ -189,7 +200,7 @@ const App: React.FC = () => {
                      (user?.uid === 'v2swNDzVnegsJNo5eNEiLYv6ZYi2') ||
                      (userProfile.role === 'admin');
 
-  const CURRENT_VERSION = '3.5.2';
+  const CURRENT_VERSION = '3.5.3';
 
   // Listen for Firestore Quota Exceeded event
   useEffect(() => {
@@ -242,6 +253,7 @@ const App: React.FC = () => {
   // Fetch Global Records
   useEffect(() => {
     const fetchGlobalRecords = async () => {
+      if (forceOfflineMode) return;
       const records: Record<string, number> = {};
       // Fetch in parallel to be faster
       await Promise.all(GAMES.map(async (game) => {
@@ -257,7 +269,7 @@ const App: React.FC = () => {
       setGlobalRecords(records);
     };
     fetchGlobalRecords();
-  }, []);
+  }, [forceOfflineMode]);
 
   // Check for updates
   useEffect(() => {
@@ -352,19 +364,21 @@ const App: React.FC = () => {
       setChallengeInvitation(parsedChallenge);
       
       // Attempt to load from Cloud to enrich stats (playsCount, bestChallenger)
-      cloud.getChallenge(challengeId).then(dbData => {
-        if (dbData) {
-          setChallengeInvitation({
-            ...parsedChallenge,
-            ...dbData,
-            loadedFromUrl: false
-          });
-        }
-      }).catch(err => {
-        console.warn('Could not load challenge from Firestore:', err);
-      });
+      if (!forceOfflineMode) {
+        cloud.getChallenge(challengeId).then(dbData => {
+          if (dbData) {
+            setChallengeInvitation({
+              ...parsedChallenge,
+              ...dbData,
+              loadedFromUrl: false
+            });
+          }
+        }).catch(err => {
+          console.warn('Could not load challenge from Firestore:', err);
+        });
+      }
     }
-  }, []);
+  }, [forceOfflineMode]);
 
   const handleAcceptChallenge = (challengerName: string) => {
     if (!challengeInvitation) return;
@@ -433,10 +447,11 @@ const App: React.FC = () => {
       sfxVolume, 
       hapticFeedback,
       dataProvider,
-      workerUrl
+      workerUrl,
+      forceOfflineMode
     }));
     cloud.configure(dataProvider, workerUrl);
-  }, [sfxVolume, hapticFeedback, dataProvider, workerUrl]);
+  }, [sfxVolume, hapticFeedback, dataProvider, workerUrl, forceOfflineMode]);
 
   useEffect(() => {
     if (isDarkMode) document.documentElement.classList.add('dark');
@@ -445,7 +460,7 @@ const App: React.FC = () => {
   }, [isDarkMode]);
 
   const syncAllScores = React.useCallback(async () => {
-    if (!navigator.onLine || isSyncing || !auth.currentUser) return;
+    if (forceOfflineMode || !navigator.onLine || isSyncing || !auth.currentUser) return;
     
     setIsSyncing(true);
     setSyncStatus('pending');
@@ -485,7 +500,7 @@ const App: React.FC = () => {
     } finally {
       setIsSyncing(false);
     }
-  }, [scores, isSyncing, userProfile]);
+  }, [scores, isSyncing, userProfile, forceOfflineMode]);
 
   // Auth Listener
   useEffect(() => {
@@ -494,6 +509,10 @@ const App: React.FC = () => {
       setIsAuthReady(true);
       
       if (firebaseUser) {
+        if (forceOfflineMode) {
+          setSyncStatus('offline');
+          return;
+        }
         // Fetch profile from Firestore
         try {
           const cloudProfile = await cloud.getProfile();
@@ -545,7 +564,7 @@ const App: React.FC = () => {
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [forceOfflineMode]);
 
   const handleLogin = async () => {
     if (isLoggingIn || !isAuthReady) return;
@@ -592,7 +611,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const updateOnlineStatus = () => {
-      const isOnline = navigator.onLine;
+      const isOnline = navigator.onLine && !forceOfflineMode;
       setSyncStatus(isOnline ? 'synced' : 'offline');
       if (isOnline) {
         syncAllScores();
@@ -609,7 +628,7 @@ const App: React.FC = () => {
       window.removeEventListener('online', updateOnlineStatus);
       window.removeEventListener('offline', updateOnlineStatus);
     };
-  }, [syncAllScores]);
+  }, [syncAllScores, forceOfflineMode]);
 
   const saveProfile = React.useCallback(async (updated: UserProfile) => {
     setUserProfile(updated);
@@ -759,7 +778,7 @@ const App: React.FC = () => {
     }
 
     // Challenge Play log update
-    if (activeChallenge && activeChallenge.gameId === gameId && metadata?.final) {
+    if (activeChallenge && activeChallenge.gameId === gameId && metadata?.final && !forceOfflineMode) {
       try {
         await cloud.updateChallengePlay(
           activeChallenge.id,
@@ -770,7 +789,7 @@ const App: React.FC = () => {
         console.error('Failed to log challenge updates in Firestore:', err);
       }
     }
-  }, [scores, unlockAchievement, userProfile, quotaExceeded, activeChallenge]);
+  }, [scores, unlockAchievement, userProfile, quotaExceeded, activeChallenge, forceOfflineMode]);
 
   const isAnonymous = userProfile.username === 'New Player' || userProfile.username === 'Player';
 
@@ -1024,6 +1043,11 @@ const App: React.FC = () => {
           dataProvider={dataProvider}
           workerUrl={workerUrl}
           isAdmin={isAdminUser}
+          forceOfflineMode={forceOfflineMode}
+          onToggleOfflineMode={(val) => {
+            setForceOfflineMode(val);
+            audioService.playToggle(val);
+          }}
           onUpdateSfx={(vol) => {
             setSfxVolume(vol);
             // Volume change feedback

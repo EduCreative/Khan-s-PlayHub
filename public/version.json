@@ -1,8 +1,7 @@
 {
-  "version": "3.5.2",
+  "version": "3.5.3",
   "changelog": [
-    "Refactored header action-group using wrapping responsive flexbox and resized icon-triggers for maximum mobile accessibility, preventing Profile button occlusion.",
-    "Purged duplicate Admin access buttons from the primary action track to streamline workspace options.",
-    "Propagated consistent v3.5.2 designations to both top-left diagnostic flags and bottom footer signatures."
+    "Integrated a manual toggle for Offline Mode in user Settings blocks that bypasses all active background cloud synchronizations, conserving valuable network data on-demand.",
+    "Engineered local offline-safe behavior transitions for lead boards, authenticated listener profiles, and active play session queries."
   ]
 }
