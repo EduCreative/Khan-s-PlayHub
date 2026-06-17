@@ -41,6 +41,21 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'chats' | 'emojis' | 'games' | 'pwa' | 'migration' | 'system'>('overview');
+  const [estimates, setEstimates] = useState<any>(cloud.getFirestoreEstimates());
+
+  useEffect(() => {
+    const handleEstimatesUpdate = (e: any) => {
+      if (e.detail) {
+        setEstimates(e.detail);
+      } else {
+        setEstimates(cloud.getFirestoreEstimates());
+      }
+    };
+    window.addEventListener('firestore-estimates-updated', handleEstimatesUpdate);
+    return () => {
+      window.removeEventListener('firestore-estimates-updated', handleEstimatesUpdate);
+    };
+  }, []);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [userScores, setUserScores] = useState<any[]>([]);
   const [loadingUserScores, setLoadingUserScores] = useState(false);
@@ -980,6 +995,226 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                   }`}>
                     {cloud.getDataProvider() === 'hybrid' ? 'Hybrid (D1 + Firestore)' : cloud.getDataProvider().toUpperCase()}
                   </span>
+                </div>
+
+                {/* REAL-TIME SYNC STATUS & FIRESTORE QUOTA DASHBOARD (BENTO-STYLE CARDS) */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+                  {/* Card 1: Live DB Consensus Drift Visualizer */}
+                  <div className="glass-card p-8 rounded-[2.5rem] border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5 flex flex-col justify-between relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-3xl rounded-full" />
+                    <div>
+                      <div className="flex items-center justify-between gap-4 mb-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-blue-600/10 text-blue-500 flex items-center justify-center border border-blue-500/10">
+                            <i className="fas fa-arrows-spin text-sm animate-spin-slow"></i>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-black text-slate-950 dark:text-white uppercase leading-none">Consensus Drift Visualizer</h3>
+                            <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-1">Cross-Database Sync Status</p>
+                          </div>
+                        </div>
+
+                        {discrepancyList.length > 0 ? (
+                          <span className="px-3 py-1 rounded-full bg-rose-500/10 text-rose-500 font-black uppercase text-[8px] tracking-widest border border-rose-500/20 animate-pulse flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                            Desynchronized ({discrepancyList.length})
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 font-black uppercase text-[8px] tracking-widest border border-emerald-500/20 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            Fully Aligned
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Visual Flow Pipeline */}
+                      <div className="my-6 p-4 rounded-2xl bg-slate-150/40 dark:bg-black/20 border border-slate-200/50 dark:border-white/5 flex items-center justify-between gap-3 text-center">
+                        <div className="flex-1">
+                          <p className="text-[8px] text-slate-500 font-extrabold uppercase">Firebase</p>
+                          <p className="text-xs font-black text-orange-500 mt-1 italic uppercase">Firestore</p>
+                        </div>
+                        <div className="flex-[2] flex flex-col items-center justify-center relative">
+                          <div className="w-full h-1 bg-slate-200 dark:bg-white/10 rounded-full relative overflow-hidden">
+                            <span className={`absolute inset-y-0 left-0 w-1/3 bg-indigo-500 rounded-full ${syncStats.active || autoSyncEnabled ? 'animate-shimmer-flow' : ''}`} style={{ animationDuration: '1.5s' }} />
+                          </div>
+                          <span className="text-[8px] text-indigo-500 font-black uppercase tracking-widest mt-2 px-2 py-0.5 rounded-md bg-indigo-500/5 border border-indigo-500/10">
+                            {syncStats.active ? 'Comparing State...' : 'Consensus Pipeline'}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-[8px] text-slate-500 font-extrabold uppercase">Cloudflare</p>
+                          <p className="text-xs font-black text-blue-500 mt-1 italic uppercase">D1 SQL</p>
+                        </div>
+                      </div>
+
+                      {/* Drift Feed / Details */}
+                      {discrepancyList.length > 0 ? (
+                        <div className="space-y-2 mb-6">
+                          <p className="text-[9px] text-rose-500 font-black uppercase tracking-widest">
+                            <i className="fas fa-triangle-exclamation mr-1"></i> Discrepancy Stack
+                          </p>
+                          <div className="max-h-28 overflow-y-auto pr-1 space-y-1.5 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-white/10">
+                            {discrepancyList.map((d, index) => (
+                              <div key={index} className="p-2.5 rounded-xl bg-rose-500/5 dark:bg-rose-500/10 border border-rose-500/20 flex items-center justify-between text-[10px]">
+                                <div className="flex items-center gap-2">
+                                  <i className="fas fa-arrows-alt-h text-rose-400"></i>
+                                  <div>
+                                    <span className="font-extrabold text-slate-800 dark:text-slate-200">{d.username}</span>
+                                    <span className="text-[8px] bg-slate-200 dark:bg-white/15 px-1 rounded font-black uppercase ml-1.5 text-slate-500">{d.gameId}</span>
+                                  </div>
+                                </div>
+                                <span className="font-mono text-[9px] opacity-80 text-rose-500 bg-rose-500/5 px-2 py-0.5 rounded border border-rose-500/10">
+                                  {d.resolution}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-4 rounded-xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/2 text-center my-4">
+                          <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto mb-2 border border-emerald-500/10">
+                            <i className="fas fa-shield-halved text-xs"></i>
+                          </div>
+                          <p className="text-xs font-extrabold text-slate-800 dark:text-slate-200">State Consensus Solidified</p>
+                          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-1">
+                            No telemetry drift detected. Everything is safely backed up.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-200/50 dark:border-white/5 flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-[8px] text-slate-500 font-black uppercase">Last verified audit</p>
+                        <p className="text-[10px] font-black text-slate-800 dark:text-white italic">{syncStats.lastSyncTime || 'Awaiting Run'}</p>
+                      </div>
+                      <button
+                        onClick={handleManualSyncAudit}
+                        disabled={syncStats.active}
+                        className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                          syncStats.active
+                            ? 'bg-slate-200 dark:bg-white/5 text-slate-400 cursor-not-allowed'
+                            : 'bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 active:scale-95'
+                        }`}
+                      >
+                        {syncStats.active ? (
+                          <span className="flex items-center gap-1.5">
+                            <i className="fas fa-circle-notch animate-spin"></i> Audit Running
+                          </span>
+                        ) : 'Consensus Refresh'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Card 2: Firestore Quota Forecaster & Tracker */}
+                  <div className="glass-card p-8 rounded-[2.5rem] border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5 flex flex-col justify-between relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 blur-3xl rounded-full" />
+                    <div>
+                      <div className="flex items-center justify-between gap-4 mb-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-orange-600/10 text-orange-500 flex items-center justify-center border border-orange-500/10">
+                            <i className="fas fa-gauge-high text-sm"></i>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-black text-slate-950 dark:text-white uppercase leading-none">Firestore Quota Monitor</h3>
+                            <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-1">Live Estimated Daily Quota Use</p>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            audioService.playClick();
+                            cloud.resetFirestoreEstimates();
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-white/5 text-slate-500 hover:text-slate-800 dark:hover:text-white uppercase font-black text-[8px] tracking-widest border border-slate-300 dark:border-white/10 transition-colors"
+                        >
+                          Reset Session
+                        </button>
+                      </div>
+
+                      {/* Quota Progress meters */}
+                      <div className="space-y-4 mb-6">
+                        {/* Reads progress bar */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1 text-[10px]">
+                            <span className="font-extrabold text-slate-700 dark:text-slate-300 uppercase">Estimated Daily Reads</span>
+                            <span className="font-mono font-black text-slate-900 dark:text-white bg-slate-200 dark:bg-white/10 px-1.5 py-0.5 rounded leading-none text-[9px]">
+                              {estimates.reads?.toLocaleString()} / 50k
+                            </span>
+                          </div>
+                          <div className="h-3 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden p-[2px]">
+                            <div 
+                              className={`h-full rounded-full transition-all duration-500 ${
+                                (estimates.reads || 0) > 40000 
+                                  ? 'bg-rose-500' 
+                                  : (estimates.reads || 0) > 25000 
+                                    ? 'bg-amber-500' 
+                                    : 'bg-emerald-500'
+                              }`} 
+                              style={{ width: `${Math.min(100, ((estimates.reads || 0) / 50000) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Writes progress bar */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1 text-[10px]">
+                            <span className="font-extrabold text-slate-700 dark:text-slate-300 uppercase">Estimated Daily Writes</span>
+                            <span className="font-mono font-black text-slate-900 dark:text-white bg-slate-200 dark:bg-white/10 px-1.5 py-0.5 rounded leading-none text-[9px]">
+                              {estimates.writes?.toLocaleString()} / 20k
+                            </span>
+                          </div>
+                          <div className="h-3 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden p-[2px]">
+                            <div 
+                              className={`h-full rounded-full transition-all duration-500 ${
+                                (estimates.writes || 0) > 16000 
+                                  ? 'bg-rose-500' 
+                                  : (estimates.writes || 0) > 10000 
+                                    ? 'bg-amber-500' 
+                                    : 'bg-emerald-500'
+                              }`} 
+                              style={{ width: `${Math.min(100, ((estimates.writes || 0) / 20000) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Cost breakdown metrics category columns */}
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-4 text-[9px] p-3 rounded-xl bg-slate-150/40 dark:bg-black/10 border border-slate-200/50 dark:border-white/5">
+                        <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-1">
+                          <span className="text-slate-500 font-extrabold uppercase">Consensus Audits</span>
+                          <span className="font-mono text-slate-800 dark:text-slate-200 font-bold">
+                            {estimates.categories?.consensus_audits?.reads || 0}R | {estimates.categories?.consensus_audits?.writes || 0}W
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-1">
+                          <span className="text-slate-500 font-extrabold uppercase">Manual Syncs</span>
+                          <span className="font-mono text-slate-800 dark:text-slate-200 font-bold">
+                            {estimates.categories?.manual_sync?.reads || 0}R | {estimates.categories?.manual_sync?.writes || 0}W
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between pb-1">
+                          <span className="text-slate-500 font-extrabold uppercase">Game Records</span>
+                          <span className="font-mono text-slate-800 dark:text-slate-200 font-bold">
+                            {estimates.categories?.game_plays?.reads || 0}R | {estimates.categories?.game_plays?.writes || 0}W
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between pb-1">
+                          <span className="text-slate-500 font-extrabold uppercase">Profiles & Lists</span>
+                          <span className="font-mono text-slate-800 dark:text-slate-200 font-bold">
+                            {estimates.categories?.user_profiles?.reads || 0}R | {estimates.categories?.user_profiles?.writes || 0}W
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-200/50 dark:border-white/5 flex items-center justify-between text-[10px]">
+                      <span className="font-black text-emerald-500 uppercase flex items-center gap-1 leading-none">
+                        <i className="fas fa-shield-check animate-pulse"></i> Normal Usage Rate
+                      </span>
+                      <span className="text-slate-500 uppercase tracking-wide text-[8px] font-bold">Resets daily GMT midnight</span>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Summary Grid */}

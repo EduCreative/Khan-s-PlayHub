@@ -1,7 +1,7 @@
 {
-  "version": "3.5.6",
+  "version": "3.5.7",
   "changelog": [
-    "Prioritized Cloudflare D1 as the default premium data engine, routing live game telemetry entirely away from Firestore reads/writes to secure zero-latency offline & online operations.",
-    "Engineered seamless background localStorage priority state migration and explicit selection overrides within the database settings pane."
+    "Implemented the bento-style Cross-Database Consensus Drift Visualizer to identify alignment states in real-time.",
+    "Integrated the dynamic session-based Firestore Quota Forecaster to help proactively monitor daily read and write limits."
   ]
 }

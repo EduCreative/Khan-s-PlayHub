@@ -1,6 +1,20 @@
 
 # Changelog
 
+## [3.5.7] - 2026-06-17
+### Added
+- **Database Consensus Drift Visualizer**:
+  - Implemented an elegant bento dashboard module in the Admin Panel that monitors the real-time synchronization state between Firestore and Cloudflare D1.
+  - Included a "Consensus Pipeline" flow visualization representing active and automated synchronization data vectors.
+  - Formulated a scrollable "Discrepancy Stack" to trace mismatches chronologically, side-by-side with localized score values.
+  - Wired an direct "Consensus Refresh" trigger to immediately align drifted database states.
+- **Estimated Firestore Quota Forecaster**:
+  - Engineered an interactive meter that estimates cumulative Firestore reads and writes generated during active sessions against the free daily quota (50K reads / 20K writes).
+  - Categorized query distribution across multiple internal engines (Consensus Audits, Manual Sync Actions, Game Play records, User Profile queries) to trace operational costs.
+  - Enabled manual count resetting to manage granular diagnostic testing sessions.
+- **Global Keyframed CSS Animations**:
+  - Registered `animate-shimmer-flow` and `animate-spin-slow` in `src/index.css` to enable smooth animation loops for the sync engine gears and data pipe shaders.
+
 ## [3.5.6] - 2026-06-16
 ### Changed
 - **Cloudflare D1 Database Priority Routing**:

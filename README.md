@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.5.6 "Cloudflare D1 Priority Storage & Quota-Safe Telemetry"  
+**Version:** 3.5.7 "Consensus Drift Visualizer & Quota Forecaster Dashboard"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,7 +9,11 @@ Khan's PlayHub is an active collection of classic, high-performance, and mobile-
 
 ---
 
-## 🚀 Recent Enhancements (v3.5.6)
+## 🚀 Recent Enhancements (v3.5.7)
+- **Real-Time Cross-Database Sync Status Visualizer**: Monitors alignment drift between Cloudflare D1 SQL and Firebase Firestore. Standardized on a gorgeous animated "Consensus Pipeline" visualization that maps cross-database consistency, logging and parsing any score record discrepancies with direct "Consensus Refresh" alignment buttons.
+- **On-Demand Session-based Firestore Quota Monitor**: Tracks estimated reads and writes generated during active administration sessions. Plots current indicators against daily developer limits (50K reads / 20K writes), with categorical breakdowns (Consensus Audits, Manual Sync Actions, Game Records, User Profiles) and localized session resetting to inspect system overhead on demand.
+
+## 🚀 Previous Enhancements (v3.5.6)
 - **Cloudflare D1 Primary Storage Routing**: Changed the default active storage provider to Cloudflare D1. High score entries, game boards, and leaderboard records default to Cloudflare Workers to protect Firestore free quotas.
 - **Zero-Config Profile State Migrators**: Automatically migrates cached settings in user local storage to cloudflare defaults upon app load, seamlessly ensuring a safe, quota-free session for all players.
 - **Enhanced Storage Informational Prompts**: Highlighted optimal storage configurations directly in the Settings drawer so players can toggle between offline and custom databases safely.

@@ -111,6 +111,117 @@ class CloudService {
     return this.workerUrl;
   }
 
+  trackFirestoreOp(reads: number, writes: number, category: string) {
+    try {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const cached = localStorage.getItem('khans-playhub-firestore-quota-estimates');
+      
+      let data = {
+        reads: 0,
+        writes: 0,
+        lastUpdatedDate: todayStr,
+        categories: {
+          consensus_audits: { reads: 0, writes: 0 },
+          manual_sync: { reads: 0, writes: 0 },
+          game_plays: { reads: 0, writes: 0 },
+          user_profiles: { reads: 0, writes: 0 },
+          quick_chat: { reads: 0, writes: 0 },
+          system: { reads: 0, writes: 0 }
+        } as Record<string, { reads: number, writes: number }>
+      };
+
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.lastUpdatedDate === todayStr) {
+          data = {
+            ...data,
+            reads: parsed.reads || 0,
+            writes: parsed.writes || 0,
+            categories: {
+              ...data.categories,
+              ...(parsed.categories || {})
+            }
+          };
+        }
+      }
+
+      data.reads += reads;
+      data.writes += writes;
+
+      if (!data.categories[category]) {
+        data.categories[category] = { reads: 0, writes: 0 };
+      }
+      data.categories[category].reads += reads;
+      data.categories[category].writes += writes;
+
+      localStorage.setItem('khans-playhub-firestore-quota-estimates', JSON.stringify(data));
+      window.dispatchEvent(new CustomEvent('firestore-estimates-updated', { detail: data }));
+    } catch (e) {
+      console.warn('Failed tracking Firestore operations', e);
+    }
+  }
+
+  getFirestoreEstimates() {
+    try {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const cached = localStorage.getItem('khans-playhub-firestore-quota-estimates');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.lastUpdatedDate === todayStr) {
+          return parsed;
+        }
+      }
+      return {
+        reads: 0,
+        writes: 0,
+        lastUpdatedDate: todayStr,
+        categories: {
+          consensus_audits: { reads: 0, writes: 0 },
+          manual_sync: { reads: 0, writes: 0 },
+          game_plays: { reads: 0, writes: 0 },
+          user_profiles: { reads: 0, writes: 0 },
+          quick_chat: { reads: 0, writes: 0 },
+          system: { reads: 0, writes: 0 }
+        }
+      };
+    } catch {
+      return {
+        reads: 0,
+        writes: 0,
+        lastUpdatedDate: new Date().toISOString().split('T')[0],
+        categories: {
+          consensus_audits: { reads: 0, writes: 0 },
+          manual_sync: { reads: 0, writes: 0 },
+          game_plays: { reads: 0, writes: 0 },
+          user_profiles: { reads: 0, writes: 0 },
+          quick_chat: { reads: 0, writes: 0 },
+          system: { reads: 0, writes: 0 }
+        }
+      };
+    }
+  }
+
+  resetFirestoreEstimates() {
+    try {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const empty = {
+        reads: 0,
+        writes: 0,
+        lastUpdatedDate: todayStr,
+        categories: {
+          consensus_audits: { reads: 0, writes: 0 },
+          manual_sync: { reads: 0, writes: 0 },
+          game_plays: { reads: 0, writes: 0 },
+          user_profiles: { reads: 0, writes: 0 },
+          quick_chat: { reads: 0, writes: 0 },
+          system: { reads: 0, writes: 0 }
+        }
+      };
+      localStorage.setItem('khans-playhub-firestore-quota-estimates', JSON.stringify(empty));
+      window.dispatchEvent(new CustomEvent('firestore-estimates-updated', { detail: empty }));
+    } catch {}
+  }
+
   private async testConnection() {
     let retries = 3;
     let delay = 1000;
@@ -124,6 +235,7 @@ class CloudService {
         );
         
         await Promise.race([connectionPromise, timeoutPromise]);
+        this.trackFirestoreOp(1, 0, 'system');
         console.log("Firebase connection established successfully.");
         return; // Success
       } catch (error) {
@@ -161,6 +273,7 @@ class CloudService {
           username: userProfile.username,
           avatar: userProfile.avatar
         }, { merge: true });
+        this.trackFirestoreOp(0, 1, 'game_plays');
         firebaseSuccess = true;
       } catch (e) {
         handleFirestoreError(e, OperationType.WRITE, `scores/${gameId}_${uid}`);
@@ -203,6 +316,7 @@ class CloudService {
         // Retrieve all scores across the platform, group by user, sum them up
         // This solves the issue of a single user showing up multiple times for different games on the All Games Leaderboard
         const snapshot = await getDocs(collection(db, 'scores'));
+        this.trackFirestoreOp(snapshot.size || 1, 0, 'game_plays');
         const scoresByUser: Record<string, { username: string; avatar: string; score: number; deviceId: string }> = {};
         
         snapshot.docs.forEach(docDoc => {
@@ -230,6 +344,7 @@ class CloudService {
       } else {
         const q = query(collection(db, 'scores'), where('gameId', '==', gameId), orderBy('score', 'desc'), limit(10));
         const snapshot = await getDocs(q);
+        this.trackFirestoreOp(snapshot.size || 1, 0, 'game_plays');
         return snapshot.docs.map(doc => doc.data());
       }
     } catch (e) {
@@ -251,6 +366,7 @@ class CloudService {
           ...profile,
           joinedAt: profile.joinedAt || Date.now()
         }, { merge: true });
+        this.trackFirestoreOp(0, 1, 'user_profiles');
         firebaseSuccess = true;
       } catch (e) {
         handleFirestoreError(e, OperationType.WRITE, `profiles/${uid}`);
@@ -286,6 +402,7 @@ class CloudService {
 
     try {
       const snapshot = await getDoc(doc(db, 'profiles', uid));
+      this.trackFirestoreOp(1, 0, 'user_profiles');
       return snapshot.exists() ? snapshot.data() as UserProfile : null;
     } catch (e) {
       handleFirestoreError(e, OperationType.GET, `profiles/${uid}`);
@@ -345,6 +462,7 @@ class CloudService {
     if (rawUsers.length === 0) {
       try {
         const snapshot = await getDocs(collection(db, 'profiles'));
+        this.trackFirestoreOp(snapshot.size || 1, 0, 'user_profiles');
         rawUsers = snapshot.docs.map(doc => ({ deviceId: doc.id, ...doc.data() }));
       } catch (e) {
         handleFirestoreError(e, OperationType.LIST, 'profiles');
@@ -355,6 +473,7 @@ class CloudService {
     // Reconcile and synchronize dynamic scores with profile stats on-the-fly!
     try {
       const scoresSnapshot = await getDocs(collection(db, 'scores'));
+      this.trackFirestoreOp(scoresSnapshot.size || 1, 0, 'user_profiles');
       const scoresList = scoresSnapshot.docs.map(doc => doc.data());
 
       // Map deviceId -> scores list
@@ -725,7 +844,7 @@ class CloudService {
                   favorites = u.favorites;
                 }
 
-                await setDoc(doc(db, 'profiles', u.deviceId), {
+                 await setDoc(doc(db, 'profiles', u.deviceId), {
                   username: u.username || 'Anonymous',
                   email: u.email || null,
                   avatar: u.avatar || 'fa-user',
@@ -733,6 +852,7 @@ class CloudService {
                   favorites: favorites,
                   joinedAt: u.joinedAt || Date.now()
                 }, { merge: true });
+                this.trackFirestoreOp(0, 1, 'manual_sync');
                 usersSuccess++;
               } catch (err) {
                 console.error(`Failed to migrate profile for ${u.deviceId}`, err);
@@ -765,6 +885,7 @@ class CloudService {
             username: s.username || 'Anonymous',
             avatar: s.avatar || 'fa-user'
           }, { merge: true });
+          this.trackFirestoreOp(0, 1, 'manual_sync');
           successCount++;
         } catch (err) {
           console.error(`Failed to migrate score for ${s.deviceId}`, err);
@@ -804,6 +925,7 @@ class CloudService {
     try {
       addLog('FIREBASE', 'Fetching all score entries from Cloud Firestore database...');
       const snapshot = await getDocs(collection(db, 'scores'));
+      this.trackFirestoreOp(snapshot.size || 1, 0, 'consensus_audits');
       firestoreScores = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       addLog('FIREBASE', `Read complete: ${firestoreScores.length} records retrieved from Firestore.`);
     } catch (e: any) {
@@ -980,6 +1102,7 @@ class CloudService {
             username,
             avatar
           }, { merge: true });
+          this.trackFirestoreOp(0, 1, 'consensus_audits');
           addLog('SUCCESS', `Firestore scores collections synchronized with score ${score}.`);
           resolved++;
           discrepancies.push({

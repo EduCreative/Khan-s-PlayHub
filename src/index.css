@@ -93,3 +93,21 @@ body {
 .dark .bg-grid-pattern {
   background-image: radial-gradient(circle at 2px 2px, rgba(99, 102, 241, 0.1) 1px, transparent 0);
 }
+
+@keyframes shimmerFlow {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+.animate-shimmer-flow {
+  animation: shimmerFlow 2.5s infinite linear;
+}
+
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 8s linear infinite;
+}
