@@ -1,6 +1,15 @@
 
 # Changelog
 
+## [3.5.8] - 2026-06-17
+### Added
+- **Interactive High Score Management**:
+  - Added inline editing controls in the Neural Event Registry of the Admin Panel, enabling admins to modify players' high score values on raw game elements immediately.
+  - Provided immediate score delete controls with full modal double-confirmation to wipe excessive/invalid metrics.
+- **Three-Way Consensus Database Sync & Client Cache Purging**:
+  - Updates and deletions carry over and execute in both Firebase Firestore and Cloudflare D1 SQL indices synchronously.
+  - Enabled active client-side synchronization: on authentication states loading, player apps fetch authoritative current database states and wipe or replace mismatched localized high scores or cleared caches in local systems, preventing users from ever syncing excessive records back to the databases in the future.
+
 ## [3.5.7] - 2026-06-17
 ### Added
 - **Database Consensus Drift Visualizer**:

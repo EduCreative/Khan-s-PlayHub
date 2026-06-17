@@ -1,7 +1,7 @@
 {
-  "version": "3.5.7",
+  "version": "3.5.8",
   "changelog": [
-    "Implemented the bento-style Cross-Database Consensus Drift Visualizer to identify alignment states in real-time.",
-    "Integrated the dynamic session-based Firestore Quota Forecaster to help proactively monitor daily read and write limits."
+    "Added high score editing and deletion tooling for administrators in the Admin Panel.",
+    "Engineered three-way score updates synchronizing Firebase Firestore, Cloudflare D1 SQL, and players' player storage instantly upon auth load."
   ]
 }

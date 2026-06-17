@@ -129,6 +129,23 @@ export default {
         return new Response(JSON.stringify(scores.results), { headers: corsHeaders });
       }
 
+      if (url.pathname === '/admin/score/update' && method === 'POST') {
+        const { deviceId, gameId, score, timestamp } = await request.json();
+        await env.PLAYHUB_DB.prepare(`
+          INSERT INTO scores (deviceId, gameId, score, timestamp) 
+          VALUES (?, ?, ?, ?)
+          ON CONFLICT(deviceId, gameId) DO UPDATE SET 
+          score = excluded.score, timestamp = excluded.timestamp
+        `).bind(deviceId, gameId, score, timestamp || Date.now()).run();
+        return new Response(JSON.stringify({ status: 'updated' }), { headers: corsHeaders });
+      }
+
+      if (url.pathname === '/admin/score/delete' && method === 'POST') {
+        const { deviceId, gameId } = await request.json();
+        await env.PLAYHUB_DB.prepare("DELETE FROM scores WHERE deviceId = ? AND gameId = ?").bind(deviceId, gameId).run();
+        return new Response(JSON.stringify({ status: 'deleted' }), { headers: corsHeaders });
+      }
+
       if (url.pathname.startsWith('/admin/user/') && method === 'DELETE') {
         const deviceId = url.pathname.split('/').pop();
         await env.PLAYHUB_DB.prepare("DELETE FROM profiles WHERE deviceId = ?").bind(deviceId).run();

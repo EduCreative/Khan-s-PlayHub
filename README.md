@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.5.7 "Consensus Drift Visualizer & Quota Forecaster Dashboard"  
+**Version:** 3.5.8 "Interactive Score Administration & Client Overrides Sync"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,7 +9,11 @@ Khan's PlayHub is an active collection of classic, high-performance, and mobile-
 
 ---
 
-## 🚀 Recent Enhancements (v3.5.7)
+## 🚀 Recent Enhancements (v3.5.8)
+- **Interactive High Score Management**: Empowers administrators to instantly modify or completely delete high scores for any micro-game directly within the Admin Panel UI with double-confirmation safeguards.
+- **Unified Score Consortia & Live Client Sync Overrides**: Updates or deletions sync cleanly to both Firestore and Cloudflare D1 databases. Upon player launch/authentication, the client device automatically fetches the authorized database metrics list and overwrites their local `localStorage` state cache, preventing players from syncing revoked or excessive scores back to the databases.
+
+## 🚀 Previous Enhancements (v3.5.7)
 - **Real-Time Cross-Database Sync Status Visualizer**: Monitors alignment drift between Cloudflare D1 SQL and Firebase Firestore. Standardized on a gorgeous animated "Consensus Pipeline" visualization that maps cross-database consistency, logging and parsing any score record discrepancies with direct "Consensus Refresh" alignment buttons.
 - **On-Demand Session-based Firestore Quota Monitor**: Tracks estimated reads and writes generated during active administration sessions. Plots current indicators against daily developer limits (50K reads / 20K writes), with categorical breakdowns (Consensus Audits, Manual Sync Actions, Game Records, User Profiles) and localized session resetting to inspect system overhead on demand.
 

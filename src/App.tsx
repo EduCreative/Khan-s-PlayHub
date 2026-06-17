@@ -204,7 +204,7 @@ const App: React.FC = () => {
                      (user?.uid === 'v2swNDzVnegsJNo5eNEiLYv6ZYi2') ||
                      (userProfile.role === 'admin');
 
-  const CURRENT_VERSION = '3.5.7';
+  const CURRENT_VERSION = '3.5.8';
 
   // Listen for Firestore Quota Exceeded event
   useEffect(() => {
@@ -591,6 +591,16 @@ const App: React.FC = () => {
             localStorage.setItem('khans-playhub-profile', JSON.stringify(initialProfile));
             await cloud.syncProfile(initialProfile);
           }
+
+          // Overwrite local storage and cached score state with authoritative database values
+          try {
+            const serverScores = await cloud.getUserScores();
+            setScores(serverScores);
+            localStorage.setItem('khans-playhub-scores', JSON.stringify(serverScores));
+          } catch (scoreErr) {
+            console.error("Failed to load/overwrite player scores from cloud:", scoreErr);
+          }
+
           // Do not automatically write-sync scores to save Firestore write quota
           setSyncStatus('synced');
           setHasUnsyncedChanges(false);

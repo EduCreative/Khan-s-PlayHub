@@ -581,6 +581,124 @@ class CloudService {
     }
   }
 
+  async getUserScores(): Promise<Record<string, number>> {
+    if (!auth.currentUser) return {};
+    const uid = auth.currentUser.uid;
+    const userScores: Record<string, number> = {};
+
+    // 1. Try Cloudflare D1
+    if ((this.provider === 'cloudflare' || this.provider === 'hybrid') && this.workerUrl) {
+      try {
+        const baseUrl = this.workerUrl.endsWith('/') ? this.workerUrl.slice(0, -1) : this.workerUrl;
+        const res = await fetch(`${baseUrl}/admin/all-scores`);
+        if (res.ok) {
+          const allScores = await res.json();
+          allScores.filter((s: any) => s.deviceId === uid).forEach((s: any) => {
+            userScores[s.gameId] = s.score;
+          });
+          return userScores;
+        }
+      } catch (e) {
+        console.warn('Cloudflare getUserScores Failed, falling back to Firebase:', e);
+      }
+    }
+
+    // 2. Try Firebase (Firestore) direct
+    try {
+      const q = query(collection(db, 'scores'), where('deviceId', '==', uid));
+      const snapshot = await getDocs(q);
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.gameId && data.score !== undefined) {
+          userScores[data.gameId] = data.score;
+        }
+      });
+      this.trackFirestoreOp(snapshot.size || 1, 0, 'user_profiles');
+    } catch (e) {
+      console.error('Failed to load user scores from Firebase:', e);
+    }
+
+    return userScores;
+  }
+
+  async adminUpdateUserScore(userId: string, gameId: string, newScore: number, username?: string, avatar?: string): Promise<boolean> {
+    let firebaseSuccess = false;
+    let cloudflareSuccess = false;
+
+    // 1. Firebase Firestore Update
+    try {
+      const scoreId = `${gameId}_${userId}`;
+      const scoreRef = doc(db, 'scores', scoreId);
+      
+      const updateObj: any = {
+        score: Number(newScore),
+        timestamp: Date.now()
+      };
+      if (username) updateObj.username = username;
+      if (avatar) updateObj.avatar = avatar;
+
+      await setDoc(scoreRef, updateObj, { merge: true });
+      this.trackFirestoreOp(0, 1, 'manual_sync');
+      firebaseSuccess = true;
+    } catch (e) {
+      console.error('Admin Firestore Score Update Failed:', e);
+    }
+
+    // 2. Cloudflare D1 Update
+    if ((this.provider === 'cloudflare' || this.provider === 'hybrid') && this.workerUrl) {
+      try {
+        const baseUrl = this.workerUrl.endsWith('/') ? this.workerUrl.slice(0, -1) : this.workerUrl;
+        const res = await fetch(`${baseUrl}/admin/score/update`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deviceId: userId, gameId, score: Number(newScore), timestamp: Date.now() })
+        });
+        if (res.ok) {
+          cloudflareSuccess = true;
+        }
+      } catch (e) {
+        console.error('Admin Cloudflare D1 Score Update Failed:', e);
+      }
+    }
+
+    return this.provider === 'hybrid' ? (firebaseSuccess && cloudflareSuccess) : (firebaseSuccess || cloudflareSuccess);
+  }
+
+  async adminDeleteUserScore(userId: string, gameId: string): Promise<boolean> {
+    let firebaseSuccess = false;
+    let cloudflareSuccess = false;
+
+    // 1. Firebase Firestore Delete
+    try {
+      const scoreId = `${gameId}_${userId}`;
+      const scoreRef = doc(db, 'scores', scoreId);
+      await deleteDoc(scoreRef);
+      this.trackFirestoreOp(0, 1, 'manual_sync');
+      firebaseSuccess = true;
+    } catch (e) {
+      console.error('Admin Firestore Score Delete Failed:', e);
+    }
+
+    // 2. Cloudflare D1 Delete
+    if ((this.provider === 'cloudflare' || this.provider === 'hybrid') && this.workerUrl) {
+      try {
+        const baseUrl = this.workerUrl.endsWith('/') ? this.workerUrl.slice(0, -1) : this.workerUrl;
+        const res = await fetch(`${baseUrl}/admin/score/delete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deviceId: userId, gameId })
+        });
+        if (res.ok) {
+          cloudflareSuccess = true;
+        }
+      } catch (e) {
+        console.error('Admin Cloudflare D1 Score Delete Failed:', e);
+      }
+    }
+
+    return this.provider === 'hybrid' ? (firebaseSuccess && cloudflareSuccess) : (firebaseSuccess || cloudflareSuccess);
+  }
+
   async getRecentScores(limitCount: number = 50): Promise<any[]> {
     if ((this.provider === 'cloudflare' || this.provider === 'hybrid') && this.workerUrl) {
       try {

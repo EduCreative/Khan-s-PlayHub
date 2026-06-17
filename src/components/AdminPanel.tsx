@@ -63,6 +63,63 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
   const [loadingRecentScores, setLoadingRecentScores] = useState(false);
   const [confirmDeleteDeviceId, setConfirmDeleteDeviceId] = useState<string | null>(null);
 
+  // Score management states
+  const [editingScoreGameId, setEditingScoreGameId] = useState<string | null>(null);
+  const [editScoreValue, setEditScoreValue] = useState<string>('');
+  const [scoreActionId, setScoreActionId] = useState<string | null>(null);
+
+  const handleUpdateScore = async (gameId: string, newScore: number) => {
+    if (!selectedUser) return;
+    const userId = selectedUser.deviceId || selectedUser.uid || selectedUser.id;
+    setScoreActionId(`${gameId}_update`);
+    audioService.playClick();
+    
+    try {
+      const success = await cloud.adminUpdateUserScore(userId, gameId, newScore, selectedUser.username, selectedUser.avatar);
+      if (success) {
+        setUserScores(prev => prev.map(s => s.gameId === gameId ? { ...s, score: newScore, timestamp: Date.now() } : s));
+        setEditingScoreGameId(null);
+        audioService.playSuccess();
+      } else {
+        alert("Warning: Score updated in Firestore but Cloudflare D1 could not be fully synchronized.");
+        // We still trust Firestore or show partial success:
+        setUserScores(prev => prev.map(s => s.gameId === gameId ? { ...s, score: newScore, timestamp: Date.now() } : s));
+        setEditingScoreGameId(null);
+      }
+    } catch (err: any) {
+      console.error("Score update error:", err);
+      alert("Error updating score: " + err.message);
+    } finally {
+      setScoreActionId(null);
+    }
+  };
+
+  const handleDeleteScore = async (gameId: string) => {
+    if (!selectedUser) return;
+    if (!confirm(`Are you sure you want to completely delete the score for ${gameId.toUpperCase()}? This will update both Databases and clear the player's system/local storage sync caches.`)) return;
+
+    const userId = selectedUser.deviceId || selectedUser.uid || selectedUser.id;
+    setScoreActionId(`${gameId}_delete`);
+    audioService.playClick();
+    
+    try {
+      const success = await cloud.adminDeleteUserScore(userId, gameId);
+      if (success) {
+        setUserScores(prev => prev.filter(s => s.gameId !== gameId));
+        audioService.playSuccess();
+      } else {
+        alert("Warning: Score deleted in Firestore but Cloudflare D1 index could not be updated.");
+        // still remove from state so UI updates
+        setUserScores(prev => prev.filter(s => s.gameId !== gameId));
+      }
+    } catch (err: any) {
+      console.error("Score delete error:", err);
+      alert("Error deleting score: " + err.message);
+    } finally {
+      setScoreActionId(null);
+    }
+  };
+
   // Chat Management state
   const [quickChats, setQuickChats] = useState<QuickChat[]>([]);
   const [loadingChats, setLoadingChats] = useState(false);
@@ -1844,8 +1901,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                         <div className="space-y-4">
                           {userScores.map((s, i) => {
                             const game = GAMES.find(g => g.id === s.gameId);
+                            const isEditing = editingScoreGameId === s.gameId;
+                            const isActionRunning = scoreActionId === `${s.gameId}_update` || scoreActionId === `${s.gameId}_delete`;
+
                             return (
-                              <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 group hover:border-indigo-500/30 transition-all">
+                              <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 gap-4 group hover:border-indigo-500/30 transition-all">
                                 <div className="flex items-center gap-4">
                                   <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${game?.color || 'from-slate-500 to-slate-600'} flex items-center justify-center text-white text-[10px]`}>
                                     <i className={`fas ${game?.icon || 'fa-gamepad'}`}></i>
@@ -1855,10 +1915,70 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
                                     <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">{formatDate(s.timestamp)} {new Date(s.timestamp).toLocaleTimeString()}</p>
                                   </div>
                                 </div>
-                                <div className="text-right">
-                                  <p className="text-sm font-black text-indigo-600 dark:text-indigo-400 italic">+{s.score.toLocaleString()}</p>
-                                  <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">NEURAL SCORE</p>
-                                </div>
+                                
+                                {isEditing ? (
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="number"
+                                      value={editScoreValue}
+                                      onChange={(e) => setEditScoreValue(e.target.value)}
+                                      disabled={isActionRunning}
+                                      className="w-24 px-2 py-1 rounded bg-slate-200 dark:bg-white/10 text-slate-900 dark:text-white border border-slate-350 dark:border-white/15 text-xs font-bold font-mono focus:outline-none focus:border-indigo-500"
+                                      placeholder="New Score"
+                                    />
+                                    <button
+                                      disabled={isActionRunning || editScoreValue.trim() === ''}
+                                      onClick={() => handleUpdateScore(s.gameId, Number(editScoreValue))}
+                                      className="p-1 px-2 bg-emerald-500 text-white rounded hover:bg-emerald-600 font-black text-[9px] uppercase tracking-wide flex items-center gap-1 active:scale-95 disabled:opacity-50 disabled:scale-100"
+                                    >
+                                      {scoreActionId === `${s.gameId}_update` ? (
+                                        <i className="fas fa-circle-notch animate-spin"></i>
+                                      ) : (
+                                        <i className="fas fa-check"></i>
+                                      )}
+                                      Save
+                                    </button>
+                                    <button
+                                      disabled={isActionRunning}
+                                      onClick={() => setEditingScoreGameId(null)}
+                                      className="p-1 px-2 bg-slate-350 dark:bg-white/10 text-slate-700 dark:text-slate-300 rounded hover:bg-slate-400 font-extrabold text-[9px] uppercase tracking-wide"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
+                                    <div className="text-right">
+                                      <p className="text-sm font-black text-indigo-600 dark:text-indigo-400 italic">+{s.score.toLocaleString()}</p>
+                                      <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">NEURAL SCORE</p>
+                                    </div>
+                                    <div className="flex items-center gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <button
+                                        onClick={() => {
+                                          setEditingScoreGameId(s.gameId);
+                                          setEditScoreValue(String(s.score));
+                                          audioService.playClick();
+                                        }}
+                                        title="Edit Score"
+                                        className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 hover:bg-indigo-600 hover:text-white flex items-center justify-center transition-colors active:scale-90"
+                                      >
+                                        <i className="fas fa-edit text-[10px]"></i>
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteScore(s.gameId)}
+                                        disabled={isActionRunning}
+                                        title="Delete Score"
+                                        className="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 hover:bg-rose-600 hover:text-white flex items-center justify-center transition-colors active:scale-90 disabled:opacity-50"
+                                      >
+                                        {scoreActionId === `${s.gameId}_delete` ? (
+                                          <i className="fas fa-circle-notch animate-spin text-[10px]"></i>
+                                        ) : (
+                                          <i className="fas fa-trash-alt text-[10px]"></i>
+                                        )}
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             );
                           })}
