@@ -80,6 +80,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
         setUserScores(prev => prev.map(s => s.gameId === gameId ? { ...s, score: newScore, timestamp: Date.now() } : s));
         setEditingScoreGameId(null);
         audioService.playSuccess();
+
+        // If editing own score, update current browser localStorage and state immediately
+        if (auth.currentUser && userId === auth.currentUser.uid) {
+          try {
+            const stored = localStorage.getItem('khans-playhub-scores');
+            const localScores = stored ? JSON.parse(stored) : {};
+            localScores[gameId] = newScore;
+            localStorage.setItem('khans-playhub-scores', JSON.stringify(localScores));
+            localStorage.setItem('khans-playhub-last-synced-scores', JSON.stringify(localScores));
+            window.dispatchEvent(new CustomEvent('local-scores-updated', { detail: localScores }));
+          } catch (storageErr) {
+            console.error("Local storage sync error inside Admin Panel:", storageErr);
+          }
+        }
       } else {
         alert("Warning: Score updated in Firestore but Cloudflare D1 could not be fully synchronized.");
         // We still trust Firestore or show partial success:
@@ -107,6 +121,25 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, dataProvider, onUpdate
       if (success) {
         setUserScores(prev => prev.filter(s => s.gameId !== gameId));
         audioService.playSuccess();
+
+        // If deleting own score, clean current browser localStorage and state immediately
+        if (auth.currentUser && userId === auth.currentUser.uid) {
+          try {
+            const stored = localStorage.getItem('khans-playhub-scores');
+            const localScores = stored ? JSON.parse(stored) : {};
+            delete localScores[gameId];
+            localStorage.setItem('khans-playhub-scores', JSON.stringify(localScores));
+
+            const lastStored = localStorage.getItem('khans-playhub-last-synced-scores');
+            const lastSyncedScores = lastStored ? JSON.parse(lastStored) : {};
+            delete lastSyncedScores[gameId];
+            localStorage.setItem('khans-playhub-last-synced-scores', JSON.stringify(lastSyncedScores));
+
+            window.dispatchEvent(new CustomEvent('local-scores-updated', { detail: localScores }));
+          } catch (storageErr) {
+            console.error("Local storage delete sync error inside Admin Panel:", storageErr);
+          }
+        }
       } else {
         alert("Warning: Score deleted in Firestore but Cloudflare D1 index could not be updated.");
         // still remove from state so UI updates

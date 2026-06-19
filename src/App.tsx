@@ -78,6 +78,16 @@ const App: React.FC = () => {
     }
   });
 
+  useEffect(() => {
+    const handleLocalScoresUpdated = (e: CustomEvent) => {
+      if (e.detail) {
+        setScores(e.detail);
+      }
+    };
+    window.addEventListener('local-scores-updated', handleLocalScoresUpdated as EventListener);
+    return () => window.removeEventListener('local-scores-updated', handleLocalScoresUpdated as EventListener);
+  }, []);
+
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     try {
       const savedProfile = localStorage.getItem('khans-playhub-profile');
@@ -496,19 +506,100 @@ const App: React.FC = () => {
       // Sync user profile to the cloud
       const profileSuccess = await cloud.syncProfile(userProfile);
       
-      const gameIds = Object.keys(scores);
+      // Load last synced values for consensus checking
+      let lastSynced: Record<string, number> = {};
+      try {
+        const stored = localStorage.getItem('khans-playhub-last-synced-scores');
+        if (stored) lastSynced = JSON.parse(stored);
+      } catch {}
+
+      // Retrieve latest server scores to check for admin edits or deletions
+      let serverScores: Record<string, number> = {};
+      try {
+        serverScores = await cloud.getUserScores();
+      } catch (err) {
+        console.warn("Could not retrieve current cloud scores for consensus, assuming offline data:", err);
+        serverScores = { ...lastSynced };
+      }
+
+      const nextScores = { ...scores };
+      const nextLastSynced = { ...lastSynced };
+      const gamesToUpload: Record<string, number> = {};
+      let changedLocally = false;
+
+      // Group all unique game IDs
+      const allGameIds = Array.from(new Set([
+        ...Object.keys(nextScores),
+        ...Object.keys(serverScores),
+        ...Object.keys(nextLastSynced)
+      ]));
+
+      for (const gameId of allGameIds) {
+        const localVal = nextScores[gameId] || 0;
+        const lastSyncedVal = nextLastSynced[gameId] || 0;
+        const serverVal = serverScores[gameId] || 0;
+
+        // Rule 1: Admin decreased score on the server, or deleted it
+        if (lastSyncedVal > 0 && serverScores[gameId] === undefined) {
+          delete nextScores[gameId];
+          delete nextLastSynced[gameId];
+          changedLocally = true;
+          console.log(`[Consensus Sync] Score completely deleted on server for ${gameId}. Aligning locally.`);
+        } else if (serverVal < lastSyncedVal) {
+          if (serverVal <= 0) {
+            delete nextScores[gameId];
+            delete nextLastSynced[gameId];
+          } else {
+            nextScores[gameId] = serverVal;
+            nextLastSynced[gameId] = serverVal;
+          }
+          changedLocally = true;
+          console.log(`[Consensus Sync] Downward override applied for ${gameId}: local ${localVal} -> server ${serverVal} (due to admin adjustment)`);
+        } else if (localVal > lastSyncedVal && serverVal === lastSyncedVal) {
+          // Rule 2: Player played offline and has a genuinely higher score
+          gamesToUpload[gameId] = localVal;
+        } else if (localVal === lastSyncedVal && serverVal > lastSyncedVal) {
+          // Rule 3: Client pulled down newer scores from another session
+          nextScores[gameId] = serverVal;
+          nextLastSynced[gameId] = serverVal;
+          changedLocally = true;
+        } else if (localVal > lastSyncedVal && serverVal > lastSyncedVal) {
+          // Rule 4: Both changed, choose higher consensus
+          const maxVal = Math.max(localVal, serverVal);
+          nextScores[gameId] = maxVal;
+          nextLastSynced[gameId] = maxVal;
+          changedLocally = true;
+          if (localVal > serverVal) {
+            gamesToUpload[gameId] = localVal;
+          }
+        } else if (serverVal > 0 && localVal === 0) {
+          nextScores[gameId] = serverVal;
+          nextLastSynced[gameId] = serverVal;
+          changedLocally = true;
+        }
+      }
+
+      if (changedLocally) {
+        setScores(nextScores);
+        localStorage.setItem('khans-playhub-scores', JSON.stringify(nextScores));
+        localStorage.setItem('khans-playhub-last-synced-scores', JSON.stringify(nextLastSynced));
+      }
+
       let allSuccess = profileSuccess;
-      
-      for (const gameId of gameIds) {
-        const success = await cloud.syncScore(gameId, scores[gameId], userProfile);
+      const uploadedScores = { ...nextLastSynced };
+
+      for (const gameId of Object.keys(gamesToUpload)) {
+        const scoreToUpload = gamesToUpload[gameId];
+        const success = await cloud.syncScore(gameId, scoreToUpload, userProfile);
         if (!success) {
           allSuccess = false;
         } else {
+          uploadedScores[gameId] = scoreToUpload;
           // Update global record if we beat it
           setGlobalRecords(prev => {
             const updated = {
               ...prev,
-              [gameId]: Math.max(prev[gameId] || 0, scores[gameId])
+              [gameId]: Math.max(prev[gameId] || 0, scoreToUpload)
             };
             try {
               localStorage.setItem('khans-playhub-global-records-cache', JSON.stringify({
@@ -520,6 +611,8 @@ const App: React.FC = () => {
           });
         }
       }
+
+      localStorage.setItem('khans-playhub-last-synced-scores', JSON.stringify(uploadedScores));
       
       setSyncStatus(allSuccess ? 'synced' : 'offline');
       setHasUnsyncedChanges(!allSuccess);
@@ -597,6 +690,7 @@ const App: React.FC = () => {
             const serverScores = await cloud.getUserScores();
             setScores(serverScores);
             localStorage.setItem('khans-playhub-scores', JSON.stringify(serverScores));
+            localStorage.setItem('khans-playhub-last-synced-scores', JSON.stringify(serverScores));
           } catch (scoreErr) {
             console.error("Failed to load/overwrite player scores from cloud:", scoreErr);
           }
