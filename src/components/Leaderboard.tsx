@@ -46,8 +46,8 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({
   isDarkMode
 }) => {
   const [selectedGameId, setSelectedGameId] = useState<string>('all');
-  const [scores, setScores] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [allRawScores, setAllRawScores] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showGuide, setShowGuide] = useState(false);
 
   // States for the Game Toppers Board next to the Leaderboard
@@ -55,24 +55,15 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({
   const [toppersLoading, setToppersLoading] = useState(false);
 
   useEffect(() => {
-    if (selectedGameId) {
-      setLoading(true);
-      cloud.getGlobalHighScores(selectedGameId).then(data => {
-        setScores(data);
-        setLoading(false);
-        if (selectedGameId !== 'all' && data && data.length > 0 && onUpdateGlobalRecord) {
-          onUpdateGlobalRecord(selectedGameId, data[0].score);
-        }
-      });
-    }
-  }, [selectedGameId, onUpdateGlobalRecord]);
-
-  useEffect(() => {
     // If user turned on forceOfflineMode, do not query live Firestore records
     const isOffline = localStorage.getItem('khans-playhub-settings')?.includes('"forceOfflineMode":true');
-    if (isOffline) return;
+    if (isOffline) {
+      setLoading(false);
+      return;
+    }
 
-    const fetchToppers = async () => {
+    const fetchAllData = async () => {
+      setLoading(true);
       setToppersLoading(true);
       try {
         let scoresList: any[] = [];
@@ -85,7 +76,7 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({
             const res = await fetch(`${baseUrl}/admin/all-scores`);
             if (res.ok) scoresList = await res.json();
           } catch (e) {
-            console.warn('Cloudflare fetch for toppers failed, falling back to Firebase:', e);
+            console.warn('Cloudflare fetch failed, falling back to Firebase:', e);
           }
         }
 
@@ -96,6 +87,9 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({
           scoresList = snapshot.docs.map(doc => doc.data());
         }
 
+        setAllRawScores(scoresList);
+
+        // Process toppers
         const toppersMap: Record<string, any> = {};
         scoresList.forEach(s => {
           if (!s.gameId) return;
@@ -105,15 +99,121 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({
           }
         });
         setGameToppers(toppersMap);
+
       } catch (err) {
-        console.error('Error fetching game toppers:', err);
+        console.error('Error fetching leaderboard data:', err);
       } finally {
+        setLoading(false);
         setToppersLoading(false);
       }
     };
 
-    fetchToppers();
+    fetchAllData();
   }, []);
+
+  // Compute leaderboard list using our custom logic including current player placement
+  const leaderboardDisplay = React.useMemo(() => {
+    if (loading || allRawScores.length === 0) {
+      return { topList: [], playerRow: null };
+    }
+
+    let items: any[] = [];
+
+    if (selectedGameId === 'all') {
+      const scoresByUser: Record<string, { username: string; avatar: string; score: number; deviceId: string; timestamp: number }> = {};
+      
+      allRawScores.forEach(s => {
+        const uid = s.deviceId;
+        if (!uid) return;
+        
+        if (!scoresByUser[uid]) {
+          scoresByUser[uid] = {
+            username: s.username || 'Anonymous',
+            avatar: s.avatar || 'fa-user-ninja',
+            score: 0,
+            deviceId: uid,
+            timestamp: s.timestamp || 0
+          };
+        }
+        scoresByUser[uid].score += (s.score || 0);
+        if (s.timestamp && s.timestamp > scoresByUser[uid].timestamp) {
+          scoresByUser[uid].timestamp = s.timestamp;
+        }
+      });
+
+      items = Object.values(scoresByUser)
+        .filter(p => p.score > 0)
+        .sort((a, b) => b.score - a.score);
+    } else {
+      const scoresByUser: Record<string, { username: string; avatar: string; score: number; deviceId: string; timestamp: number }> = {};
+      
+      allRawScores.forEach(s => {
+        if (s.gameId !== selectedGameId) return;
+        const uid = s.deviceId;
+        if (!uid) return;
+        
+        if (!scoresByUser[uid] || s.score > scoresByUser[uid].score) {
+          scoresByUser[uid] = {
+            username: s.username || 'Anonymous',
+            avatar: s.avatar || 'fa-user-ninja',
+            score: s.score || 0,
+            deviceId: uid,
+            timestamp: s.timestamp || 0
+          };
+        }
+      });
+
+      items = Object.values(scoresByUser)
+        .filter(p => p.score > 0)
+        .sort((a, b) => b.score - a.score);
+    }
+
+    const currUid = currentUser?.uid;
+    const currUsername = userProfile?.username;
+    const currAvatar = userProfile?.avatar;
+
+    const userIndexInAll = items.findIndex(s => 
+      (currUid && s.deviceId === currUid) || 
+      (currUsername && s.username === currUsername && s.avatar === currAvatar)
+    );
+
+    const topList = items.slice(0, 10);
+    let playerRow: any = null;
+
+    if (userIndexInAll !== -1) {
+      if (userIndexInAll >= 10) {
+        playerRow = {
+          ...items[userIndexInAll],
+          rank: userIndexInAll + 1
+        };
+      }
+    } else {
+      let localScore = 0;
+      if (selectedGameId === 'all') {
+        localScore = Object.values(highScores).reduce((sum, val) => sum + val, 0);
+      } else {
+        localScore = highScores[selectedGameId] || 0;
+      }
+
+      playerRow = {
+        deviceId: currUid || 'local_user',
+        username: currUsername || 'You',
+        avatar: currAvatar || 'fa-user-ninja',
+        score: localScore,
+        rank: items.length + 1
+      };
+    }
+
+    return { topList, playerRow };
+  }, [allRawScores, selectedGameId, currentUser, userProfile, highScores, loading]);
+
+  // Keep global records in parent up to sync with the topper of selected game
+  useEffect(() => {
+    const topItem = leaderboardDisplay.topList[0];
+    if (selectedGameId !== 'all' && topItem && onUpdateGlobalRecord) {
+      onUpdateGlobalRecord(selectedGameId, topItem.score);
+    }
+  }, [selectedGameId, leaderboardDisplay.topList, onUpdateGlobalRecord]);
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
@@ -242,64 +342,112 @@ const Leaderboard: React.FC<LeaderboardProps & { onBack?: () => void }> = ({
                         </div>
                       </td>
                     </tr>
-                  ) : scores.length === 0 ? (
+                  ) : leaderboardDisplay.topList.length === 0 ? (
                     <tr>
                       <td colSpan={3} className="px-6 py-12 text-center">
                         <p className="text-slate-500 font-medium italic">No neural data recorded for this sector yet.</p>
                       </td>
                     </tr>
                   ) : (
-                    scores.map((s, idx) => {
-                      const isCurrentUser = (currentUser && s.deviceId && s.deviceId === currentUser.uid) ||
-                                            (userProfile && s.username === userProfile.username && s.avatar === userProfile.avatar);
+                    <>
+                      {leaderboardDisplay.topList.map((s, idx) => {
+                        const isCurrentUser = (currentUser && s.deviceId && s.deviceId === currentUser.uid) ||
+                                              (userProfile && s.username === userProfile.username && s.avatar === userProfile.avatar);
 
-                      return (
-                        <tr 
-                          key={idx} 
-                          className={`border-b transition-colors group relative ${
-                            isCurrentUser 
-                              ? 'bg-indigo-500/10 dark:bg-indigo-500/20 border-indigo-500/20 dark:border-indigo-500/30 font-semibold' 
-                              : 'border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5'
-                          }`}
-                        >
-                          <td className="px-6 py-4">
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black italic ${
-                              idx === 0 ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30' :
-                              idx === 1 ? 'bg-slate-300 text-slate-700' :
-                              idx === 2 ? 'bg-orange-400 text-white' :
-                              isCurrentUser ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/20' :
-                              'text-slate-400'
-                            }`}>
-                              {idx + 1}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform ${
-                                isCurrentUser ? 'bg-indigo-500/25 ring-2 ring-indigo-500/50' : 'bg-indigo-500/10'
+                        return (
+                          <tr 
+                            key={idx} 
+                            className={`border-b transition-colors group relative ${
+                              isCurrentUser 
+                                ? 'bg-indigo-500/10 dark:bg-indigo-500/20 border-indigo-500/20 dark:border-indigo-500/30 font-semibold' 
+                                : 'border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5'
+                            }`}
+                          >
+                            <td className="px-6 py-4">
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black italic ${
+                                idx === 0 ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30' :
+                                idx === 1 ? 'bg-slate-300 text-slate-700' :
+                                idx === 2 ? 'bg-orange-400 text-white' :
+                                isCurrentUser ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/20' :
+                                'text-slate-400'
                               }`}>
-                                <i className={`fas ${s.avatar || 'fa-user-ninja'} text-xs`}></i>
+                                {idx + 1}
                               </div>
-                              <div className="flex items-center gap-2">
-                                <span className={`font-black uppercase italic ${isCurrentUser ? 'text-indigo-600 dark:text-indigo-300' : 'text-slate-700 dark:text-slate-200'}`}>
-                                  {s.username || 'Anonymous'}
-                                </span>
-                                {isCurrentUser && (
-                                  <span className="text-[8px] font-black tracking-widest bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-2 py-0.5 rounded-[6px] shadow-sm uppercase leading-none">
-                                    YOU
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform ${
+                                  isCurrentUser ? 'bg-indigo-500/25 ring-2 ring-indigo-500/50' : 'bg-indigo-500/10'
+                                }`}>
+                                  <i className={`fas ${s.avatar || 'fa-user-ninja'} text-xs`}></i>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className={`font-black uppercase italic ${isCurrentUser ? 'text-indigo-600 dark:text-indigo-300' : 'text-slate-700 dark:text-slate-200'}`}>
+                                    {s.username || 'Anonymous'}
                                   </span>
-                                )}
+                                  {isCurrentUser && (
+                                    <span className="text-[8px] font-black tracking-widest bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-2 py-0.5 rounded-[6px] shadow-sm uppercase leading-none">
+                                      YOU
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <span className={`text-xl font-black tabular-nums ${isCurrentUser ? 'text-indigo-700 dark:text-indigo-300 contrast-125' : 'text-indigo-600 dark:text-indigo-400'}`}>
-                              {(s.score || 0).toLocaleString()}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <span className={`text-xl font-black tabular-nums ${isCurrentUser ? 'text-indigo-700 dark:text-indigo-300 contrast-125' : 'text-indigo-600 dark:text-indigo-400'}`}>
+                                {(s.score || 0).toLocaleString()}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+
+                      {/* Your Sector Standing at the end of the top-10 list if not in the top 10 */}
+                      {leaderboardDisplay.playerRow && (() => {
+                        const s = leaderboardDisplay.playerRow;
+                        const rank = s.rank;
+
+                        return (
+                          <>
+                            <tr key="standing-divider" className="bg-slate-50/50 dark:bg-white/5 border-t border-b border-slate-200/50 dark:border-white/10">
+                              <td colSpan={3} className="px-6 py-2.5 text-center text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em]">
+                                ••• Your Sector Standing •••
+                              </td>
+                            </tr>
+                            <tr 
+                              key="current-player-row" 
+                              className="border-b transition-colors group relative bg-indigo-500/15 dark:bg-indigo-500/25 border-indigo-500/30 dark:border-indigo-500/40 font-semibold"
+                            >
+                              <td className="px-6 py-4">
+                                <div className="w-8 h-8 rounded-lg flex items-center justify-center font-black italic bg-indigo-500 text-white shadow-md shadow-indigo-500/20">
+                                  {rank}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-indigo-500 scale-110 bg-indigo-500/25 ring-2 ring-indigo-500/50">
+                                    <i className={`fas ${s.avatar || 'fa-user-ninja'} text-xs`}></i>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-black uppercase italic text-indigo-600 dark:text-indigo-300">
+                                      {s.username || 'Anonymous'}
+                                    </span>
+                                    <span className="text-[8px] font-black tracking-widest bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-2 py-0.5 rounded-[6px] shadow-sm uppercase leading-none">
+                                      YOU
+                                    </span>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <span className="text-xl font-black tabular-nums text-indigo-700 dark:text-indigo-300 contrast-125">
+                                  {(s.score || 0).toLocaleString()}
+                                </span>
+                              </td>
+                            </tr>
+                          </>
+                        );
+                      })()}
+                    </>
                   )}
                 </tbody>
               </table>
