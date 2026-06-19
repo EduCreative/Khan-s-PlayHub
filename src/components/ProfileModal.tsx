@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { UserProfile } from '../types';
 import { ACHIEVEMENTS } from '../achievements';
 import { audioService } from '../services/audioService';
+import { GAMES } from '../constants';
 
 interface ProfileModalProps {
   userProfile: UserProfile;
@@ -21,6 +22,73 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ userProfile, onSave, onClos
   const [email, setEmail] = useState(userProfile.email || '');
   const [avatar, setAvatar] = useState(userProfile.avatar);
   const [bio, setBio] = useState(userProfile.bio);
+
+  // Parse game stats
+  const gameStats = userProfile.gameStats || {};
+  const statsList = Object.entries(gameStats).map(([gameId, data]) => {
+    const game = GAMES.find(g => g.id === gameId);
+    return {
+      gameId,
+      game,
+      highScore: data.highScore || 0,
+      sessions: data.sessions || 0,
+      timeSpent: data.timeSpent || 0,
+      lastPlayed: data.lastPlayed || 0
+    };
+  }).filter(entry => entry.game);
+
+  // Best Score calculation
+  let bestHighScore = 0;
+  let bestScoreGameName = 'No Games';
+  let bestScoreGameColor = 'from-slate-400 to-slate-500';
+  let bestScoreGameIcon = 'fa-trophy';
+
+  // Total Time Played calculation
+  let totalTimeSeconds = userProfile.playTime || 0;
+  let aggregatedTime = 0;
+  statsList.forEach(s => {
+    aggregatedTime += s.timeSpent;
+  });
+  if (totalTimeSeconds < aggregatedTime) {
+    totalTimeSeconds = aggregatedTime;
+  }
+
+  // Most Played Game calculation
+  let mostPlayedGameName = 'No Games';
+  let mostPlayedGameIcon = 'fa-gamepad';
+  let mostPlayedGameColor = 'from-slate-400 to-slate-500';
+  let mostPlayedGameSessions = 0;
+
+  statsList.forEach(s => {
+    if (s.highScore > bestHighScore) {
+      bestHighScore = s.highScore;
+      bestScoreGameName = s.game?.name || s.gameId;
+      bestScoreGameColor = s.game?.color || 'from-slate-400 to-slate-500';
+      bestScoreGameIcon = s.game?.icon || 'fa-trophy';
+    }
+
+    if (s.sessions > mostPlayedGameSessions) {
+      mostPlayedGameSessions = s.sessions;
+      mostPlayedGameName = s.game?.name || s.gameId;
+      mostPlayedGameIcon = s.game?.icon || 'fa-gamepad';
+      mostPlayedGameColor = s.game?.color || 'from-slate-400 to-slate-500';
+    }
+  });
+
+  const formatTimePlayed = (totalSecs: number) => {
+    if (totalSecs <= 0) return '0s';
+    const hrs = Math.floor(totalSecs / 3600);
+    const mins = Math.floor((totalSecs % 3600) / 60);
+    const secs = totalSecs % 60;
+
+    if (hrs > 0) {
+      return `${hrs}h ${mins}m`;
+    }
+    if (mins > 0) {
+      return `${mins}m ${secs}s`;
+    }
+    return `${secs}s`;
+  };
 
   const handleSave = () => {
     if (!username.trim()) {
@@ -126,6 +194,127 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ userProfile, onSave, onClos
                 className="w-full bg-slate-100 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 rounded-2xl px-6 py-4 text-slate-900 dark:text-white font-bold focus:border-indigo-500 outline-none transition-all h-24 resize-none placeholder:text-slate-400"
               />
             </div>
+          </div>
+
+          {/* Personal Records Section */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center px-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Personal Records</label>
+              <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
+                Real-Time Telemetry
+              </span>
+            </div>
+
+            {/* Stats Summary Bento Grid */}
+            <div className="grid grid-cols-3 gap-3">
+              {/* Best Score */}
+              <div className="p-3 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl flex flex-col justify-between group hover:border-amber-500/30 transition-all">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Best Score</span>
+                  <div className={`w-5 h-5 rounded bg-gradient-to-br ${bestHighScore > 0 ? bestScoreGameColor : 'from-slate-500 to-slate-600'} flex items-center justify-center text-white text-[8px]`}>
+                    <i className={`fas ${bestScoreGameIcon}`}></i>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-black text-slate-900 dark:text-white truncate">
+                    {bestHighScore > 0 ? bestHighScore.toLocaleString() : '0'}
+                  </p>
+                  <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest truncate">
+                    {bestScoreGameName}
+                  </p>
+                </div>
+              </div>
+
+              {/* Total Time */}
+              <div className="p-3 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl flex flex-col justify-between group hover:border-emerald-500/30 transition-all">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Time Spent</span>
+                  <div className="w-5 h-5 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-[8px]">
+                    <i className="fas fa-hourglass-half"></i>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-black text-slate-900 dark:text-white truncate">
+                    {formatTimePlayed(totalTimeSeconds)}
+                  </p>
+                  <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest truncate">
+                    Total Logged
+                  </p>
+                </div>
+              </div>
+
+              {/* Most Played */}
+              <div className="p-3 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl flex flex-col justify-between group hover:border-indigo-500/30 transition-all">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Most Played</span>
+                  <div className={`w-5 h-5 rounded bg-gradient-to-br ${mostPlayedGameSessions > 0 ? mostPlayedGameColor : 'from-slate-500 to-slate-600'} flex items-center justify-center text-white text-[8px]`}>
+                    <i className={`fas ${mostPlayedGameIcon}`}></i>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-black text-slate-900 dark:text-white truncate">
+                    {mostPlayedGameSessions > 0 ? `${mostPlayedGameSessions} plays` : '0 plays'}
+                  </p>
+                  <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest truncate">
+                    {mostPlayedGameName}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Individual Game Stats List */}
+            {statsList.length > 0 ? (
+              <div className="p-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl space-y-3">
+                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Neural Performance Logs</p>
+                <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-white/10">
+                  {statsList.map((stat, idx) => {
+                    const game = stat.game!;
+                    // Max session percentage tracker for the indicator bar
+                    const maxSessions = Math.max(...statsList.map(s => s.sessions), 1);
+                    const progressPercent = Math.min(100, Math.round((stat.sessions / maxSessions) * 100));
+
+                    return (
+                      <div key={idx} className="flex flex-col p-2.5 rounded-xl bg-slate-200/50 dark:bg-white/5 border border-slate-350 dark:border-white/5 hover:border-indigo-500/25 transition-all text-xs">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-5 h-5 rounded-md bg-gradient-to-br ${game.color} flex items-center justify-center text-white text-[8px]`}>
+                              <i className={`fas ${game.icon}`}></i>
+                            </div>
+                            <span className="font-bold text-slate-800 dark:text-white text-[11px]">{game.name}</span>
+                          </div>
+                          <span className="font-mono text-[10px] text-indigo-600 dark:text-indigo-400 font-extrabold">
+                            High: {stat.highScore.toLocaleString()}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between text-[9px] text-slate-500 mb-1 font-bold uppercase">
+                          <span>{stat.sessions} Sessions</span>
+                          <span>{formatTimePlayed(stat.timeSpent)} played</span>
+                        </div>
+
+                        {/* Progress Bar visual indicator */}
+                        <div className="w-full h-1 bg-slate-300 dark:bg-white/10 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full bg-gradient-to-r ${game.color}`} 
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="p-6 bg-slate-100 dark:bg-white/3 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-3xl text-center">
+                <i className="fas fa-chart-line text-slate-400 dark:text-slate-600 text-2xl mb-2 animate-pulse"></i>
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-normal">
+                  Neural Records Uncompiled
+                </p>
+                <p className="text-[9px] text-slate-400 font-medium max-w-xs mx-auto mt-1 leading-normal">
+                  Engage in micro-games to calibrate your digital footprint and load cognitive metrics.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="space-y-4">
