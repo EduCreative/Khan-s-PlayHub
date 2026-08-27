@@ -1,5 +1,9 @@
 
 import { Game, Category } from './types';
+import fruitVortexScreenshot from './assets/images/fruit_vortex_screenshot_1787830697410.jpg';
+import neonRacerScreenshot from './assets/images/neon_racer_screenshot_1787830682506.jpg';
+import skyStrikeScreenshot from './assets/images/sky_strike_screenshot_1787830711596.jpg';
+import tetrisScreenshot from './assets/images/tetris_screenshot_1787830726088.jpg';
 
 export const GAMES: Game[] = [
   {
@@ -10,7 +14,8 @@ export const GAMES: Game[] = [
     icon: 'fa-apple-whole',
     color: 'from-orange-400 to-rose-500',
     description: 'A fast-paced fruit matching game with explosive combos.',
-    instructions: ['Match 3 or more fruits', 'Use power-ups for big scores', 'Beat the clock']
+    instructions: ['Match 3 or more fruits', 'Use power-ups for big scores', 'Beat the clock'],
+    screenshot: fruitVortexScreenshot
   },
   {
     id: 'word-builder',
@@ -20,7 +25,8 @@ export const GAMES: Game[] = [
     icon: 'fa-font',
     color: 'from-emerald-400 to-teal-600',
     description: 'Construct words to build your tower and defend the nexus.',
-    instructions: ['Select letters to form words', 'Submit to build blocks', 'Reach the target height']
+    instructions: ['Select letters to form words', 'Submit to build blocks', 'Reach the target height'],
+    screenshot: 'https://images.unsplash.com/photo-1546776310-eef45dd6d63c?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'sudoku-lite',
@@ -30,7 +36,8 @@ export const GAMES: Game[] = [
     icon: 'fa-table-cells',
     color: 'from-indigo-400 to-blue-600',
     description: 'Classic Sudoku with neural mapping assistance.',
-    instructions: ['Fill the grid with numbers 1-9', 'Each row, column, and block must have unique numbers', 'Use logic to solve']
+    instructions: ['Fill the grid with numbers 1-9', 'Each row, column, and block must have unique numbers', 'Use logic to solve'],
+    screenshot: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'memory-matrix',
@@ -40,7 +47,8 @@ export const GAMES: Game[] = [
     icon: 'fa-brain',
     color: 'from-teal-400 to-emerald-600',
     description: 'Test your short-term memory by recalling patterns in the matrix.',
-    instructions: ['Memorize the pattern', 'Wait for the flip', 'Recall the positions']
+    instructions: ['Memorize the pattern', 'Wait for the flip', 'Recall the positions'],
+    screenshot: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'labyrinth',
@@ -50,7 +58,8 @@ export const GAMES: Game[] = [
     icon: 'fa-route',
     color: 'from-orange-500 to-amber-700',
     description: 'Navigate through complex mazes to reach the exit portal.',
-    instructions: ['Use arrows to move', 'Find the green exit', 'Avoid dead ends']
+    instructions: ['Use arrows to move', 'Find the green exit', 'Avoid dead ends'],
+    screenshot: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'color-clash',
@@ -60,7 +69,8 @@ export const GAMES: Game[] = [
     icon: 'fa-palette',
     color: 'from-rose-400 to-pink-600',
     description: 'A clinical Stroop Effect challenge. Read the word, ignore the color. Calibrate your cognitive focus.',
-    instructions: ['Read the text of the word', 'Ignore the actual color of the text', 'Select the button that matches the WORD']
+    instructions: ['Read the text of the word', 'Ignore the actual color of the text', 'Select the button that matches the WORD'],
+    screenshot: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'resonance-breathing',
@@ -70,7 +80,8 @@ export const GAMES: Game[] = [
     icon: 'fa-lungs',
     color: 'from-indigo-400 to-purple-500',
     description: 'Practice coherent breathing at the scientifically optimal rate of 6 breaths per minute.',
-    instructions: ['Inhale as the lotus expands', 'Exhale as the lotus shrinks', 'Maintain rhythm for 5 minutes']
+    instructions: ['Inhale as the lotus expands', 'Exhale as the lotus shrinks', 'Maintain rhythm for 5 minutes'],
+    screenshot: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'reaction-test',
@@ -80,7 +91,8 @@ export const GAMES: Game[] = [
     icon: 'fa-bolt',
     color: 'from-amber-400 to-orange-600',
     description: 'Test your neural response speed with this precision reaction protocol.',
-    instructions: ['Wait for the screen to turn green', 'Click as fast as you can', 'Complete 5 attempts for an average']
+    instructions: ['Wait for the screen to turn green', 'Click as fast as you can', 'Complete 5 attempts for an average'],
+    screenshot: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'tetris',
@@ -90,7 +102,8 @@ export const GAMES: Game[] = [
     icon: 'fa-shapes',
     color: 'from-fuchsia-500 to-purple-700',
     description: 'A high-speed block fitting challenge in a neon-drenched digital void.',
-    instructions: ['Use arrow keys or buttons to move and rotate', 'Complete horizontal lines to clear them', 'Don\'t let the blocks reach the top']
+    instructions: ['Use arrow keys or buttons to move and rotate', 'Complete horizontal lines to clear them', 'Don\'t let the blocks reach the top'],
+    screenshot: tetrisScreenshot
   },
   {
     id: 'binary-dash',
@@ -100,7 +113,8 @@ export const GAMES: Game[] = [
     icon: 'fa-code-branch',
     color: 'from-cyan-400 to-blue-600',
     description: 'Sort incoming data packets into Even and Odd streams.',
-    instructions: ['Check the number', 'Sort left for Even', 'Sort right for Odd']
+    instructions: ['Check the number', 'Sort left for Even', 'Sort right for Odd'],
+    screenshot: 'https://images.unsplash.com/photo-1510511459019-5dda7724fd87?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'bit-master',
@@ -110,7 +124,8 @@ export const GAMES: Game[] = [
     icon: 'fa-microchip',
     color: 'from-cyan-500 to-indigo-700',
     description: 'Convert 4-bit binary signals to decimal values quickly.',
-    instructions: ['Read the binary', 'Convert to decimal', 'Select the correct option']
+    instructions: ['Read the binary', 'Convert to decimal', 'Select the correct option'],
+    screenshot: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'quick-math',
@@ -120,7 +135,8 @@ export const GAMES: Game[] = [
     icon: 'fa-calculator',
     color: 'from-indigo-500 to-purple-700',
     description: 'Solve arithmetic problems as fast as you can.',
-    instructions: ['Read the equation', 'Calculate the answer', 'Select the correct option']
+    instructions: ['Read the equation', 'Calculate the answer', 'Select the correct option'],
+    screenshot: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'pattern-finder',
@@ -130,7 +146,8 @@ export const GAMES: Game[] = [
     icon: 'fa-shapes',
     color: 'from-amber-400 to-orange-600',
     description: 'Identify the logic in a sequence and predict the next element.',
-    instructions: ['Analyze the sequence', 'Find the rule', 'Select the next item']
+    instructions: ['Analyze the sequence', 'Find the rule', 'Select the next item'],
+    screenshot: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'grammar-guardian',
@@ -140,7 +157,8 @@ export const GAMES: Game[] = [
     icon: 'fa-book',
     color: 'from-emerald-500 to-teal-700',
     description: 'Repair broken sentences by selecting the correct grammatical form.',
-    instructions: ['Read the sentence', 'Identify the error', 'Select the correct word']
+    instructions: ['Read the sentence', 'Identify the error', 'Select the correct word'],
+    screenshot: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'neon-racer',
@@ -150,7 +168,8 @@ export const GAMES: Game[] = [
     icon: 'fa-car',
     color: 'from-yellow-400 to-orange-600',
     description: 'Dodge traffic and collect energy cells in a high-speed neon-drenched race.',
-    instructions: ['Use arrows or touch to steer', 'Avoid other cars', 'Collect yellow energy cells']
+    instructions: ['Use arrows or touch to steer', 'Avoid other cars', 'Collect yellow energy cells'],
+    screenshot: neonRacerScreenshot
   },
   {
     id: 'sky-strike',
@@ -160,7 +179,8 @@ export const GAMES: Game[] = [
     icon: 'fa-plane',
     color: 'from-blue-400 to-indigo-600',
     description: 'Pilot a high-tech jet, dodge incoming missiles, and neutralize enemy threats.',
-    instructions: ['Use arrows or touch to move', 'Tap or Space to fire', 'Avoid enemy fire and collisions']
+    instructions: ['Use arrows or touch to move', 'Tap or Space to fire', 'Avoid enemy fire and collisions'],
+    screenshot: skyStrikeScreenshot
   },
   {
     id: 'snake-arena',
@@ -170,6 +190,7 @@ export const GAMES: Game[] = [
     icon: 'fa-dragon',
     color: 'from-fuchsia-400 to-indigo-600',
     description: 'Bait other cyber snakes into crashing into your tail, collect energy dots, and grow to rule the arena!',
-    instructions: ['Guide your snake using keys or touch', 'Collect colorful dots to increase your size & score', 'Trap other snakes to consume their remains', 'Hold SPACEBAR or tap BOOST button to sprint']
+    instructions: ['Guide your snake using keys or touch', 'Collect colorful dots to increase your size & score', 'Trap other snakes to consume their remains', 'Hold SPACEBAR or tap BOOST button to sprint'],
+    screenshot: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80'
   }
 ];

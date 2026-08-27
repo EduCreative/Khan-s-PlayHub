@@ -54,6 +54,7 @@ export interface Game {
   color: string;
   description: string;
   instructions: string[];
+  screenshot?: string;
 }
 
 export interface Score {

@@ -1,6 +1,15 @@
 
 # Changelog
 
+## [3.5.9] - 2026-08-27
+### Added
+- **High-Resolution Gameplay Screenshots & HUD Overlays for All Game Cards**:
+  - Replaced basic flat gradient icons on game cards with action-packed, high-resolution gameplay screenshots across all 17 micro-games.
+  - Generated crisp arcade gameplay screenshots for flagship games like Neon Racer, Fruit Vortex, Sky Strike, and Neon Tetris.
+  - Implemented interactive in-game HUD overlays (e.g. `240 KM/H` Nitro meter, `3x COMBO` points, `TARGET LOCK` radar, `9x9 GRID` Sudoku logic check, `LEN: 84` Snake boost gauge) on game card banners.
+  - Added live status indicator badges ("● SCREENSHOT"), glassmorphic hover play triggers, and smooth scale-up zoom transitions.
+  - Integrated graceful image load error handlers falling back to stylized gradient icon frames.
+
 ## [3.5.8] - 2026-06-17
 ### Added
 - **Interactive High Score Management**:

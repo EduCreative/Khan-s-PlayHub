@@ -1,7 +1,7 @@
 
 # 🕹️ Khan's PlayHub: The Ultimate Micro-Gaming Hub
 
-**Version:** 3.5.8 "Interactive Score Administration & Client Overrides Sync"  
+**Version:** 3.5.9 "High-Resolution Gameplay Screenshots & HUD Banners"  
 **Architecture:** React 19 + Cloudflare D1 + Workers  
 **Design Philosophy:** Neon-Cyberpunk / Offline-First / Zero-Latency
 
@@ -9,7 +9,12 @@ Khan's PlayHub is an active collection of classic, high-performance, and mobile-
 
 ---
 
-## 🚀 Recent Enhancements (v3.5.8)
+## 🚀 Recent Enhancements (v3.5.9)
+- **High-Resolution Gameplay Screenshots**: Upgraded all game cards across all 17 micro-games with action-packed, high-resolution gameplay screenshot banners, featuring arcade visuals for flagship titles like Neon Racer, Fruit Vortex, Sky Strike, and Neon Tetris.
+- **In-Game HUD Overlays**: Integrated live game UI overlays on each card preview, featuring digital speedometers (`240 KM/H`), combo counters (`3x COMBO`), target lock indicators, Sudoku logic grids, and Snake boost meters.
+- **Live Visual Status Indicators**: Added `● SCREENSHOT` live badges, glassmorphic hover play controls, and responsive zoom transitions with graceful fallback error handling.
+
+## 🚀 Previous Enhancements (v3.5.8)
 - **Interactive High Score Management**: Empowers administrators to instantly modify or completely delete high scores for any micro-game directly within the Admin Panel UI with double-confirmation safeguards.
 - **Unified Score Consortia & Live Client Sync Overrides**: Updates or deletions sync cleanly to both Firestore and Cloudflare D1 databases. Upon player launch/authentication, the client device automatically fetches the authorized database metrics list and overwrites their local `localStorage` state cache, preventing players from syncing revoked or excessive scores back to the databases.
 
